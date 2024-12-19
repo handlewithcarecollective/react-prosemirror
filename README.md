@@ -22,16 +22,21 @@ ProseMirror renderer will happen in this repository, published as
 
 ## Installation
 
+_Note_: React ProseMirror releases are coupled to specific prosemirror-view
+releases, and are not guaranteed to work with other versions of
+prosemirror-view. Ensure that your version of prosemirror-view matches the
+version in React ProseMirror's peer dependencies!
+
 npm:
 
 ```sh
-npm install @handlewithcare/react-prosemirror
+npm install @handlewithcare/react-prosemirror prosemirror-view@1.37.1 prosemirror-state prosemirror-model
 ```
 
 yarn:
 
 ```sh
-yarn add @handlewithcare/react-prosemirror
+yarn add @handlewithcare/react-prosemirror prosemirror-view@1.37.1 prosemirror-state prosemirror-model
 ```
 
 <!-- toc -->
