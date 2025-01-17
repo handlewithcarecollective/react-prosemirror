@@ -1,3 +1,4 @@
+/* Copyright (c) The New York Times Company */
 import type { EditorView } from "prosemirror-view";
 import { useContext } from "react";
 import type { DependencyList } from "react";

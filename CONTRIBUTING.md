@@ -1,3 +1,5 @@
+<!-- Copyright (c) The New York Times Company -->
+
 ## Project setup
 
 This project is written in Typescript. It uses:

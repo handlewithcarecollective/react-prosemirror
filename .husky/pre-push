@@ -1,4 +1,7 @@
 #!/usr/bin/env sh
+
+# Copyright (c) The New York Times Company
+
 . "$(dirname -- "$0")/_/husky.sh"
 
 ./scripts/if-no-version-change.sh yarn version check

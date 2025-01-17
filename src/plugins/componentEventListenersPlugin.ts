@@ -1,3 +1,4 @@
+/* Copyright (c) The New York Times Company */
 import { Plugin, PluginKey } from "prosemirror-state";
 import { DOMEventMap, EditorView } from "prosemirror-view";
 import { unstable_batchedUpdates as batch } from "react-dom";

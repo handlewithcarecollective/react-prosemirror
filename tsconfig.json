@@ -1,3 +1,5 @@
+/* Copyright (c) The New York Times Company */
+
 {
   "$schema": "https://json.schemastore.org/tsconfig",
   "include": ["src/**/*", "src/**/*.json"],

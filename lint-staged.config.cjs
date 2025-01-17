@@ -1,3 +1,5 @@
+/* Copyright (c) The New York Times Company */
+
 module.exports = {
   // Run ESLint and Prettier on typescript, javascript, and json
   // files. lint-staged automatically adds any updated files

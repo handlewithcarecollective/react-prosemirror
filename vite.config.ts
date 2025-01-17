@@ -1,3 +1,5 @@
+/* Copyright (c) The New York Times Company */
+
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 

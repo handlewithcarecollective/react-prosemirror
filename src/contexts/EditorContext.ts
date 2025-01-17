@@ -1,3 +1,4 @@
+/* Copyright (c) The New York Times Company */
 import type { DOMEventMap, EditorView } from "prosemirror-view";
 import { createContext } from "react";
 

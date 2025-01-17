@@ -1,3 +1,4 @@
+/* Copyright (c) The New York Times Company */
 "use client";
 
 export { ProseMirror } from "./components/ProseMirror.js";

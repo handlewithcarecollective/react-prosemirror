@@ -1,3 +1,4 @@
+/* Copyright (c) The New York Times Company */
 let oldElementFromPoint: undefined | ((x: number, y: number) => Element | null);
 let oldGetClientRects: undefined | (() => DOMRectList);
 let oldGetBoundingClientRect: undefined | (() => DOMRect);

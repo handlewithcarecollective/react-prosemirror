@@ -1,3 +1,4 @@
+/* Copyright (c) The New York Times Company */
 import React, { useCallback, useLayoutEffect, useRef } from "react";
 import type { EffectCallback } from "react";
 

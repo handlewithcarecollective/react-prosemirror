@@ -1,3 +1,5 @@
+/* Copyright (c) The New York Times Company */
+
 module.exports = {
   displayName: "react-prosemirror",
   rootDir: "src",

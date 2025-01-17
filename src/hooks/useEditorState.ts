@@ -1,3 +1,4 @@
+/* Copyright (c) The New York Times Company */
 import type { EditorState } from "prosemirror-state";
 import { useContext } from "react";
 

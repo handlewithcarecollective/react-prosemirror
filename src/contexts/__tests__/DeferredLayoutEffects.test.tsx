@@ -1,3 +1,4 @@
+/* Copyright (c) The New York Times Company */
 import { act, render, screen } from "@testing-library/react";
 import React, { useLayoutEffect, useState } from "react";
 

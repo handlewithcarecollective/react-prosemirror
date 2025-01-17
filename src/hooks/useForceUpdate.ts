@@ -1,3 +1,4 @@
+/* Copyright (c) The New York Times Company */
 import { useReducer } from "react";
 
 /**

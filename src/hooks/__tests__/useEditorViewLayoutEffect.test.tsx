@@ -1,3 +1,4 @@
+/* Copyright (c) The New York Times Company */
 /* eslint-disable @typescript-eslint/no-empty-function */
 import { render } from "@testing-library/react";
 import type { EditorState } from "prosemirror-state";

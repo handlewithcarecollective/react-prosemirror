@@ -1,3 +1,4 @@
+/* Copyright (c) The New York Times Company */
 import { useContext, useLayoutEffect } from "react";
 import type { DependencyList, EffectCallback } from "react";
 

@@ -1,3 +1,4 @@
+/* Copyright (c) The New York Times Company */
 import type { DOMEventMap } from "prosemirror-view";
 import { useCallback, useMemo, useState } from "react";
 

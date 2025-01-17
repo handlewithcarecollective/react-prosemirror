@@ -1,3 +1,4 @@
+/* Copyright (c) The New York Times Company */
 import { createContext } from "react";
 import type { EffectCallback } from "react";
 
