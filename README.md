@@ -9,36 +9,29 @@
 
 [![Join the chat at https://gitter.im/nytimes/react-prosemirror](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/nytimes/react-prosemirror?utm_source=badge&utm_medium=badge&utm_content=badge)
 
-> ## The state of this library
->
-> `@nytimes/react-prosemirror` just published its first stable release,
-> [v1.0.0](https://www.npmjs.com/package/@nytimes/react-prosemirror/v/1.0.0).
-> The code for that version of the library lives on the
-> [v1.x branch](https://github.com/nytimes/react-prosemirror/tree/v1.x), and
-> users of that version should view the
-> [README.md](https://github.com/nytimes/react-prosemirror/blob/v1.x/README.md)
-> on that branch for relevant documentation.
->
-> Moving forward, the main branch of this library will focus on the upcoming v2
-> release, previously the react-editor-view branch. This entails a significant
-> re-write of the underlying EditorView integration, and will include some
-> breaking API changes.
->
-> To try out the new version, install `@nytimes/react-prosemirror@next`. We'd
-> love to hear your thoughts!
+## What happened to `@nytimes/react-prosemirror`?
+
+On Jan. 17, 2025, the maintainers of the `@nytimes/react-prosemirror` library
+decided fork the v2 release into its own project. It had been developed entirely
+by one developer, @smoores-dev, who had not worked for NYT in years, and was
+struggling to move the project at the speed he desired.
+
+This project is that fork, and all future development on the React-based
+ProseMirror renderer will happen in this repository, published as
+`@handlewithcare/react-prosemirror` on NPM.
 
 ## Installation
 
 npm:
 
 ```sh
-npm install @nytimes/react-prosemirror
+npm install @handlewithcare/react-prosemirror
 ```
 
 yarn:
 
 ```sh
-yarn add @nytimes/react-prosemirror
+yarn add @handlewithcare/react-prosemirror
 ```
 
 <!-- toc -->
@@ -130,7 +123,7 @@ import {
   ProseMirror,
   ProseMirrorDoc,
   reactKeys,
-} from "@nytimes/react-prosemirror";
+} from "@handlewithcare/react-prosemirror";
 
 export function ProseMirrorEditor() {
   return (
@@ -159,7 +152,7 @@ import {
   ProseMirror,
   ProseMirrorDoc,
   reactKeys,
-} from "@nytimes/react-prosemirror";
+} from "@handlewithcare/react-prosemirror";
 
 export function ProseMirrorEditor() {
   const [editorState, setEditorState] = useState(
@@ -197,7 +190,7 @@ use `useEditorEffect`.
 ```tsx
 // SelectionWidget.tsx
 import { useRef } from "react";
-import { useEditorEffect } from "@nytimes/react-prosemirror";
+import { useEditorEffect } from "@handlewithcare/react-prosemirror";
 
 export function SelectionWidget() {
   const ref = useRef();
@@ -227,7 +220,7 @@ import {
   ProseMirror,
   ProseMirrorDoc,
   reactKeys
-} from '@nytimes/react-prosemirror';
+} from "@handlewithcare/react-prosemirror";
 import { EditorState } from "prosemirror-state";
 import { schema } from "prosemirror-schema-basic";
 
@@ -271,7 +264,7 @@ safely access the latest value of the `EditorView`.
 ```tsx
 // BoldButton.tsx
 import { toggleMark } from "prosemirror-commands";
-import { useEditorEventCallback } from "@nytimes/react-prosemirror";
+import { useEditorEventCallback } from "@handlewithcare/react-prosemirror";
 
 export function BoldButton() {
   const onClick = useEditorEventCallback((view) => {
@@ -288,7 +281,7 @@ import {
   ProseMirror,
   ProseMirrorDoc,
   reactKeys,
-} from "@nytimes/react-prosemirror";
+} from "@handlewithcare/react-prosemirror";
 import { EditorState } from "prosemirror-state";
 import { schema } from "prosemirror-schema-basic";
 
@@ -341,7 +334,7 @@ import { forwardRef, Ref } from "react";
 import {
   useEditorEventListener,
   NodeViewComponentProps,
-} from "@nytimes/react-prosemirror";
+} from "@handlewithcare/react-prosemirror";
 
 const Paragraph = forwardRef<HTMLParagraphElement, NodeViewComponentProps>(
   function Paragraph({ children, nodeProps, ...props }, ref) {
@@ -386,7 +379,7 @@ import {
   useEditorEventCallback,
   NodeViewComponentProps,
   reactKeys,
-} from "@nytimes/react-prosemirror";
+} from "@handlewithcare/react-prosemirror";
 import { EditorState } from "prosemirror-state";
 import { schema } from "prosemirror-schema-basic";
 
@@ -512,7 +505,7 @@ import {
   ProseMirror,
   ProseMirrorDoc,
   reactKeys,
-} from "@nytimes/react-prosemirror";
+} from "@handlewithcare/react-prosemirror";
 
 export function ProseMirrorEditor() {
   return (
@@ -545,7 +538,7 @@ import {
   ProseMirror,
   ProseMirrorDoc,
   reactKeys,
-} from "@nytimes/react-prosemirror";
+} from "@handlewithcare/react-prosemirror";
 
 export function ProseMirrorEditor() {
   return (
@@ -623,7 +616,7 @@ Example usage:
 
 ```tsx
 import { useRef } from "react"
-import { useEditorEffect } from "@nytimes/react-prosemirror"
+import { useEditorEffect } from "@handlewithcare/react-prosemirror"
 
 export function SelectionWidget() {
   const ref = useRef()
