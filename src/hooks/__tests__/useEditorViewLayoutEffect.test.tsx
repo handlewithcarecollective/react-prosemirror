@@ -29,6 +29,7 @@ describe("useEditorViewLayoutEffect", () => {
     const editorState = {} as EditorState;
     const registerEventListener = () => {};
     const unregisterEventListener = () => {};
+    const flushSyncRef = { current: true };
 
     render(
       <LayoutGroup>
@@ -37,6 +38,7 @@ describe("useEditorViewLayoutEffect", () => {
             view: editorView,
             registerEventListener,
             unregisterEventListener,
+            flushSyncRef,
           }}
         >
           <EditorStateContext.Provider value={editorState}>
@@ -61,6 +63,7 @@ describe("useEditorViewLayoutEffect", () => {
       view: editorView,
       registerEventListener,
       unregisterEventListener,
+      flushSyncRef: { current: true },
     };
 
     const { rerender } = render(
@@ -100,6 +103,7 @@ describe("useEditorViewLayoutEffect", () => {
             view: editorView,
             registerEventListener,
             unregisterEventListener,
+            flushSyncRef: { current: true },
           }}
         >
           <EditorStateContext.Provider value={editorState}>
@@ -116,6 +120,7 @@ describe("useEditorViewLayoutEffect", () => {
             view: editorView,
             registerEventListener,
             unregisterEventListener,
+            flushSyncRef: { current: true },
           }}
         >
           <EditorStateContext.Provider value={editorState}>

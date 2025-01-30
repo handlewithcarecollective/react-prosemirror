@@ -31,6 +31,8 @@ import {
   ProseMirrorDoc,
   WidgetViewComponentProps,
   reactKeys,
+  useEditorEffect,
+  useEditorState,
   widget,
 } from "../src/index.js";
 
