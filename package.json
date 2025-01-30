@@ -52,6 +52,7 @@
     "@types/jest": "^27.0.0",
     "@types/react": "^18.0.0",
     "@types/react-dom": "^18.0.0",
+    "@types/react-reconciler": "^0.28.9",
     "@typescript-eslint/eslint-plugin": "^5.51.0",
     "@typescript-eslint/parser": "^5.51.0",
     "@vitejs/plugin-react": "^4.3.1",
@@ -100,14 +101,15 @@
     "prosemirror-model": "^1.0.0",
     "prosemirror-state": "^1.0.0",
     "prosemirror-view": "1.37.1",
-    "react": "17 - 19",
-    "react-dom": "17 - 19"
+    "react": ">=17 <=19.0.0",
+    "react-dom": ">=17 <=19.0.0"
   },
   "packageManager": "yarn@4.5.3",
   "engines": {
     "node": ">=16.9"
   },
   "dependencies": {
-    "classnames": "^2.3.2"
+    "classnames": "^2.3.2",
+    "react-reconciler": "0.31.0"
   }
 }

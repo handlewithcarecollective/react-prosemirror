@@ -1121,6 +1121,7 @@ __metadata:
     "@types/jest": "npm:^27.0.0"
     "@types/react": "npm:^18.0.0"
     "@types/react-dom": "npm:^18.0.0"
+    "@types/react-reconciler": "npm:^0.28.9"
     "@typescript-eslint/eslint-plugin": "npm:^5.51.0"
     "@typescript-eslint/parser": "npm:^5.51.0"
     "@vitejs/plugin-react": "npm:^4.3.1"
@@ -1160,6 +1161,7 @@ __metadata:
     prosemirror-view: "npm:1.37.1"
     react: "npm:^18.2.0"
     react-dom: "npm:^18.2.0"
+    react-reconciler: "npm:0.31.0"
     rimraf: "npm:^3.0.2"
     tsx: "npm:^4.19.1"
     typescript: "npm:^4.9.5"
@@ -1169,8 +1171,8 @@ __metadata:
     prosemirror-model: ^1.0.0
     prosemirror-state: ^1.0.0
     prosemirror-view: 1.37.1
-    react: 17 - 19
-    react-dom: 17 - 19
+    react: ">=17 <=19.0.0"
+    react-dom: ">=17 <=19.0.0"
   languageName: unknown
   linkType: soft
 
@@ -2851,6 +2853,15 @@ __metadata:
   dependencies:
     "@types/react": "npm:*"
   checksum: 10/fbc4ea2eb2e5fff8716bd323f850904f3aec1cbb257bf0799a23111b6d98b83c5b7e58b96c4bdd11033004668424672fd29f7412160bb0cdf2305066de1ce300
+  languageName: node
+  linkType: hard
+
+"@types/react-reconciler@npm:^0.28.9":
+  version: 0.28.9
+  resolution: "@types/react-reconciler@npm:0.28.9"
+  peerDependencies:
+    "@types/react": "*"
+  checksum: 10/2450e3df6169fb887591f2a949ca8f08439ac76c756124feeee7370f1a79b5060ba8e5f612302dc70169433e043da7f617dd7ea3b14a3c2bb39559d66b7a0986
   languageName: node
   linkType: hard
 
@@ -11200,6 +11211,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-reconciler@npm:0.31.0":
+  version: 0.31.0
+  resolution: "react-reconciler@npm:0.31.0"
+  dependencies:
+    scheduler: "npm:^0.25.0"
+  peerDependencies:
+    react: ^19.0.0
+  checksum: 10/e7235fa08947296c2084a89dc264651fd7cb9dc3a26c3b132b84ecf2a30c46b9b98cd004c30adfe2a24741cd1e49a618858a48080008ce2b4e964a2c4233041e
+  languageName: node
+  linkType: hard
+
 "react-refresh@npm:^0.14.2":
   version: 0.14.2
   resolution: "react-refresh@npm:0.14.2"
@@ -11728,6 +11750,13 @@ __metadata:
   dependencies:
     loose-envify: "npm:^1.1.0"
   checksum: 10/0c4557aa37bafca44ff21dc0ea7c92e2dbcb298bc62eae92b29a39b029134f02fb23917d6ebc8b1fa536b4184934314c20d8864d156a9f6357f3398aaf7bfda8
+  languageName: node
+  linkType: hard
+
+"scheduler@npm:^0.25.0":
+  version: 0.25.0
+  resolution: "scheduler@npm:0.25.0"
+  checksum: 10/e661e38503ab29a153429a99203fefa764f28b35c079719eb5efdd2c1c1086522f6653d8ffce388209682c23891a6d1d32fa6badf53c35fb5b9cd0c55ace42de
   languageName: node
   linkType: hard
 

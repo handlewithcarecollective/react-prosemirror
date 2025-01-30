@@ -1,8 +1,8 @@
 import { Node } from "prosemirror-model";
 import { Decoration, DecorationSet, EditorView } from "prosemirror-view";
 import { Component, MutableRefObject } from "react";
-import { findDOMNode } from "react-dom";
 
+import { findDOMNode } from "../findDOMNode.js";
 import {
   CompositionViewDesc,
   TextViewDesc,

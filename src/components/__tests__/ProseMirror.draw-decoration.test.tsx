@@ -495,12 +495,14 @@ describe("Decoration drawing", () => {
       view.dom
         .querySelector("p")!
         .style.getPropertyValue("--my-custom-property")
+        .trim()
     ).toBe("36px");
     updateDeco(view, null, [deco]);
     expect(
       view.dom
         .querySelector("p")!
         .style.getPropertyValue("--my-custom-property")
+        .trim()
     ).toBe("");
   });
 
