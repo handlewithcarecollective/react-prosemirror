@@ -4,40 +4,17 @@ import "prosemirror-gapcursor/style/gapcursor.css";
 import { history, redo, undo } from "prosemirror-history";
 import { inputRules, wrappingInputRule } from "prosemirror-inputrules";
 import { keymap } from "prosemirror-keymap";
-import { Schema } from "prosemirror-model";
-import { EditorState, Plugin, Transaction } from "prosemirror-state";
-import { columnResizing, tableEditing, tableNodes } from "prosemirror-tables";
+import { EditorState, Transaction } from "prosemirror-state";
+import { columnResizing, tableEditing } from "prosemirror-tables";
 import "prosemirror-tables/style/tables.css";
-import {
-  Decoration,
-  DecorationSet,
-  EditorView,
-  NodeViewConstructor,
-} from "prosemirror-view";
 import "prosemirror-view/style/prosemirror.css";
-import React, {
-  ForwardedRef,
-  Ref,
-  StrictMode,
-  forwardRef,
-  useCallback,
-  useMemo,
-  useState,
-} from "react";
+import React, { StrictMode, useCallback, useState } from "react";
 import { createRoot } from "react-dom/client";
 
-import {
-  NodeViewComponentProps,
-  ProseMirror,
-  ProseMirrorDoc,
-  WidgetViewComponentProps,
-  reactKeys,
-  useEditorEffect,
-  useEditorState,
-  widget,
-} from "../src/index.js";
+import { ProseMirror, ProseMirrorDoc, reactKeys } from "../src/index.js";
 
-import { doc } from "./content.js";
+import { LinkTooltip } from "./LinkTooltip.js";
+import { doc } from "./doc.js";
 import "./main.css";
 import { CodeBlock } from "./nodeViews/CodeBlock.js";
 import { schema } from "./schema.js";
@@ -93,6 +70,7 @@ function DemoEditor() {
         plugins={plugins}
       >
         <ProseMirrorDoc spellCheck={false} />
+        <LinkTooltip />
       </ProseMirror>
     </main>
   );
