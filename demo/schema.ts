@@ -22,7 +22,7 @@ export const schema = new Schema({
       },
     },
     ...tableNodes({
-      cellContent: "inline*",
+      cellContent: "paragraph",
       cellAttributes: {},
       tableGroup: "block",
     }),

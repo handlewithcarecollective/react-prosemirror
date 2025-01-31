@@ -68,9 +68,20 @@ const remarkProseMirrorOptions: RemarkProseMirrorOptions = {
     tableCell(node, _, state) {
       const children = state.all(node);
       if (node.data?.head) {
-        return schema.nodes.table_header.create({}, children);
+        return schema.nodes.table_header.create(
+          {},
+          // prosemirror-tables commands expect that table_cells
+          // have block children, so each has exactly one paragraph.
+          // Markdown only allows phrasing content in a table cell,
+          // so we wrap the phrasing content from the tableCell in a
+          // paragraph.
+          schema.nodes.paragraph.create({}, children)
+        );
       }
-      return schema.nodes.table_cell.create({}, children);
+      return schema.nodes.table_cell.create(
+        {},
+        schema.nodes.paragraph.create({}, children)
+      );
     },
     tableRow: toPmNode(schema.nodes.table_row),
     table: toPmNode(schema.nodes.table),
