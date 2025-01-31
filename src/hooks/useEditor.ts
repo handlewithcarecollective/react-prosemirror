@@ -238,6 +238,7 @@ export function useEditor<T extends HTMLElement = HTMLElement>(
       didWarnValueDefaultValue = true;
     }
   }
+  const flushSyncRef = useRef(true);
   const [cursorWrapper, _setCursorWrapper] = useState<Decoration | null>(null);
   const forceUpdate = useForceUpdate();
 
@@ -268,7 +269,17 @@ export function useEditor<T extends HTMLElement = HTMLElement>(
 
   const dispatchTransaction = useCallback(
     function dispatchTransaction(this: EditorView, tr: Transaction) {
-      flushSync(() => {
+      if (flushSyncRef.current) {
+        flushSync(() => {
+          if (!options.state) {
+            setState((s) => s.apply(tr));
+          }
+
+          if (options.dispatchTransaction) {
+            options.dispatchTransaction.call(this, tr);
+          }
+        });
+      } else {
         if (!options.state) {
           setState((s) => s.apply(tr));
         }
@@ -276,7 +287,7 @@ export function useEditor<T extends HTMLElement = HTMLElement>(
         if (options.dispatchTransaction) {
           options.dispatchTransaction.call(this, tr);
         }
-      });
+      }
     },
     [options.dispatchTransaction, options.state]
   );
@@ -368,6 +379,7 @@ export function useEditor<T extends HTMLElement = HTMLElement>(
       unregisterEventListener,
       cursorWrapper,
       docViewDescRef,
+      flushSyncRef,
     }),
     [view, registerEventListener, unregisterEventListener, cursorWrapper]
   );

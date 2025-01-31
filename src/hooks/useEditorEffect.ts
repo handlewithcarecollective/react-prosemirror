@@ -25,7 +25,7 @@ export function useEditorEffect(
   effect: (editorView: EditorView) => void | (() => void),
   dependencies?: DependencyList
 ) {
-  const { view } = useContext(EditorContext);
+  const { view, flushSyncRef } = useContext(EditorContext);
 
   // The rules of hooks want `effect` to be included in the
   // dependency list, but dependency issues for `effect` will
@@ -37,7 +37,10 @@ export function useEditorEffect(
   useLayoutGroupEffect(
     () => {
       if (view) {
-        return effect(view);
+        flushSyncRef.current = false;
+        const result = effect(view);
+        flushSyncRef.current = true;
+        return result;
       }
     },
     // The rules of hooks want to be able to statically

@@ -60,6 +60,7 @@ yarn add @handlewithcare/react-prosemirror prosemirror-view@1.37.1 prosemirror-s
   - [`NodeViewComponentProps`](#nodeviewcomponentprops)
   - [`useStopEvent`](#usestopevent)
   - [`useSelectNode`](#useselectnode)
+  - [`useIsNodeSelected`](#useisnodeselected)
   - [`widget`](#widget)
 - [Looking for someone to collaborate with?](#looking-for-someone-to-collaborate-with)
 
@@ -694,6 +695,16 @@ This hook can be used within a node view component to register
 [selectNode and deselectNode handlers](https://prosemirror.net/docs/ref/#view.NodeView.selectNode).
 The selectNode handler will only be called when a NodeSelection is created whose
 node is this one.
+
+### `useIsNodeSelected`
+
+```tsx
+type useIsNodeSelected = (): boolean
+```
+
+This hook can be used within a node view component to subscribe to a boolean
+value determining whether this node is selected. The hook will return true when
+a NodeSelection is created whose node is this one.
 
 ### `widget`
 
