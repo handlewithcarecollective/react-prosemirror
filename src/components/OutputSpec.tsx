@@ -25,7 +25,7 @@ const ForwardedOutputSpec = memo(
 
     if (!Array.isArray(outputSpec)) {
       throw new Error(
-        "@nytimes/react-prosemirror only supports strings and arrays in toDOM"
+        "@handlewithcare/react-prosemirror only supports strings and arrays in toDOM"
       );
     }
 

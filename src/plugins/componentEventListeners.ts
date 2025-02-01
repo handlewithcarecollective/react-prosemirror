@@ -31,7 +31,9 @@ export function componentEventListeners(
   }
 
   const plugin = new Plugin({
-    key: new PluginKey("@nytimes/react-prosemirror/componentEventListeners"),
+    key: new PluginKey(
+      "@handlewithcare/react-prosemirror/componentEventListeners"
+    ),
     props: {
       handleDOMEvents: domEventHandlers,
     },

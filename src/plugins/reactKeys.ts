@@ -10,7 +10,7 @@ export const reactKeysPluginKey = new PluginKey<{
   posToKey: Map<number, string>;
   keyToPos: Map<string, number>;
   posToNode: Map<number, Node>;
-}>("@nytimes/react-prosemirror/reactKeys");
+}>("@handlewithcare/react-prosemirror/reactKeys");
 
 /**
  * Tracks a unique key for each (non-text) node in the
