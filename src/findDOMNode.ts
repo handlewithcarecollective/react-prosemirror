@@ -1,6 +1,6 @@
 import { Component } from "react";
 //@ts-expect-error This module isn't typed
-import { findCurrentHostFiber } from "react-reconciler/reflection";
+import { findCurrentHostFiber } from "react-reconciler/reflection.js";
 
 // https://github.com/facebook/react/blob/main/packages/shared/ReactInstanceMap.js#L18
 export function getInstance(key: Component) {
