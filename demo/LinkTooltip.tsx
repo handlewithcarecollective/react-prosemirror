@@ -27,7 +27,10 @@ export function LinkTooltip() {
   if (!linkMark) return null;
 
   return (
-    <div className="link-tooltip" style={{ left, top }}>
+    <div
+      className="link-tooltip"
+      style={{ left: left + window.scrollX, top: top + window.scrollY }}
+    >
       Visit:{" "}
       <a href={linkMark.attrs.url} target="_blank" rel="noreferrer">
         {linkMark.attrs.url}
