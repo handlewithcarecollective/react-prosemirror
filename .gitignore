@@ -23,3 +23,9 @@
 node_modules
 .eslintcache
 tsconfig.buildinfo
+
+# direnv/devenv config and cache
+local.envrc
+.direnv
+.devenv
+/.devenv-initialized
