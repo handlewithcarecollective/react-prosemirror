@@ -273,8 +273,15 @@ export class ViewDesc {
       let child = this.children[i]!;
       const end = offset + child.size;
       if (offset == pos && end != offset) {
-        while (!child.border && child.children.length)
-          child = child.children[0]!;
+        while (!child.border && child.children.length) {
+          for (let i = 0; i < child.children.length; i++) {
+            const inner = child.children[i]!;
+            if (inner.size) {
+              child = inner;
+              break;
+            }
+          }
+        }
         return child;
       }
       if (pos < end) return child.descAt(pos - offset - child.border);
