@@ -14,6 +14,7 @@ import { createRoot } from "react-dom/client";
 import { ProseMirror, ProseMirrorDoc, reactKeys } from "../src/index.js";
 
 import { LinkTooltip } from "./LinkTooltip.js";
+import Menu from "./Menu.js";
 import { doc } from "./doc.js";
 import "./main.css";
 import { CodeBlock } from "./nodeViews/CodeBlock.js";
@@ -69,6 +70,7 @@ function DemoEditor() {
         nodeViews={nodeViews}
         plugins={plugins}
       >
+        <Menu />
         <ProseMirrorDoc spellCheck={false} />
         <LinkTooltip />
       </ProseMirror>
