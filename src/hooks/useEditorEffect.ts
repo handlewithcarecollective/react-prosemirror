@@ -36,7 +36,8 @@ export function useEditorEffect(
   // be defined inline and run on every re-render.
   useLayoutGroupEffect(
     () => {
-      if (view) {
+      // @ts-expect-error We're making use of knowledge of internal attributes here
+      if (view?.docView) {
         flushSyncRef.current = false;
         const result = effect(view);
         flushSyncRef.current = true;
