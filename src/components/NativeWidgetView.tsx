@@ -1,12 +1,8 @@
 import { Decoration, EditorView } from "prosemirror-view";
-import React, {
-  MutableRefObject,
-  useContext,
-  useLayoutEffect,
-  useRef,
-} from "react";
+import React, { MutableRefObject, useContext, useRef } from "react";
 
 import { ChildDescriptorsContext } from "../contexts/ChildDescriptorsContext.js";
+import { useClientLayoutEffect } from "../hooks/useClientLayoutEffect.js";
 import { useEditorEffect } from "../hooks/useEditorEffect.js";
 import { WidgetViewDesc, sortViewDescs } from "../viewdesc.js";
 
@@ -21,7 +17,7 @@ export function NativeWidgetView({ widget, getPos }: Props) {
 
   const rootDomRef = useRef<HTMLDivElement | null>(null);
 
-  useLayoutEffect(() => {
+  useClientLayoutEffect(() => {
     const siblings = siblingsRef.current;
     return () => {
       if (!viewDescRef.current) return;
@@ -56,7 +52,7 @@ export function NativeWidgetView({ widget, getPos }: Props) {
     rootDomRef.current.replaceChildren(dom);
   });
 
-  useLayoutEffect(() => {
+  useClientLayoutEffect(() => {
     if (!rootDomRef.current) return;
 
     if (!viewDescRef.current) {

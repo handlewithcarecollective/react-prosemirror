@@ -6,12 +6,12 @@ import React, {
   memo,
   useContext,
   useImperativeHandle,
-  useLayoutEffect,
   useMemo,
   useRef,
 } from "react";
 
 import { ChildDescriptorsContext } from "../contexts/ChildDescriptorsContext.js";
+import { useClientLayoutEffect } from "../hooks/useClientLayoutEffect.js";
 import { MarkViewDesc, ViewDesc, sortViewDescs } from "../viewdesc.js";
 
 import { OutputSpec } from "./OutputSpec.js";
@@ -45,7 +45,7 @@ export const MarkView = memo(
     if (!outputSpec)
       throw new Error(`Mark spec for ${mark.type.name} is missing toDOM`);
 
-    useLayoutEffect(() => {
+    useClientLayoutEffect(() => {
       const siblings = siblingsRef.current;
       return () => {
         if (!viewDescRef.current) return;
@@ -56,7 +56,7 @@ export const MarkView = memo(
       };
     }, [siblingsRef]);
 
-    useLayoutEffect(() => {
+    useClientLayoutEffect(() => {
       if (!domRef.current) return;
 
       const firstChildDesc = childDescriptors.current[0];

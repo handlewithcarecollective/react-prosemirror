@@ -9,7 +9,7 @@ import {
   MarkViewConstructor,
   NodeViewConstructor,
 } from "prosemirror-view";
-import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 
 import { beforeInputPlugin } from "../plugins/beforeInputPlugin.js";
@@ -17,6 +17,7 @@ import { SelectionDOMObserver } from "../selection/SelectionDOMObserver.js";
 import { setSsrStubs } from "../ssr.js";
 import { NodeViewDesc } from "../viewdesc.js";
 
+import { useClientLayoutEffect } from "./useClientLayoutEffect.js";
 import { useComponentEventListeners } from "./useComponentEventListeners.js";
 import { useForceUpdate } from "./useForceUpdate.js";
 
@@ -332,7 +333,7 @@ export function useEditor<T extends HTMLElement = HTMLElement>(
     () => new ReactEditorView(null, directEditorProps)
   );
 
-  useLayoutEffect(() => {
+  useClientLayoutEffect(() => {
     return () => {
       view?.destroy();
     };
@@ -342,7 +343,7 @@ export function useEditor<T extends HTMLElement = HTMLElement>(
   // call to setView. These calls are deliberately conditional,
   // so this is not a concern.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useLayoutEffect(() => {
+  useClientLayoutEffect(() => {
     if (!mount) {
       setView(null);
       return;

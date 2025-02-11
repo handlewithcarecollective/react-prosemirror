@@ -1,13 +1,8 @@
-import React, {
-  MutableRefObject,
-  useContext,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react";
+import React, { MutableRefObject, useContext, useRef, useState } from "react";
 
 import { browser } from "../browser.js";
 import { ChildDescriptorsContext } from "../contexts/ChildDescriptorsContext.js";
+import { useClientLayoutEffect } from "../hooks/useClientLayoutEffect.js";
 import { TrailingHackViewDesc, sortViewDescs } from "../viewdesc.js";
 
 type Props = {
@@ -20,7 +15,7 @@ export function SeparatorHackView({ getPos }: Props) {
   const ref = useRef<HTMLImageElement | null>(null);
   const [shouldRender, setShouldRender] = useState(false);
 
-  useLayoutEffect(() => {
+  useClientLayoutEffect(() => {
     const siblings = siblingsRef.current;
     return () => {
       if (!viewDescRef.current) return;
@@ -34,7 +29,7 @@ export function SeparatorHackView({ getPos }: Props) {
   // There's no risk of an infinite loop here, because
   // we call setShouldRender conditionally
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useLayoutEffect(() => {
+  useClientLayoutEffect(() => {
     const lastSibling = siblingsRef.current[siblingsRef.current.length - 1];
     if (
       (browser.safari || browser.chrome) &&

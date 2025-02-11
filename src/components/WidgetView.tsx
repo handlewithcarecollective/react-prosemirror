@@ -1,12 +1,8 @@
-import React, {
-  MutableRefObject,
-  useContext,
-  useLayoutEffect,
-  useRef,
-} from "react";
+import React, { MutableRefObject, useContext, useRef } from "react";
 
 import { ChildDescriptorsContext } from "../contexts/ChildDescriptorsContext.js";
 import { ReactWidgetDecoration } from "../decorations/ReactWidgetType.js";
+import { useClientLayoutEffect } from "../hooks/useClientLayoutEffect.js";
 import { WidgetViewDesc, sortViewDescs } from "../viewdesc.js";
 
 type Props = {
@@ -21,7 +17,7 @@ export function WidgetView({ widget, getPos }: Props) {
 
   const domRef = useRef<HTMLElement | null>(null);
 
-  useLayoutEffect(() => {
+  useClientLayoutEffect(() => {
     const siblings = siblingsRef.current;
     return () => {
       if (!viewDescRef.current) return;
@@ -32,7 +28,7 @@ export function WidgetView({ widget, getPos }: Props) {
     };
   }, [siblingsRef]);
 
-  useLayoutEffect(() => {
+  useClientLayoutEffect(() => {
     if (!domRef.current) return;
 
     if (!viewDescRef.current) {

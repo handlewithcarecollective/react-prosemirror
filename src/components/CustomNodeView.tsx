@@ -11,7 +11,6 @@ import React, {
   createElement,
   memo,
   useContext,
-  useLayoutEffect,
   useMemo,
   useRef,
 } from "react";
@@ -19,6 +18,7 @@ import { createPortal } from "react-dom";
 
 import { ChildDescriptorsContext } from "../contexts/ChildDescriptorsContext.js";
 import { EditorContext } from "../contexts/EditorContext.js";
+import { useClientLayoutEffect } from "../hooks/useClientLayoutEffect.js";
 import { useClientOnly } from "../hooks/useClientOnly.js";
 import { useNodeViewDescriptor } from "../hooks/useNodeViewDescriptor.js";
 
@@ -55,7 +55,7 @@ export const CustomNodeView = memo(function CustomNodeView({
 
   const shouldRender = useClientOnly();
 
-  useLayoutEffect(() => {
+  useClientLayoutEffect(() => {
     if (
       !customNodeViewRef.current ||
       !customNodeViewRootRef.current ||
@@ -71,7 +71,7 @@ export const CustomNodeView = memo(function CustomNodeView({
     };
   }, [customNodeViewRef, customNodeViewRootRef, nodeDomRef, shouldRender]);
 
-  useLayoutEffect(() => {
+  useClientLayoutEffect(() => {
     if (!customNodeView || !customNodeViewRef.current || !shouldRender) return;
 
     const { destroy, update } = customNodeViewRef.current;

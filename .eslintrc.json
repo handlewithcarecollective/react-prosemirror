@@ -22,7 +22,7 @@
     "react-hooks/exhaustive-deps": [
       "warn",
       {
-        "additionalHooks": "(useEditorEffect|useLayoutGroupEffect$)"
+        "additionalHooks": "(useEditorEffect|useLayoutGroupEffect|useClientLayoutEffect$)"
       }
     ],
     "import/extensions": ["error", "ignorePackages"],

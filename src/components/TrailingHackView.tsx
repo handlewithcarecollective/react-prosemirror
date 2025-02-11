@@ -1,11 +1,7 @@
-import React, {
-  MutableRefObject,
-  useContext,
-  useLayoutEffect,
-  useRef,
-} from "react";
+import React, { MutableRefObject, useContext, useRef } from "react";
 
 import { ChildDescriptorsContext } from "../contexts/ChildDescriptorsContext.js";
+import { useClientLayoutEffect } from "../hooks/useClientLayoutEffect.js";
 import { TrailingHackViewDesc, sortViewDescs } from "../viewdesc.js";
 
 type Props = {
@@ -18,7 +14,7 @@ export function TrailingHackView({ getPos }: Props) {
 
   const ref = useRef<(HTMLBRElement & HTMLImageElement) | null>(null);
 
-  useLayoutEffect(() => {
+  useClientLayoutEffect(() => {
     const siblings = siblingsRef.current;
     return () => {
       if (!viewDescRef.current) return;
@@ -29,7 +25,7 @@ export function TrailingHackView({ getPos }: Props) {
     };
   }, [siblingsRef]);
 
-  useLayoutEffect(() => {
+  useClientLayoutEffect(() => {
     if (!ref.current) return;
 
     if (!viewDescRef.current) {

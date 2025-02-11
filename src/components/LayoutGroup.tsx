@@ -1,8 +1,9 @@
 /* Copyright (c) The New York Times Company */
-import React, { useCallback, useLayoutEffect, useRef } from "react";
+import React, { useCallback, useRef } from "react";
 import type { EffectCallback } from "react";
 
 import { LayoutGroupContext } from "../contexts/LayoutGroupContext.js";
+import { useClientLayoutEffect } from "../hooks/useClientLayoutEffect.js";
 import { useForceUpdate } from "../hooks/useForceUpdate.js";
 
 export interface LayoutGroupProps {
@@ -31,7 +32,7 @@ export function LayoutGroup({ children }: LayoutGroupProps) {
     }
   }, [forceUpdate]);
 
-  const register = useCallback<typeof useLayoutEffect>(
+  const register = useCallback<typeof useClientLayoutEffect>(
     (effect: EffectCallback) => {
       let destroy: ReturnType<EffectCallback>;
       const create = () => {
@@ -56,7 +57,7 @@ export function LayoutGroup({ children }: LayoutGroupProps) {
     [createQueue, destroyQueue, ensureFlush]
   );
 
-  useLayoutEffect(() => {
+  useClientLayoutEffect(() => {
     isUpdatePending.current = false;
     createQueue.forEach((create) => create());
     createQueue.clear();
@@ -66,7 +67,7 @@ export function LayoutGroup({ children }: LayoutGroupProps) {
     };
   });
 
-  useLayoutEffect(() => {
+  useClientLayoutEffect(() => {
     isMounted.current = true;
     return () => {
       isMounted.current = false;

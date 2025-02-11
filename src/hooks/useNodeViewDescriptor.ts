@@ -4,7 +4,6 @@ import {
   MutableRefObject,
   useCallback,
   useContext,
-  useLayoutEffect,
   useRef,
   useState,
 } from "react";
@@ -17,6 +16,8 @@ import {
   ViewDesc,
   sortViewDescs,
 } from "../viewdesc.js";
+
+import { useClientLayoutEffect } from "./useClientLayoutEffect.js";
 
 export function useNodeViewDescriptor(
   node: Node | undefined,
@@ -65,7 +66,7 @@ export function useNodeViewDescriptor(
   const { siblingsRef, parentRef } = useContext(ChildDescriptorsContext);
   const childDescriptors = useRef<ViewDesc[]>([]);
 
-  useLayoutEffect(() => {
+  useClientLayoutEffect(() => {
     const siblings = siblingsRef.current;
     return () => {
       if (!nodeViewDescRef.current) return;
@@ -77,7 +78,7 @@ export function useNodeViewDescriptor(
   }, [siblingsRef]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useLayoutEffect(() => {
+  useClientLayoutEffect(() => {
     if (!node || !nodeDomRef.current) return;
 
     const firstChildDesc = childDescriptors.current[0];
