@@ -58,7 +58,7 @@
                   # This is your devenv configuration
                   packages = [
                     pkgs.nodejs_22
-                    (pkgs.yarn.override { nodejs = pkgs.nodejs_22; })
+                    pkgs.corepack
                   ];
 
                   tasks."repo:init" = {

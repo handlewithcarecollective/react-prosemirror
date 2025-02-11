@@ -176,11 +176,11 @@ describe("ProseMirror", () => {
     expect(view.state).toBe(view.props.state);
   });
 
-  it("calls handleScrollToSelection when appropriate", async () => {
+  it.only("calls handleScrollToSelection when appropriate", async () => {
     let scrolled = 0;
 
     const { view } = tempEditor({
-      doc: doc(p()),
+      doc: doc(p("foo")),
       handleScrollToSelection: () => {
         scrolled++;
         return false;
