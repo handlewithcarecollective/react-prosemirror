@@ -260,7 +260,7 @@ describe("EditorView draw", () => {
     expect(strongDom?.childNodes.item(1).textContent).toBe(" two");
   });
 
-  it("correctly wraps blokc nodes with marks", async () => {
+  it("correctly wraps block nodes with marks", async () => {
     const testSchema = new Schema<"doc" | "image", "difficulty">({
       nodes: schema.spec.nodes.update("image", {
         ...schema.spec.nodes.get("image")!,
@@ -288,5 +288,24 @@ describe("EditorView draw", () => {
     expect(difficultyDom.tagName).toBe("DIV");
     expect(difficultyDom.dataset["difficulty"]).toBe("beginner");
     expect(imageDom.tagName).toBe("IMG");
+  });
+
+  it("supports omitting the hole in mark specs", async () => {
+    const testSchema = new Schema<"doc" | "paragraph", "bold">({
+      nodes: schema.spec.nodes,
+      marks: schema.spec.marks.addToEnd("bold", {
+        toDOM() {
+          return ["strong"];
+        },
+      }),
+    });
+
+    const { doc, paragraph, bold } = builders(testSchema);
+
+    const { view } = tempEditor({
+      doc: doc(paragraph(bold("Some bold text"))),
+    });
+
+    expect(view.dom.textContent).toBe("Some bold text");
   });
 });

@@ -103,7 +103,7 @@ export const MarkView = memo(
     );
 
     return (
-      <OutputSpec ref={domRef} outputSpec={outputSpec}>
+      <OutputSpec ref={domRef} outputSpec={outputSpec} isMark>
         <ChildDescriptorsContext.Provider value={childContextValue}>
           {children}
         </ChildDescriptorsContext.Provider>
