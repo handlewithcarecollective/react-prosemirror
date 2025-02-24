@@ -88,7 +88,14 @@ export const schema = new Schema({
     },
     code: {
       toDOM() {
-        return ["code", 0];
+        return [
+          "code",
+          {
+            style:
+              "background-color: lightgray; padding: 0.125rem 0.25rem; border-radius: 2px;",
+          },
+          0,
+        ];
       },
       parseDOM: [
         {

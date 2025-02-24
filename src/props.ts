@@ -1,4 +1,5 @@
 import cx from "classnames";
+import { generate, parse } from "css-tree";
 import { HTMLProps } from "react";
 
 export function kebabCaseToCamelCase(str: string) {
@@ -11,16 +12,23 @@ export function kebabCaseToCamelCase(str: string) {
  * `style` prop.
  */
 export function cssToStyles(css: string) {
-  const stylesheet = new CSSStyleSheet();
-  stylesheet.insertRule(`* { ${css} }`);
+  const ast = parse(`* { ${css} }`);
 
-  const insertedRule = stylesheet.cssRules[0] as CSSStyleRule;
-  const declaration = insertedRule.style;
+  if (ast.type !== "StyleSheet") return {};
+
+  const rule = ast.children.first;
+  if (rule?.type !== "Rule") return {};
+
+  const block = rule.block;
   const styles: Record<string, string> = {};
 
-  for (let i = 0; i < declaration.length; i++) {
-    const property = declaration.item(i);
-    const value = declaration.getPropertyValue(property);
+  for (const declaration of block.children) {
+    if (declaration.type !== "Declaration") continue;
+    const property = declaration.property;
+    const value =
+      declaration.value.type === "Raw"
+        ? declaration.value.value
+        : generate(declaration.value);
     const camelCasePropertyName = property.startsWith("--")
       ? property
       : kebabCaseToCamelCase(property);
