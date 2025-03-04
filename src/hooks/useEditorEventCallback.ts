@@ -31,10 +31,12 @@ export function useEditorEventCallback<T extends unknown[], R>(
 
   return useCallback(
     (...args: T) => {
-      if (view) {
-        return ref.current(view, ...args);
-      }
-      return;
+      // It's not actually possible for an event handler to run
+      // while view is null, since view is only ever set to
+      // null in a layout effect that then immediately triggers
+      // a re-render which sets view to a new EditorView
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      return ref.current(view!, ...args);
     },
     [view]
   );

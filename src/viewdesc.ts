@@ -808,7 +808,8 @@ export class NodeViewDesc extends ViewDesc {
     public nodeDOM: DOMNode,
     public stopEvent: (event: Event) => boolean,
     public selectNode: () => void,
-    public deselectNode: () => void
+    public deselectNode: () => void,
+    public ignoreMutation: (mutation: ViewMutationRecord) => boolean
   ) {
     super(parent, children, getPos, dom, contentDOM);
   }
@@ -915,6 +916,9 @@ export class TextViewDesc extends NodeViewDesc {
       },
       () => {
         /* Text nodes can't have node selections */
+      },
+      (mutation) => {
+        return mutation.type != "characterData" && mutation.type != "selection";
       }
     );
   }
@@ -950,10 +954,6 @@ export class TextViewDesc extends NodeViewDesc {
     if (dom == this.nodeDOM)
       return this.posAtStart + Math.min(offset, this.node.text!.length);
     return super.localPosFromDOM(dom, offset, bias);
-  }
-
-  ignoreMutation(mutation: ViewMutationRecord) {
-    return mutation.type != "characterData" && mutation.type != "selection";
   }
 
   markDirty(from: number, to: number) {

@@ -1,5 +1,9 @@
 import { Node } from "prosemirror-model";
-import { Decoration, DecorationSource } from "prosemirror-view";
+import {
+  Decoration,
+  DecorationSource,
+  ViewMutationRecord,
+} from "prosemirror-view";
 import {
   MutableRefObject,
   useCallback,
@@ -36,6 +40,15 @@ export function useNodeViewDescriptor(
   const setStopEvent = useCallback(
     (newStopEvent: (event: Event) => boolean | undefined) => {
       stopEvent.current = newStopEvent;
+    },
+    []
+  );
+  const ignoreMutation = useRef<(mutation: ViewMutationRecord) => boolean>(
+    () => false
+  );
+  const setIgnoreMutation = useCallback(
+    (newIgnoreMutation: (mutation: ViewMutationRecord) => boolean) => {
+      ignoreMutation.current = newIgnoreMutation;
     },
     []
   );
@@ -96,7 +109,8 @@ export function useNodeViewDescriptor(
         nodeDomRef.current,
         (event) => !!stopEvent.current(event),
         () => selectNode.current(),
-        () => deselectNode.current()
+        () => deselectNode.current(),
+        (mutation) => ignoreMutation.current(mutation)
       );
     } else {
       nodeViewDescRef.current.parent = parentRef.current;
@@ -179,5 +193,6 @@ export function useNodeViewDescriptor(
     nodeViewDescRef,
     setStopEvent,
     setSelectNode,
+    setIgnoreMutation,
   };
 }

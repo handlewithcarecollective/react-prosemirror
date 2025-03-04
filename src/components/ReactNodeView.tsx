@@ -12,6 +12,7 @@ import React, {
 } from "react";
 
 import { ChildDescriptorsContext } from "../contexts/ChildDescriptorsContext.js";
+import { IgnoreMutationContext } from "../contexts/IgnoreMutationContext.js";
 import { NodeViewContext } from "../contexts/NodeViewContext.js";
 import { SelectNodeContext } from "../contexts/SelectNodeContext.js";
 import { StopEventContext } from "../contexts/StopEventContext.js";
@@ -60,6 +61,7 @@ export const ReactNodeView = memo(function ReactNodeView({
     childDescriptors,
     setStopEvent,
     setSelectNode,
+    setIgnoreMutation,
     nodeViewDescRef,
   } = useNodeViewDescriptor(
     node,
@@ -139,9 +141,11 @@ export const ReactNodeView = memo(function ReactNodeView({
   return (
     <SelectNodeContext.Provider value={setSelectNode}>
       <StopEventContext.Provider value={setStopEvent}>
-        <ChildDescriptorsContext.Provider value={childContextValue}>
-          {decoratedElement}
-        </ChildDescriptorsContext.Provider>
+        <IgnoreMutationContext.Provider value={setIgnoreMutation}>
+          <ChildDescriptorsContext.Provider value={childContextValue}>
+            {decoratedElement}
+          </ChildDescriptorsContext.Provider>
+        </IgnoreMutationContext.Provider>
       </StopEventContext.Provider>
     </SelectNodeContext.Provider>
   );

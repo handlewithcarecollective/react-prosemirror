@@ -59,6 +59,7 @@ yarn add @handlewithcare/react-prosemirror prosemirror-view@1.37.1 prosemirror-s
   - [`useEditorEffect`](#useeditoreffect-1)
   - [`NodeViewComponentProps`](#nodeviewcomponentprops)
   - [`useStopEvent`](#usestopevent)
+  - [`useIgnoreMutation`](#useignoremutation)
   - [`useSelectNode`](#useselectnode)
   - [`useIsNodeSelected`](#useisnodeselected)
   - [`widget`](#widget)
@@ -684,6 +685,16 @@ type useStopEvent = (stopEvent: (view: EditorView, event: Event) => boolean): vo
 This hook can be used within a node view component to register a
 [stopEvent handler](https://prosemirror.net/docs/ref/#view.NodeView.stopEvent).
 Events for which this returns true are not handled by the editor.
+
+### `useIgnoreMutation`
+
+```tsx
+type useIgnoreMutation = (stopEvent: (view: EditorView, mutation: ViewMutationRecord) => boolean): void
+```
+
+This hook can be used within a node view component to register an
+[ignoreMutation handler](https://prosemirror.net/docs/ref/#view.NodeView.ignoreMutation).
+Mutations for which this returns true are not handled by the editor.
 
 ### `useSelectNode`
 

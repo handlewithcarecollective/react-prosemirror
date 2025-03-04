@@ -119,9 +119,15 @@ export const CustomNodeView = memo(function CustomNodeView({
     getPosFunc,
   ]);
 
-  const { childDescriptors, nodeViewDescRef } = useNodeViewDescriptor(
+  const {
+    childDescriptors,
+    nodeViewDescRef,
+    setStopEvent,
+    setSelectNode,
+    setIgnoreMutation,
+  } = useNodeViewDescriptor(
     node,
-    () => getPos.current(),
+    getPosFunc,
     domRef,
     nodeDomRef,
     innerDeco,
@@ -151,6 +157,25 @@ export const CustomNodeView = memo(function CustomNodeView({
       initialOuterDeco.current,
       initialInnerDeco.current
     );
+    if (customNodeViewRef.current.stopEvent) {
+      setStopEvent(
+        customNodeViewRef.current.stopEvent.bind(customNodeViewRef.current)
+      );
+    }
+    if (customNodeViewRef.current.selectNode) {
+      setSelectNode(
+        customNodeViewRef.current.selectNode.bind(customNodeViewRef.current),
+        customNodeViewRef.current.deselectNode?.bind(
+          customNodeViewRef.current
+          // eslint-disable-next-line @typescript-eslint/no-empty-function
+        ) ?? (() => {})
+      );
+    }
+    if (customNodeViewRef.current.ignoreMutation) {
+      setIgnoreMutation(
+        customNodeViewRef.current.ignoreMutation.bind(customNodeViewRef.current)
+      );
+    }
   }
   const { contentDOM } = customNodeViewRef.current;
   contentDomRef.current = contentDOM ?? null;
