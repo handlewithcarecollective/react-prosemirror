@@ -1,4 +1,5 @@
 import { Node } from "prosemirror-model";
+import { NodeSelection } from "prosemirror-state";
 import {
   Decoration,
   DecorationSource,
@@ -45,34 +46,89 @@ export const CustomNodeView = memo(function CustomNodeView({
   const contentDomRef = useRef<HTMLElement | null>(null);
   const getPosFunc = useRef(() => getPos.current()).current;
 
-  // this is ill-conceived; should revisit
-  const initialNode = useRef(node);
-  const initialOuterDeco = useRef(outerDeco);
-  const initialInnerDeco = useRef(innerDeco);
+  const nodeRef = useRef(node);
+  nodeRef.current = node;
+  const outerDecoRef = useRef(outerDeco);
+  outerDecoRef.current = outerDeco;
+  const innerDecoRef = useRef(innerDeco);
+  innerDecoRef.current = innerDeco;
 
   const customNodeViewRootRef = useRef<HTMLDivElement | null>(null);
   const customNodeViewRef = useRef<NodeViewT | null>(null);
 
   const shouldRender = useClientOnly();
 
+  // In Strict/Concurrent mode, layout effects can be destroyed/re-run
+  // independently of renders. We need to ensure that if the
+  // destructor that destroys the node view is called, we then recreate
+  // the node view when the layout effect is re-run.
   useClientLayoutEffect(() => {
-    if (
-      !customNodeViewRef.current ||
-      !customNodeViewRootRef.current ||
-      !shouldRender
-    )
-      return;
+    if (!customNodeViewRef.current || !shouldRender) {
+      customNodeViewRef.current = customNodeView(
+        nodeRef.current,
+        // customNodeView will only be set if view is set, and we can only reach
+        // this line if customNodeView is set
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        view!,
+        getPosFunc,
+        outerDecoRef.current,
+        innerDecoRef.current
+      );
+      if (customNodeViewRef.current.stopEvent) {
+        setStopEvent(
+          customNodeViewRef.current.stopEvent.bind(customNodeViewRef.current)
+        );
+      }
+      if (customNodeViewRef.current.selectNode) {
+        setSelectNode(
+          customNodeViewRef.current.selectNode.bind(customNodeViewRef.current),
+          customNodeViewRef.current.deselectNode?.bind(
+            customNodeViewRef.current
+            // eslint-disable-next-line @typescript-eslint/no-empty-function
+          ) ?? (() => {})
+        );
+      }
+      if (customNodeViewRef.current.ignoreMutation) {
+        setIgnoreMutation(
+          customNodeViewRef.current.ignoreMutation.bind(
+            customNodeViewRef.current
+          )
+        );
+      }
 
-    const { dom } = customNodeViewRef.current;
-    nodeDomRef.current = customNodeViewRootRef.current;
-    customNodeViewRootRef.current.appendChild(dom);
+      if (!customNodeViewRootRef.current) return;
+
+      const { dom } = customNodeViewRef.current;
+      nodeDomRef.current = customNodeViewRootRef.current;
+      customNodeViewRootRef.current.appendChild(dom);
+
+      // Layout effects can run multiple times — if this effect
+      // destroyed and recreated this node view, then we need to
+      // resync the selectNode state
+      if (
+        view?.state.selection instanceof NodeSelection &&
+        view.state.selection.node === nodeRef.current
+      ) {
+        customNodeViewRef.current.selectNode?.();
+      }
+    }
+
+    const nodeView = customNodeViewRef.current;
+
     return () => {
-      customNodeViewRef.current?.destroy?.();
+      nodeView.destroy?.();
+      customNodeViewRef.current = null;
     };
-  }, [customNodeViewRef, customNodeViewRootRef, nodeDomRef, shouldRender]);
+    // setStopEvent, setSelectNodee, and setIgnoreMutation are all stable
+    // functions and don't need to be added to the dependencies. They also
+    // can't be, because they come from useNodeViewDescriptor, which
+    // _has_ to be called after this hook, so that the effects run
+    // in the correct order
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [customNodeView, getPosFunc, view]);
 
   useClientLayoutEffect(() => {
-    if (!customNodeView || !customNodeViewRef.current || !shouldRender) return;
+    if (!customNodeView || !customNodeViewRef.current) return;
 
     const { destroy, update } = customNodeViewRef.current;
 
@@ -85,39 +141,20 @@ export const CustomNodeView = memo(function CustomNodeView({
 
     if (!customNodeViewRootRef.current) return;
 
-    initialNode.current = node;
-    initialOuterDeco.current = outerDeco;
-    initialInnerDeco.current = innerDeco;
-
     customNodeViewRef.current = customNodeView(
-      initialNode.current,
+      nodeRef.current,
       // customNodeView will only be set if view is set, and we can only reach
       // this line if customNodeView is set
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       view!,
       getPosFunc,
-      initialOuterDeco.current,
-      initialInnerDeco.current
+      outerDecoRef.current,
+      innerDecoRef.current
     );
     const { dom } = customNodeViewRef.current;
     nodeDomRef.current = customNodeViewRootRef.current;
     customNodeViewRootRef.current.appendChild(dom);
-  }, [
-    customNodeView,
-    view,
-    innerDeco,
-    node,
-    outerDeco,
-    getPos,
-    customNodeViewRef,
-    customNodeViewRootRef,
-    initialNode,
-    initialOuterDeco,
-    initialInnerDeco,
-    nodeDomRef,
-    shouldRender,
-    getPosFunc,
-  ]);
+  }, [customNodeView, view, innerDeco, node, outerDeco, getPos, getPosFunc]);
 
   const {
     childDescriptors,
@@ -146,16 +183,21 @@ export const CustomNodeView = memo(function CustomNodeView({
 
   if (!shouldRender) return null;
 
+  // In order to render the correct element with the correct
+  // props below, we have to call the customNodeView in the
+  // render function here. We only do this once, and the
+  // results are stored in a ref but not actually appended
+  // to the DOM until a client effect
   if (!customNodeViewRef.current) {
     customNodeViewRef.current = customNodeView(
-      initialNode.current,
+      nodeRef.current,
       // customNodeView will only be set if view is set, and we can only reach
       // this line if customNodeView is set
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       view!,
       () => getPos.current(),
-      initialOuterDeco.current,
-      initialInnerDeco.current
+      outerDecoRef.current,
+      innerDecoRef.current
     );
     if (customNodeViewRef.current.stopEvent) {
       setStopEvent(

@@ -1,9 +1,16 @@
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
+
+// eslint-disable-next-line @typescript-eslint/no-empty-function
+function unsubscribe() {}
+
+function subscribe() {
+  return unsubscribe;
+}
 
 export function useClientOnly() {
-  const [render, setRender] = useState(false);
-  useEffect(() => {
-    setRender(true);
-  }, []);
-  return render;
+  return useSyncExternalStore(
+    subscribe,
+    () => true,
+    () => false
+  );
 }
