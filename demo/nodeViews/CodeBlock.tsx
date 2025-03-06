@@ -260,6 +260,7 @@ export const CodeBlock = forwardRef<
 
   return (
     <div
+      {...props}
       ref={(el) => {
         ref.current = el;
         if (!outerRef) {
@@ -275,7 +276,6 @@ export const CodeBlock = forwardRef<
       onClick={(e) => {
         cmViewRef.current?.focus();
       }}
-      {...props}
     >
       <ReactCodeMirror
         ref={cmElRef}

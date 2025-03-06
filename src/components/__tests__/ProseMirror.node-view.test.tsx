@@ -75,7 +75,7 @@ describe("nodeViews prop", () => {
         paragraph: forwardRef<HTMLParagraphElement, NodeViewComponentProps>(
           function Paragraph({ children, nodeProps, ...props }, ref) {
             return (
-              <p ref={ref} {...props}>
+              <p {...props} ref={ref}>
                 {children}
               </p>
             );
@@ -155,7 +155,7 @@ describe("nodeViews prop", () => {
             // re-render when an updated doesn't directly affect us
             useEditorState();
             pos = nodeProps.getPos();
-            return <br ref={ref} {...props} />;
+            return <br {...props} ref={ref} />;
           }
         ),
       },
@@ -278,10 +278,10 @@ describe("nodeViews prop", () => {
             });
             return (
               <input
+                {...props}
                 ref={ref}
                 type="text"
                 defaultValue={nodeProps.node.textContent}
-                {...props}
               />
             );
           }

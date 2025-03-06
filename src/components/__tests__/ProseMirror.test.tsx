@@ -311,7 +311,7 @@ describe("ProseMirror", () => {
     const Paragraph = forwardRef<HTMLDivElement | null, NodeViewComponentProps>(
       function Paragraph({ nodeProps, children, ...props }, ref) {
         return (
-          <p ref={ref} data-testid="node-view" {...props}>
+          <p {...props} ref={ref} data-testid="node-view">
             {children}
           </p>
         );
@@ -357,7 +357,7 @@ describe("ProseMirror", () => {
               return true;
             });
             return (
-              <button id="button" ref={ref} type="button" {...props}>
+              <button {...props} id="button" ref={ref} type="button">
                 Click me
               </button>
             );

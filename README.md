@@ -363,7 +363,7 @@ const Paragraph = forwardRef<HTMLParagraphElement, NodeViewComponentProps>(
     });
 
     return (
-      <p ref={ref} {...props}>
+      <p {...props} ref={ref}>
         {children}
       </p>
     );
@@ -403,7 +403,7 @@ const Paragraph = forwardRef<HTMLParagraphElement, NodeViewComponentProps>(
     );
 
     return (
-      <p ref={ref} {...props} onClick={onClick}>
+      <p {...props} ref={ref} onClick={onClick}>
         {children}
       </p>
     );

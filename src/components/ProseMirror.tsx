@@ -3,13 +3,7 @@ import {
   DecorationSet,
   NodeViewConstructor,
 } from "prosemirror-view";
-import React, {
-  ComponentType,
-  ReactNode,
-  RefAttributes,
-  useMemo,
-  useState,
-} from "react";
+import React, { ComponentType, ReactNode, useMemo, useState } from "react";
 
 import { EditorContext } from "../contexts/EditorContext.js";
 import { EditorStateContext } from "../contexts/EditorStateContext.js";
@@ -26,14 +20,7 @@ export type Props = Omit<UseEditorOptions, "nodeViews"> & {
   className?: string;
   children?: ReactNode;
   nodeViews?: {
-    [nodeType: string]: ComponentType<
-      // We need to allow refs to any type of HTMLElement, but there's
-      // no way to express that that still allows consumers to correctly
-      // type their own refs. This is sufficient to ensure that there's
-      // a ref of _some_ kind, which is enough.
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      NodeViewComponentProps & RefAttributes<any>
-    >;
+    [nodeType: string]: ComponentType<NodeViewComponentProps>;
   };
   customNodeViews?: {
     [nodeType: string]: NodeViewConstructor;

@@ -188,7 +188,7 @@ describe("EditorView draw", () => {
       nodeViews: {
         horizontal_rule: forwardRef<HTMLElement, NodeViewComponentProps>(
           function HorizontalRule({ nodeProps, ...props }, ref) {
-            return <var ref={ref} {...props} />;
+            return <var {...props} ref={ref} />;
           }
         ),
       },

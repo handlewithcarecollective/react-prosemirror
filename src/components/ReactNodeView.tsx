@@ -1,9 +1,8 @@
 import { DOMOutputSpec, Node } from "prosemirror-model";
 import { Decoration, DecorationSource } from "prosemirror-view";
 import React, {
-  ForwardRefExoticComponent,
+  ComponentType,
   MutableRefObject,
-  RefAttributes,
   cloneElement,
   memo,
   useContext,
@@ -45,11 +44,8 @@ export const ReactNodeView = memo(function ReactNodeView({
 
   let element: JSX.Element | null = null;
 
-  const Component:
-    | ForwardRefExoticComponent<
-        NodeViewComponentProps & RefAttributes<HTMLElement>
-      >
-    | undefined = nodeViews[node.type.name];
+  const Component: ComponentType<NodeViewComponentProps> | undefined =
+    nodeViews[node.type.name];
 
   const outputSpec: DOMOutputSpec | undefined = useMemo(
     () => node.type.spec.toDOM?.(node),

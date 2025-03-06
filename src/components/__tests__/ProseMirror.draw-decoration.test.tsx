@@ -28,7 +28,7 @@ import {
   DecorationSource,
   EditorView,
 } from "prosemirror-view";
-import React, { LegacyRef, forwardRef, useEffect } from "react";
+import React, { forwardRef, useEffect } from "react";
 
 import { widget } from "../../decorations/ReactWidgetType.js";
 import { useEditorEffect } from "../../hooks/useEditorEffect.js";
@@ -36,10 +36,10 @@ import { tempEditor } from "../../testing/editorViewTestHelpers.js";
 import { NodeViewComponentProps } from "../NodeViewComponentProps.js";
 import { WidgetViewComponentProps } from "../WidgetViewComponentProps.js";
 
-const Widget = forwardRef<HTMLElement, WidgetViewComponentProps>(
+const Widget = forwardRef<HTMLButtonElement, WidgetViewComponentProps>(
   function Widget({ widget, getPos, ...props }, ref) {
     return (
-      <button ref={ref as LegacyRef<HTMLButtonElement>} {...props}>
+      <button ref={ref} {...props}>
         ω
       </button>
     );
@@ -256,16 +256,15 @@ describe("Decoration drawing", () => {
 
   it("calls widget destroy methods", async () => {
     let destroyed = false;
-    const DestroyableWidget = forwardRef<HTMLElement, WidgetViewComponentProps>(
-      function DestroyableWidget({ widget, getPos, ...props }, ref) {
-        useEffect(() => {
-          destroyed = true;
-        });
-        return (
-          <button ref={ref as LegacyRef<HTMLButtonElement>} {...props}></button>
-        );
-      }
-    );
+    const DestroyableWidget = forwardRef<
+      HTMLButtonElement,
+      WidgetViewComponentProps
+    >(function DestroyableWidget({ widget, getPos, ...props }, ref) {
+      useEffect(() => {
+        destroyed = true;
+      });
+      return <button ref={ref} {...props}></button>;
+    });
     const { view } = tempEditor({
       doc: doc(p("abc")),
       plugins: [
@@ -564,7 +563,7 @@ describe("Decoration drawing", () => {
         horizontal_rule: forwardRef<HTMLHRElement, NodeViewComponentProps>(
           function HR({ nodeProps, children, ...props }, ref) {
             current = nodeProps.decorations.map((d) => d.spec.name).join();
-            return <hr ref={ref as LegacyRef<HTMLHRElement>} {...props} />;
+            return <hr {...props} ref={ref} />;
           }
         ),
       },
@@ -594,9 +593,7 @@ describe("Decoration drawing", () => {
               { widget, getPos, ...props },
               ref
             ) {
-              return (
-                <img {...props} ref={ref as LegacyRef<HTMLImageElement>} />
-              );
+              return <img {...props} ref={ref} />;
             }),
             {
               marks: [schema.mark("em")],
@@ -620,9 +617,7 @@ describe("Decoration drawing", () => {
               { widget, getPos, ...props },
               ref
             ) {
-              return (
-                <img {...props} ref={ref as LegacyRef<HTMLImageElement>} />
-              );
+              return <img {...props} ref={ref} />;
             }),
             { side: -1, key: "img-widget" }
           ),
@@ -630,11 +625,11 @@ describe("Decoration drawing", () => {
         decoPlugin([
           widget(
             4,
-            forwardRef<HTMLImageElement, WidgetViewComponentProps>(function BR(
+            forwardRef<HTMLBRElement, WidgetViewComponentProps>(function BR(
               { widget, getPos, ...props },
               ref
             ) {
-              return <br {...props} ref={ref as LegacyRef<HTMLBRElement>} />;
+              return <br {...props} ref={ref} />;
             }),
             { key: "br-widget" }
           ),
@@ -666,7 +661,7 @@ describe("Decoration drawing", () => {
         paragraph: forwardRef<HTMLParagraphElement, NodeViewComponentProps>(
           function Paragraph({ nodeProps, children, ...props }, ref) {
             return (
-              <p ref={ref as LegacyRef<HTMLParagraphElement>} {...props}>
+              <p {...props} ref={ref}>
                 {children}
               </p>
             );
@@ -681,9 +676,7 @@ describe("Decoration drawing", () => {
               { widget, getPos, ...props },
               ref
             ) {
-              return (
-                <img {...props} ref={ref as LegacyRef<HTMLImageElement>} />
-              );
+              return <img {...props} ref={ref} />;
             }),
             { key: "img-widget" }
           ),
@@ -735,7 +728,7 @@ describe("Decoration drawing", () => {
               ) {
                 expect(getPos()).toBe(3);
                 return (
-                  <button ref={ref as LegacyRef<HTMLButtonElement>} {...props}>
+                  <button ref={ref} {...props}>
                     ω
                   </button>
                 );
@@ -857,7 +850,7 @@ describe("Decoration drawing", () => {
           ) {
             decosFromFirstEditor = nodeProps.innerDecorations;
             return (
-              <p ref={ref as LegacyRef<HTMLParagraphElement>} {...props}>
+              <p {...props} ref={ref}>
                 {children}
               </p>
             );
