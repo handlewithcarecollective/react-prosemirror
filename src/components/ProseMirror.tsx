@@ -4,7 +4,7 @@ import {
   NodeViewConstructor,
 } from "prosemirror-view";
 import React, {
-  ForwardRefExoticComponent,
+  ComponentType,
   ReactNode,
   RefAttributes,
   useMemo,
@@ -26,7 +26,7 @@ export type Props = Omit<UseEditorOptions, "nodeViews"> & {
   className?: string;
   children?: ReactNode;
   nodeViews?: {
-    [nodeType: string]: ForwardRefExoticComponent<
+    [nodeType: string]: ComponentType<
       // We need to allow refs to any type of HTMLElement, but there's
       // no way to express that that still allows consumers to correctly
       // type their own refs. This is sufficient to ensure that there's
