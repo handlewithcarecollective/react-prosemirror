@@ -1,6 +1,30 @@
 import cx from "classnames";
 import { HTMLProps } from "react";
 
+let patched = false;
+
+function patchConsoleError() {
+  if (patched) return;
+  /* eslint-disable no-console */
+  const consoleError = console.error;
+  console.error = function (...data: unknown[]) {
+    const [message, prop, correction] = data;
+    if (
+      typeof message === "string" &&
+      message.startsWith(
+        "Warning: Invalid DOM property `%s`. Did you mean `%s`?"
+      ) &&
+      prop === "STYLE" &&
+      correction === "style"
+    ) {
+      return;
+    }
+    consoleError(...data);
+  };
+  patched = true;
+  /* eslint-enable no-console */
+}
+
 function mergeStyleProps(a: HTMLProps<HTMLElement>, b: HTMLProps<HTMLElement>) {
   if (!("STYLE" in a)) {
     if (!("STYLE" in b)) {
@@ -44,6 +68,7 @@ export function mergeReactProps(
 export function htmlAttrsToReactProps(
   attrs: Record<string, string>
 ): HTMLProps<HTMLElement> {
+  patchConsoleError();
   const props: Record<string, unknown> = {};
   for (const [attrName, attrValue] of Object.entries(attrs)) {
     switch (attrName.toLowerCase()) {
