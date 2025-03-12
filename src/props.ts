@@ -1,41 +1,19 @@
 import cx from "classnames";
-import { generate, parse } from "css-tree";
 import { HTMLProps } from "react";
 
-export function kebabCaseToCamelCase(str: string) {
-  return str.replaceAll(/-[a-z]/g, (g) => g[1]?.toUpperCase() ?? "");
-}
-
-/**
- * Converts a CSS style string to an object
- * that can be passed to a React component's
- * `style` prop.
- */
-export function cssToStyles(css: string) {
-  const ast = parse(`* { ${css} }`);
-
-  if (ast.type !== "StyleSheet") return {};
-
-  const rule = ast.children.first;
-  if (rule?.type !== "Rule") return {};
-
-  const block = rule.block;
-  const styles: Record<string, string> = {};
-
-  for (const declaration of block.children) {
-    if (declaration.type !== "Declaration") continue;
-    const property = declaration.property;
-    const value =
-      declaration.value.type === "Raw"
-        ? declaration.value.value
-        : generate(declaration.value);
-    const camelCasePropertyName = property.startsWith("--")
-      ? property
-      : kebabCaseToCamelCase(property);
-    styles[camelCasePropertyName] = value;
+function mergeStyleProps(a: HTMLProps<HTMLElement>, b: HTMLProps<HTMLElement>) {
+  if (!("STYLE" in a)) {
+    if (!("STYLE" in b)) {
+      return undefined;
+    }
+    return b.STYLE as string;
   }
-
-  return styles;
+  if (!("STYLE" in b)) {
+    return a.STYLE as string;
+  }
+  return `${(a.STYLE as string).match(/;\s*$/) ? a.STYLE : `${a.STYLE}`} ${
+    b.STYLE
+  }`;
 }
 
 /**
@@ -51,6 +29,7 @@ export function mergeReactProps(
     ...a,
     ...b,
     className: cx(a.className, b.className),
+    STYLE: mergeStyleProps(a, b),
     style: {
       ...a.style,
       ...b.style,
@@ -73,7 +52,14 @@ export function htmlAttrsToReactProps(
         break;
       }
       case "style": {
-        props.style = cssToStyles(attrValue);
+        // HACK: React expects the `style` prop to be an
+        // object mapping from CSS property name to value.
+        // However, it will pass un-recognized props through
+        // to the underlying DOM element, and HTML attributes
+        // are case insensitive. So we use `STYLE` instead,
+        // which React doesn't intercept, but the DOM treats
+        // as `style`
+        props.STYLE = attrValue;
         break;
       }
       case "autocapitalize": {
