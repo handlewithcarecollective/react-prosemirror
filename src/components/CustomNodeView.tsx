@@ -21,6 +21,7 @@ import { ChildDescriptorsContext } from "../contexts/ChildDescriptorsContext.js"
 import { EditorContext } from "../contexts/EditorContext.js";
 import { useClientLayoutEffect } from "../hooks/useClientLayoutEffect.js";
 import { useClientOnly } from "../hooks/useClientOnly.js";
+import { useForceUpdate } from "../hooks/useForceUpdate.js";
 import { useNodeViewDescriptor } from "../hooks/useNodeViewDescriptor.js";
 
 import { ChildNodeViews, wrapInDeco } from "./ChildNodeViews.js";
@@ -56,14 +57,16 @@ export const CustomNodeView = memo(function CustomNodeView({
   const customNodeViewRootRef = useRef<HTMLDivElement | null>(null);
   const customNodeViewRef = useRef<NodeViewT | null>(null);
 
-  const shouldRender = useClientOnly();
+  const forceUpdate = useForceUpdate();
+
+  const isOnClient = useClientOnly();
 
   // In Strict/Concurrent mode, layout effects can be destroyed/re-run
   // independently of renders. We need to ensure that if the
   // destructor that destroys the node view is called, we then recreate
   // the node view when the layout effect is re-run.
   useClientLayoutEffect(() => {
-    if (!customNodeViewRef.current || !shouldRender) {
+    if (!customNodeViewRef.current) {
       customNodeViewRef.current = customNodeView(
         nodeRef.current,
         // customNodeView will only be set if view is set, and we can only reach
@@ -111,6 +114,11 @@ export const CustomNodeView = memo(function CustomNodeView({
       ) {
         customNodeViewRef.current.selectNode?.();
       }
+
+      // If we've reconstructed the nodeview, then we need to
+      // recreate the portal into its contentDOM, which happens
+      // during the render. So we need to trigger a re-render!
+      forceUpdate();
     }
 
     const nodeView = customNodeViewRef.current;
@@ -181,7 +189,7 @@ export const CustomNodeView = memo(function CustomNodeView({
     [childDescriptors, nodeViewDescRef]
   );
 
-  if (!shouldRender) return null;
+  if (!isOnClient) return null;
 
   // In order to render the correct element with the correct
   // props below, we have to call the customNodeView in the
