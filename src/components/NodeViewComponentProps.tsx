@@ -1,6 +1,6 @@
 import { Node } from "prosemirror-model";
 import { Decoration, DecorationSource } from "prosemirror-view";
-import { HTMLAttributes, ReactNode, Ref } from "react";
+import { HTMLAttributes, LegacyRef, ReactNode } from "react";
 
 export type NodeViewComponentProps = {
   nodeProps: {
@@ -15,5 +15,5 @@ export type NodeViewComponentProps = {
   // it could be either a RefObject or a RefCallback). So we use any,
   // here, instead of a more useful type like HTMLElement | null
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ref: Ref<any>;
+  ref: LegacyRef<any>;
 } & HTMLAttributes<HTMLElement>;

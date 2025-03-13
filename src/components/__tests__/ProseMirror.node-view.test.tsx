@@ -16,12 +16,11 @@ describe("nodeViews prop", () => {
     const { view } = tempEditor({
       doc: doc(p("foo", br())),
       nodeViews: {
-        hard_break: forwardRef(function Var(
-          props: NodeViewComponentProps,
-          ref
-        ) {
-          return <var ref={ref}>{props.children}</var>;
-        }),
+        hard_break: forwardRef<HTMLElement, NodeViewComponentProps>(
+          function Var(props, ref) {
+            return <var ref={ref}>{props.children}</var>;
+          }
+        ),
       },
     });
     expect(view.dom.querySelector("var")).not.toBeNull();
@@ -193,18 +192,17 @@ describe("nodeViews prop", () => {
       doc: doc(p("foo", br())),
       plugins: [plugin],
       nodeViews: {
-        hard_break: forwardRef(function Var(
-          props: NodeViewComponentProps,
-          ref
-        ) {
-          return (
-            <var ref={ref}>
-              {props.nodeProps.decorations.length
-                ? props.nodeProps.decorations[0]!.spec.name
-                : "[]"}
-            </var>
-          );
-        }),
+        hard_break: forwardRef<HTMLElement, NodeViewComponentProps>(
+          function Var(props, ref) {
+            return (
+              <var ref={ref}>
+                {props.nodeProps.decorations.length
+                  ? props.nodeProps.decorations[0]!.spec.name
+                  : "[]"}
+              </var>
+            );
+          }
+        ),
       },
     });
     expect(view.dom.querySelector("var")!.textContent).toBe("[]");

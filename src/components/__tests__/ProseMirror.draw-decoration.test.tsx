@@ -844,10 +844,7 @@ describe("Decoration drawing", () => {
       ],
       nodeViews: {
         paragraph: forwardRef<HTMLParagraphElement, NodeViewComponentProps>(
-          function Paragraph(
-            { nodeProps, children, ...props }: NodeViewComponentProps,
-            ref
-          ) {
+          function Paragraph({ nodeProps, children, ...props }, ref) {
             decosFromFirstEditor = nodeProps.innerDecorations;
             return (
               <p {...props} ref={ref}>
