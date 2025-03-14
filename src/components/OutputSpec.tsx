@@ -101,7 +101,7 @@ const ForwardedOutputSpec = memo(
     // When the resulting spec contains a hole, that is where the
     // marked content is placed. Otherwise, it is appended to the top node.
     if (isMark && !hasHole(outputSpec)) {
-      content.push(createElement(tagName, props, children));
+      content.push(children);
     }
     return createElement(tagName, props, ...content);
   })

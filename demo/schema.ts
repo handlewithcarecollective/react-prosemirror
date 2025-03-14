@@ -68,7 +68,7 @@ export const schema = new Schema({
   marks: {
     em: {
       toDOM() {
-        return ["em", 0];
+        return ["em"];
       },
       parseDOM: [
         {
@@ -78,7 +78,7 @@ export const schema = new Schema({
     },
     strong: {
       toDOM() {
-        return ["strong", 0];
+        return ["strong"];
       },
       parseDOM: [
         {
@@ -108,7 +108,7 @@ export const schema = new Schema({
         url: { default: "", validate: "string" },
       },
       toDOM(mark) {
-        return ["a", { href: mark.attrs.url }, 0];
+        return ["a", { href: mark.attrs.url }];
       },
       parseDOM: [
         {
