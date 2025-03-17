@@ -11,9 +11,7 @@ function patchConsoleError() {
     const [message, prop, correction] = data;
     if (
       typeof message === "string" &&
-      message.startsWith(
-        "Warning: Invalid DOM property `%s`. Did you mean `%s`?"
-      ) &&
+      message.includes("Invalid DOM property `%s`. Did you mean `%s`?") &&
       prop === "STYLE" &&
       correction === "style"
     ) {
