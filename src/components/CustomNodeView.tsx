@@ -99,26 +99,31 @@ export const CustomNodeView = memo(function CustomNodeView({
         );
       }
 
-      if (!customNodeViewRootRef.current) return;
-
-      const { dom } = customNodeViewRef.current;
-      nodeDomRef.current = customNodeViewRootRef.current;
-      customNodeViewRootRef.current.appendChild(dom);
-
-      // Layout effects can run multiple times — if this effect
-      // destroyed and recreated this node view, then we need to
-      // resync the selectNode state
-      if (
-        view?.state.selection instanceof NodeSelection &&
-        view.state.selection.node === nodeRef.current
-      ) {
-        customNodeViewRef.current.selectNode?.();
-      }
-
       // If we've reconstructed the nodeview, then we need to
       // recreate the portal into its contentDOM, which happens
       // during the render. So we need to trigger a re-render!
       forceUpdate();
+    }
+
+    if (!customNodeViewRootRef.current) return;
+
+    const { dom } = customNodeViewRef.current;
+
+    if (customNodeViewRootRef.current.firstChild === dom) {
+      return;
+    }
+
+    nodeDomRef.current = customNodeViewRootRef.current;
+    customNodeViewRootRef.current.appendChild(dom);
+
+    // Layout effects can run multiple times — if this effect
+    // destroyed and recreated this node view, then we need to
+    // resync the selectNode state
+    if (
+      view?.state.selection instanceof NodeSelection &&
+      view.state.selection.node === nodeRef.current
+    ) {
+      customNodeViewRef.current.selectNode?.();
     }
 
     const nodeView = customNodeViewRef.current;
