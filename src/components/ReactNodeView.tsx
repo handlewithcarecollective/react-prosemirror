@@ -72,9 +72,10 @@ export const ReactNodeView = memo(function ReactNodeView({
 
   const finalProps = {
     ...props,
-    ...(!hasContentDOM && {
-      contentEditable: false,
-    }),
+    ...(!hasContentDOM &&
+      nodeDomRef.current?.tagName !== "BR" && {
+        contentEditable: false,
+      }),
   };
 
   const nodeProps = useMemo(
