@@ -187,6 +187,8 @@ describe("ProseMirror", () => {
       },
     });
 
+    view.focus();
+
     view.dispatch(view.state.tr.scrollIntoView());
 
     expect(scrolled).toBe(1);
