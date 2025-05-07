@@ -190,8 +190,6 @@ export class SelectionDOMObserver {
       view.input.lastFocus = 0;
       selectionToDOM(view);
       this.currentSelection.set(sel);
-      // @ts-expect-error Internal property (scrollToSelection)
-      view.scrollToSelection();
     } else if (newSel) {
       this.updateSelection();
       if (!this.currentSelection.eq(sel)) selectionToDOM(view);
