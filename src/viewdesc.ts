@@ -8,6 +8,12 @@ import { InternalDecorationSource } from "./decorations/internalTypes.js";
 import { DOMNode } from "./dom.js";
 import { domIndex, isEquivalentPosition } from "./selection/selectionToDOM.js";
 
+declare global {
+  interface Node {
+    pmViewDesc?: ViewDesc;
+  }
+}
+
 /// A ViewMutationRecord represents a DOM
 /// [mutation](https://developer.mozilla.org/en-US/docs/Web/API/MutationObserver)
 /// or a selection change happens within the view. When the change is
@@ -58,8 +64,6 @@ export class ViewDesc {
   ) {
     // An expando property on the DOM node provides a link back to its
     // description.
-    // @ts-expect-error We're using custom view implementations here but
-    // we match the API so this is relatively safe.
     dom.pmViewDesc = this;
   }
 

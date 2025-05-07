@@ -120,7 +120,6 @@ export function useNodeViewDescriptor(
       nodeViewDescRef.current.outerDeco = outerDecorations;
       nodeViewDescRef.current.innerDeco = innerDecorations;
       nodeViewDescRef.current.dom = domRef?.current ?? nodeDomRef.current;
-      // @ts-expect-error We have our own ViewDesc implementations
       nodeViewDescRef.current.dom.pmViewDesc = nodeViewDescRef.current;
       nodeViewDescRef.current.contentDOM =
         // If there's already a contentDOM, we can just
@@ -167,7 +166,6 @@ export function useNodeViewDescriptor(
         childDesc.dom = compositionTopDOM;
         childDesc.textDOM = textDOM;
         childDesc.text = textDOM.data;
-        // @ts-expect-error ???
         childDesc.textDOM.pmViewDesc = childDesc;
 
         // @ts-expect-error ???
