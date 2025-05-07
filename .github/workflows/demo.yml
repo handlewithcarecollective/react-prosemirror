@@ -22,6 +22,9 @@ jobs:
         with:
           node-version: 22.x
 
+      - name: Install corepack
+        run: npm i -g corepack
+
       - name: Install dependencies
         run: yarn
 
