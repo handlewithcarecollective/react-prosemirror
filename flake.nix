@@ -59,6 +59,7 @@
                   packages = [
                     pkgs.nodejs_22
                     pkgs.corepack
+                    pkgs.act
                   ];
 
                   tasks."repo:init" = {

@@ -1284,7 +1284,7 @@ __metadata:
     prosemirror-tables: "npm:^1.3.7"
     prosemirror-test-builder: "npm:^1.1.1"
     prosemirror-transform: "npm:^1.8.0"
-    prosemirror-view: "npm:1.38.1"
+    prosemirror-view: "npm:1.39.0"
     react: "npm:^18.2.0"
     react-dom: "npm:^18.2.0"
     react-reconciler: "npm:^0.29.0"
@@ -11782,14 +11782,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"prosemirror-view@npm:1.38.1, prosemirror-view@npm:^1.0.0, prosemirror-view@npm:^1.13.3, prosemirror-view@npm:^1.27.0, prosemirror-view@npm:^1.31.0":
-  version: 1.38.1
-  resolution: "prosemirror-view@npm:1.38.1"
+"prosemirror-view@npm:1.39.0, prosemirror-view@npm:^1.0.0, prosemirror-view@npm:^1.13.3, prosemirror-view@npm:^1.27.0, prosemirror-view@npm:^1.31.0":
+  version: 1.39.0
+  resolution: "prosemirror-view@npm:1.39.0"
   dependencies:
     prosemirror-model: "npm:^1.20.0"
     prosemirror-state: "npm:^1.0.0"
     prosemirror-transform: "npm:^1.1.0"
-  checksum: 10/708d593dcd49880469062bd2ea3f38b6f0837ca84c3f4f1aeb182a69447fea4e6e745fa5e92584e8a106ed470592c42f00e254f7ab314a4a2a6589212b4c6fd8
+  checksum: 10/696059e0946325e9a2f7cf153f59319db4b44e281a6cb1d3631b2f93d880fd70ea5bc74eba9d9173bff7f9ddd70faf4cb24f05e1207b1f497df1a2c0a5239a7f
   languageName: node
   linkType: hard
 
