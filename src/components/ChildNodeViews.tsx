@@ -416,7 +416,7 @@ export const ChildNodeViews = memo(function ChildNodeViews({
 
   if (!node) return null;
 
-  const keysSeen = new Set<string>();
+  const keysSeen = new Map<string, number>();
 
   let widgetChildren: Array<ChildNativeWidget | ChildWidget> = [];
   let lastNodeChild: ChildNode | null = null;
@@ -451,7 +451,7 @@ export const ChildNodeViews = memo(function ChildNodeViews({
         } else {
           childMap.set(key, child);
         }
-        keysSeen.add(key);
+        keysSeen.set(key, keysSeen.size);
       } else {
         key = createKey(
           getInnerPos.current(),
@@ -475,7 +475,7 @@ export const ChildNodeViews = memo(function ChildNodeViews({
         } else {
           childMap.set(key, child);
         }
-        keysSeen.add(key);
+        keysSeen.set(key, keysSeen.size);
       }
       const child = childMap.get(key) as ChildWidget | ChildNativeWidget;
       widgetChildren.push(child);
@@ -508,7 +508,7 @@ export const ChildNodeViews = memo(function ChildNodeViews({
         childMap.set(key, child);
         lastNodeChild = child;
       }
-      keysSeen.add(key);
+      keysSeen.set(key, keysSeen.size);
       adjustWidgetMarksBack(widgetChildren, lastNodeChild);
       widgetChildren = [];
     }
@@ -521,7 +521,10 @@ export const ChildNodeViews = memo(function ChildNodeViews({
   }
 
   const children = Array.from(childMap.values()).sort(
-    (a, b) => a.offset - b.offset
+    // We already ensured that these existed in keysSeen in the previous
+    // step
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    (a, b) => keysSeen.get(a.key)! - keysSeen.get(b.key)!
   );
 
   const childElements = createChildElements(children, getInnerPos);
