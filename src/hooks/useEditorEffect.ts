@@ -5,6 +5,7 @@ import type { DependencyList } from "react";
 
 import { EditorContext } from "../contexts/EditorContext.js";
 
+import type { ReactEditorView } from "./useEditor.js";
 import { useLayoutGroupEffect } from "./useLayoutGroupEffect.js";
 
 /**
@@ -37,7 +38,7 @@ export function useEditorEffect(
   useLayoutGroupEffect(
     () => {
       // @ts-expect-error We're making use of knowledge of internal attributes here
-      if (view?.docView) {
+      if (view?.docView && (view as ReactEditorView).ready) {
         flushSyncRef.current = false;
         const result = effect(view);
         flushSyncRef.current = true;

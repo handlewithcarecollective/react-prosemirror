@@ -68,9 +68,11 @@ export class ReactEditorView extends EditorView {
 
   private _props: DirectEditorProps;
 
+  public ready: boolean;
+
   constructor(
     place: { mount: HTMLElement } | null,
-    props: DirectEditorProps & { docView: NodeViewDesc }
+    props: DirectEditorProps & { docView: NodeViewDesc; ready: boolean }
   ) {
     // Call the superclass constructor with an empty
     // document and limited props. We'll set everything
@@ -84,6 +86,7 @@ export class ReactEditorView extends EditorView {
       plugins: props.plugins,
     });
     cleanup();
+    this.ready = props.ready;
 
     this.shouldUpdatePluginViews = true;
 
@@ -325,13 +328,14 @@ export function useEditor<T extends HTMLElement = HTMLElement>(
     plugins,
     dispatchTransaction,
     docView: docViewDescRef.current,
+    ready: true,
   };
 
   const [view, setView] = useState<ReactEditorView | null>(
     // During the initial render, we create something of a dummy
     // EditorView. This allows us to ensure that the first render actually
     // renders the document, which is necessary for SSR.
-    () => new ReactEditorView(null, directEditorProps)
+    () => new ReactEditorView(null, { ...directEditorProps, ready: false })
   );
 
   useClientLayoutEffect(() => {
