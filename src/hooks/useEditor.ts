@@ -109,6 +109,8 @@ export class ReactEditorView extends EditorView {
     // @ts-expect-error We're making use of knowledge of internal attributes here
     this.docView.dom.replaceChildren();
     // @ts-expect-error We're making use of knowledge of internal attributes here
+    this.nodeViews = buildNodeViews(this);
+    // @ts-expect-error We're making use of knowledge of internal attributes here
     this.docView = props.docView;
   }
 
