@@ -22,10 +22,10 @@ function TestComponent({
   return null;
 }
 
-describe("useEditorViewLayoutEffect", () => {
+describe("useEditorEffect", () => {
   it("should run the effect", () => {
     const effect = jest.fn();
-    const editorView = { docView: {} } as unknown as EditorView;
+    const editorView = { docView: {}, ready: true } as unknown as EditorView;
     const editorState = {} as EditorState;
     const registerEventListener = () => {};
     const unregisterEventListener = () => {};
@@ -54,7 +54,7 @@ describe("useEditorViewLayoutEffect", () => {
 
   it("should not re-run the effect if no dependencies change", () => {
     const effect = jest.fn();
-    const editorView = { docView: {} } as unknown as EditorView;
+    const editorView = { docView: {}, ready: true } as unknown as EditorView;
     const editorState = {} as EditorState;
     const registerEventListener = () => {};
     const unregisterEventListener = () => {};
@@ -91,7 +91,7 @@ describe("useEditorViewLayoutEffect", () => {
 
   it("should re-run the effect if dependencies change", () => {
     const effect = jest.fn();
-    const editorView = { docView: {} } as unknown as EditorView;
+    const editorView = { docView: {}, ready: true } as unknown as EditorView;
     const editorState = {} as EditorState;
     const registerEventListener = () => {};
     const unregisterEventListener = () => {};
