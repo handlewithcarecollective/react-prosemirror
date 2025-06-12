@@ -116,7 +116,6 @@ export function beforeInputPlugin(
         beforeinput(view, event) {
           event.preventDefault();
           switch (event.inputType) {
-            // insertParagraph and insertLineBreak
             case "insertParagraph":
             case "insertLineBreak": {
               // Fire a synthetic keydown event to trigger ProseMirror's keymap
