@@ -116,9 +116,26 @@ export function beforeInputPlugin(
         beforeinput(view, event) {
           event.preventDefault();
           switch (event.inputType) {
-            case "insertCompositionText": {
-              if (event.data === null) break;
+            // insertParagraph and insertLineBreak
+            case "insertParagraph":
+            case "insertLineBreak": {
+              // Fire a synthetic keydown event to trigger ProseMirror's keymap
+              const keyEvent = new KeyboardEvent("keydown", {
+                bubbles: true,
+                cancelable: true,
+                key: "Enter",
+                code: "Enter",
+                keyCode: 13,
+                shiftKey: event.inputType === "insertLineBreak",
+              });
 
+              // Use someProp to directly call ProseMirror handlers
+              return (
+                view.someProp("handleKeyDown", (f) => f(view, keyEvent)) ??
+                false
+              );
+            }
+            case "insertCompositionText": {
               compositionText = event.data;
               break;
             }
