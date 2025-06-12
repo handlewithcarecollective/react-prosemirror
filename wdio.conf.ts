@@ -2,6 +2,8 @@ import "@wdio/types";
 
 import viteConfig from "./vite.config.js";
 
+const mobileSpecs = ["./src/components/__tests__/ProseMirror.mobile.test.tsx"];
+
 export const config: WebdriverIO.Config = {
   //
   // ====================
@@ -34,6 +36,11 @@ export const config: WebdriverIO.Config = {
   exclude: [
     // 'path/to/excluded/files'
   ],
+
+  // Define suites for targeted test runs
+  suites: {
+    mobile: mobileSpecs,
+  },
   //
   // ============
   // Capabilities
@@ -59,9 +66,20 @@ export const config: WebdriverIO.Config = {
   capabilities: [
     {
       browserName: "chrome",
+      "wdio:exclude": mobileSpecs,
     },
     {
       browserName: "firefox",
+      "wdio:exclude": mobileSpecs,
+    },
+    {
+      browserName: "chrome",
+      "wdio:specs": mobileSpecs,
+      "goog:chromeOptions": {
+        mobileEmulation: {
+          deviceName: "Pixel 7",
+        },
+      },
     },
   ],
 
