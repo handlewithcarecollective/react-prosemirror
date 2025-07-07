@@ -2,6 +2,8 @@ import { Node } from "prosemirror-model";
 import { Mapping } from "prosemirror-transform";
 import { Decoration, DecorationSet, DecorationSource } from "prosemirror-view";
 
+import { DecorationType } from "./ReactWidgetType.js";
+
 export interface InternalDecorationSource {
   /// Map the set of decorations in response to a change in the
   /// document.
@@ -21,5 +23,8 @@ export interface InternalDecorationSet extends InternalDecorationSource {
 }
 
 export interface InternalDecoration extends Decoration {
+  type: DecorationType;
   copy(from: number, to: number): Decoration;
+  widget: boolean;
+  inline: boolean;
 }

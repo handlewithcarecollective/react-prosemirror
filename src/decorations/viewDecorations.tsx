@@ -201,13 +201,8 @@ export function viewDecorations(
     const result = f(view.state);
     if (result && result != empty) found.push(result);
   });
-  // We don't have access to types for view.cursorWrapper here
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   if (cursorWrapper) {
-    found.push(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      DecorationSet.create(view.state.doc, [cursorWrapper])
-    );
+    found.push(DecorationSet.create(view.state.doc, [cursorWrapper]));
   }
   const previous = ViewDecorationsCache.get(view);
   if (!previous) {

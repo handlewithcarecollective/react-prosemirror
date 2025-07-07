@@ -3,7 +3,10 @@ import { Node } from "prosemirror-model";
 import { Decoration, DecorationSource } from "prosemirror-view";
 
 import { ReactWidgetType } from "./ReactWidgetType.js";
-import { InternalDecorationSource } from "./internalTypes.js";
+import {
+  InternalDecoration,
+  InternalDecorationSource,
+} from "./internalTypes.js";
 
 function compareSide(a: Decoration, b: Decoration) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -58,30 +61,42 @@ export function iterDeco(
   let restNode = null;
   for (let parentIndex = 0; ; ) {
     if (decoIndex < locals.length && locals[decoIndex]!.to == offset) {
-      const widget = locals[decoIndex++]!;
+      let widget;
       let widgets;
-      while (decoIndex < locals.length && locals[decoIndex]!.to == offset)
-        (widgets || (widgets = [widget])).push(locals[decoIndex++]!);
-      if (widgets) {
-        widgets.sort(compareSide);
-        for (let i = 0; i < widgets.length; i++)
+      while (decoIndex < locals.length && locals[decoIndex]!.to == offset) {
+        const next = locals[decoIndex++]!;
+        if (
+          (next as InternalDecoration).widget ||
+          // FORK: Our custom widget type can't report itself as a widget,
+          // so we have to explicitly check
+          (next as InternalDecoration).type instanceof ReactWidgetType
+        ) {
+          if (!widget) widget = next;
+          else (widgets || (widgets = [widget])).push(next);
+        }
+      }
+      if (widget) {
+        if (widgets) {
+          widgets.sort(compareSide);
+          for (let i = 0; i < widgets.length; i++)
+            onWidget(
+              widgets[i]!,
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              !((widgets[i]! as any).type instanceof ReactWidgetType),
+              offset,
+              parentIndex + i,
+              !!restNode
+            );
+        } else {
           onWidget(
-            widgets[i]!,
+            widget,
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            !((widgets[i]! as any).type instanceof ReactWidgetType),
+            !((widget as any).type instanceof ReactWidgetType),
             offset,
-            parentIndex + i,
+            parentIndex,
             !!restNode
           );
-      } else {
-        onWidget(
-          widget,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          !((widget as any).type instanceof ReactWidgetType),
-          offset,
-          parentIndex,
-          !!restNode
-        );
+        }
       }
     }
 
