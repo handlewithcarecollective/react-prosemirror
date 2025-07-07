@@ -24,18 +24,16 @@ function patchConsoleError() {
 }
 
 function mergeStyleProps(a: HTMLProps<HTMLElement>, b: HTMLProps<HTMLElement>) {
-  if (!("STYLE" in a)) {
-    if (!("STYLE" in b)) {
+  if (!("STYLE" in a) || typeof a.STYLE !== "string") {
+    if (!("STYLE" in b) || typeof b.STYLE !== "string") {
       return undefined;
     }
-    return b.STYLE as string;
+    return b.STYLE;
   }
-  if (!("STYLE" in b)) {
-    return a.STYLE as string;
+  if (!("STYLE" in b) || typeof b.STYLE !== "string") {
+    return a.STYLE;
   }
-  return `${(a.STYLE as string).match(/;\s*$/) ? a.STYLE : `${a.STYLE}`} ${
-    b.STYLE
-  }`;
+  return `${a.STYLE.match(/;\s*$/) ? a.STYLE : `${a.STYLE};`} ${b.STYLE}`;
 }
 
 /**
