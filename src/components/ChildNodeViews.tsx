@@ -529,20 +529,22 @@ export const ChildNodeViews = memo(function ChildNodeViews({
 
   const childElements = createChildElements(children, getInnerPos);
 
-  const lastChild = children[children.length - 1];
+  if (node.isTextblock) {
+    const lastChild = children[children.length - 1];
 
-  if (
-    !lastChild ||
-    lastChild.type !== "node" ||
-    (lastChild.node.isInline && !lastChild.node.isText) ||
-    // RegExp.test actually handles undefined just fine
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    /\n$/.test(lastChild.node.text!)
-  ) {
-    childElements.push(
-      <SeparatorHackView getPos={getInnerPos} key="trailing-hack-img" />,
-      <TrailingHackView getPos={getInnerPos} key="trailing-hack-br" />
-    );
+    if (
+      !lastChild ||
+      lastChild.type !== "node" ||
+      (lastChild.node.isInline && !lastChild.node.isText) ||
+      // RegExp.test actually handles undefined just fine
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      /\n$/.test(lastChild.node.text!)
+    ) {
+      childElements.push(
+        <SeparatorHackView getPos={getInnerPos} key="trailing-hack-img" />,
+        <TrailingHackView getPos={getInnerPos} key="trailing-hack-br" />
+      );
+    }
   }
 
   return <>{childElements}</>;
