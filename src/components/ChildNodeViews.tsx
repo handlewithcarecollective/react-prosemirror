@@ -261,10 +261,12 @@ function createKey(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return (widget as any).type.spec.key;
 
-    // eslint-disable-next-line no-console
-    console.warn(
-      `Widget at position ${pos} doesn't have a key specified. This may cause issues.`
-    );
+    if (type === "widget") {
+      // eslint-disable-next-line no-console
+      console.warn(
+        `Widget at position ${pos} doesn't have a key specified. React ProseMirror will generate a key partially based on this widget’s index into its parent’s children. This can cause issues if there are multiple adjacent widgets.`
+      );
+    }
     return `${key}-${index}`;
   }
 
