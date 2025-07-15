@@ -47,8 +47,12 @@ export function reactKeys() {
        * node was deleted.
        */
       apply(tr, value, _, newState) {
-        if (!tr.docChanged || composing) return value;
         const meta = tr.getMeta(reactKeysPluginKey);
+
+        if ((!tr.docChanged && meta?.type !== "bustKey") || composing) {
+          return value;
+        }
+
         const keyToBust = meta?.type === "bustKey" && meta.payload.key;
 
         const next = {

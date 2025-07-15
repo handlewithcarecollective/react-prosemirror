@@ -168,7 +168,7 @@ export function useNodeViewDescriptor(
         childDesc.text = textDOM.data;
         childDesc.textDOM.pmViewDesc = childDesc;
 
-        // @ts-expect-error ???
+        // @ts-expect-error Internal property -- input
         view?.input.compositionNodes.push(childDesc);
       }
     }

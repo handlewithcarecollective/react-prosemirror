@@ -53,7 +53,6 @@ function insertText(
 export function beforeInputPlugin(
   setCursorWrapper: (deco: Decoration | null) => void
 ) {
-  let compositionText: string | null = null;
   let compositionMarks: readonly Mark[] | null = null;
   return new Plugin({
     props: {
@@ -90,15 +89,13 @@ export function beforeInputPlugin(
         compositionupdate() {
           return true;
         },
-        compositionend(view) {
+        compositionend(view, event) {
           // @ts-expect-error Internal property - input
           view.input.composing = false;
-          if (compositionText === null) return;
 
-          insertText(view, compositionText, {
+          insertText(view, event.data, {
             // TODO: Rather than busting the reactKey cache here,
-            // which is pretty blunt and doesn't work for
-            // multi-node replacements, we should attempt to
+            // which is pretty blunt, we should attempt to
             // snapshot the selected DOM during compositionstart
             // and restore it before we end the composition.
             // This should allow React to successfully clean up
@@ -108,7 +105,6 @@ export function beforeInputPlugin(
             marks: compositionMarks,
           });
 
-          compositionText = null;
           compositionMarks = null;
           setCursorWrapper(null);
           return true;
@@ -133,10 +129,6 @@ export function beforeInputPlugin(
                 view.someProp("handleKeyDown", (f) => f(view, keyEvent)) ??
                 false
               );
-            }
-            case "insertCompositionText": {
-              compositionText = event.data;
-              break;
             }
             case "insertReplacementText": {
               const ranges = event.getTargetRanges();
