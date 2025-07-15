@@ -4,8 +4,7 @@ import { Decoration, EditorView } from "prosemirror-view";
 
 import { CursorWrapper } from "../components/CursorWrapper.js";
 import { widget } from "../decorations/ReactWidgetType.js";
-
-import { reactKeysPluginKey } from "./reactKeys.js";
+import { DOMNode } from "../dom.js";
 
 function insertText(
   view: EditorView,
@@ -31,21 +30,6 @@ function insertText(
 
   tr.insertText(eventData, from, to);
 
-  if (options.bust) {
-    const $from = view.state.doc.resolve(from);
-    const sharedAncestorDepth = $from.sharedDepth(to);
-    const sharedAncestorPos = $from.start(sharedAncestorDepth);
-
-    const parentKey = reactKeysPluginKey
-      .getState(view.state)
-      ?.posToKey.get(sharedAncestorPos - 1);
-
-    tr.setMeta(reactKeysPluginKey, {
-      type: "bustKey",
-      payload: { key: parentKey },
-    });
-  }
-
   view.dispatch(tr);
   return true;
 }
@@ -54,6 +38,7 @@ export function beforeInputPlugin(
   setCursorWrapper: (deco: Decoration | null) => void
 ) {
   let compositionMarks: readonly Mark[] | null = null;
+  const precompositionSnapshot: DOMNode[] = [];
   return new Plugin({
     props: {
       handleDOMEvents: {
@@ -64,23 +49,23 @@ export function beforeInputPlugin(
 
           const $pos = state.selection.$from;
 
-          if (
-            state.selection.empty &&
-            (state.storedMarks ||
-              (!$pos.textOffset &&
-                $pos.parentOffset &&
-                $pos.nodeBefore?.marks.some(
-                  (m) => m.type.spec.inclusive === false
-                )))
-          ) {
+          compositionMarks = state.storedMarks ?? $pos.marks();
+          if (compositionMarks) {
             setCursorWrapper(
               widget(state.selection.from, CursorWrapper, {
                 key: "cursor-wrapper",
-                marks: state.storedMarks ?? $pos.marks(),
+                marks: compositionMarks,
               })
             );
           }
-          compositionMarks = state.storedMarks ?? $pos.marks();
+
+          // Snapshot the siblings of the node that contains the
+          // current cursor. We'll restore this later, so that React
+          // doesn't panic about unknown DOM nodes.
+          const { node: parent } = view.domAtPos($pos.pos);
+          parent.childNodes.forEach((node) => {
+            precompositionSnapshot.push(node);
+          });
 
           // @ts-expect-error Internal property - input
           view.input.composing = true;
@@ -93,19 +78,39 @@ export function beforeInputPlugin(
           // @ts-expect-error Internal property - input
           view.input.composing = false;
 
-          insertText(view, event.data, {
-            // TODO: Rather than busting the reactKey cache here,
-            // which is pretty blunt, we should attempt to
-            // snapshot the selected DOM during compositionstart
-            // and restore it before we end the composition.
-            // This should allow React to successfully clean up
-            // and insert the newly composed text, without requiring
-            // any remounts
-            bust: true,
-            marks: compositionMarks,
+          const { state } = view;
+          const { node: parent } = view.domAtPos(state.selection.from);
+
+          // Restore the snapshot of the parent node's children
+          // from before the composition started. This gives us a
+          // clean slate from which to dispatch our transaction
+          // and trigger a React update.
+          precompositionSnapshot.forEach((prevNode, i) => {
+            if (parent.childNodes.length <= i) {
+              parent.appendChild(prevNode);
+              return;
+            }
+            parent.replaceChild(prevNode, parent.childNodes.item(i));
           });
 
+          if (parent.childNodes.length > precompositionSnapshot.length) {
+            for (
+              let i = precompositionSnapshot.length;
+              i < parent.childNodes.length;
+              i++
+            ) {
+              parent.removeChild(parent.childNodes.item(i));
+            }
+          }
+
+          if (event.data) {
+            insertText(view, event.data, {
+              marks: compositionMarks,
+            });
+          }
+
           compositionMarks = null;
+          precompositionSnapshot.splice(0, precompositionSnapshot.length);
           setCursorWrapper(null);
           return true;
         },
