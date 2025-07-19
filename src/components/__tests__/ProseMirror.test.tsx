@@ -372,4 +372,83 @@ describe("ProseMirror", () => {
     await $("#button").click();
     expect(document.activeElement === button).toBeTruthy();
   });
+
+  it("cleans up event listeners on reconfigure", async () => {
+    let firstFocusHandlerCalled = 0;
+    let secondFocusHandlerCalled = 0;
+
+    const viewPlugin = () =>
+      new Plugin({
+        props: {
+          nodeViews: {
+            horizontal_rule() {
+              const dom = document.createElement("hr");
+              return {
+                dom,
+              };
+            },
+          },
+        },
+      });
+
+    const startDoc = doc(p("first"));
+    const firstState = EditorState.create({
+      doc: startDoc,
+      schema,
+      plugins: [viewPlugin(), reactKeys()],
+    });
+
+    let firstView: EditorView | null = null;
+    let secondView: EditorView | null = null as EditorView | null;
+
+    function Test() {
+      useEditorEffect((v) => {
+        if (firstView === null) {
+          firstView = v;
+        } else {
+          secondView = v;
+        }
+      });
+
+      return null;
+    }
+
+    const { rerender } = render(
+      <ProseMirror
+        state={firstState}
+        handleDOMEvents={{
+          focus: () => {
+            firstFocusHandlerCalled++;
+          },
+        }}
+      >
+        <Test></Test>
+        <ProseMirrorDoc />
+      </ProseMirror>
+    );
+
+    const secondState = EditorState.create({
+      doc: doc(p("second")),
+      schema,
+      plugins: [viewPlugin(), reactKeys()],
+    });
+
+    rerender(
+      <ProseMirror
+        state={secondState}
+        handleDOMEvents={{
+          focus: () => {
+            secondFocusHandlerCalled++;
+          },
+        }}
+      >
+        <Test></Test>
+        <ProseMirrorDoc />
+      </ProseMirror>
+    );
+
+    secondView!.dom.focus();
+    expect(firstFocusHandlerCalled).toBe(0);
+    expect(secondFocusHandlerCalled).toBe(1);
+  });
 });

@@ -187,6 +187,22 @@ export class ReactEditorView extends EditorView {
   // the actual view.dom cleanup (which React will have already handled).
   // So we give the EditorView a dummy DOM element and ask it to clean up
   destroy() {
+    // If needsRedraw returns true, then we will destroy and recreate
+    // the EditorView, but will likely leave the ProseMirrorDoc node as-is.
+    // In this case, this.dom will still be connected when destroy runs, and
+    // it will be reused for the next EditorView, so we need to manually reset
+    // it.
+    if (this.dom.isConnected) {
+      // We need to manually execute this code from super.destroy(),
+      // because when super.destroy() runs, it will have been given a dummy
+      // dom node
+      // @ts-expect-error Internal property - input
+      for (const type in this.input.eventHandlers) {
+        // @ts-expect-error Internal property - input
+        this.dom.removeEventListener(type, this.input.eventHandlers[type]);
+      }
+    }
+
     // @ts-expect-error we're intentionally overwriting this property
     // to prevent side effects
     this.dom = document.createElement("div");
