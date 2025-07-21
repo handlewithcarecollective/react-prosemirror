@@ -1,6 +1,6 @@
 {
   "name": "@handlewithcare/react-prosemirror",
-  "version": "2.4.8",
+  "version": "2.4.9-rc.0",
   "license": "Apache-2.0",
   "type": "module",
   "main": "dist/cjs/index.js",
@@ -123,5 +123,6 @@
   },
   "dependencies": {
     "classnames": "^2.3.2"
-  }
+  },
+  "stableVersion": "2.4.9"
 }
