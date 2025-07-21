@@ -2,7 +2,9 @@ import "@wdio/types";
 
 import viteConfig from "./vite.config.js";
 
-const mobileSpecs = ["./src/components/__tests__/ProseMirror.mobile.test.tsx"];
+const mobileSpecs = [
+  "file:///src/components/__tests__/ProseMirror.mobile.test.tsx",
+];
 
 export const config: WebdriverIO.Config = {
   //
