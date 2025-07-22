@@ -33,11 +33,11 @@ const toEqualNode: MatcherFunction<[actual: unknown, expect: unknown]> =
 
 expect.extend({ toEqualNode });
 
-declare module "expect" {
+declare module "expect-webdriverio" {
   interface AsymmetricMatchers {
     toEqualNode(actual: Node): void;
   }
-  interface Matchers<R> {
+  interface Matchers<R, T> {
     toEqualNode(actual: Node): R;
   }
 }
