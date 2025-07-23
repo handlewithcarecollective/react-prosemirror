@@ -38,7 +38,7 @@ export function beforeInputPlugin(
   setCursorWrapper: (deco: Decoration | null) => void
 ) {
   let compositionMarks: readonly Mark[] | null = null;
-  const precompositionSnapshot: DOMNode[] = [];
+  let precompositionSnapshot: DOMNode[] | null = null;
   return new Plugin({
     props: {
       handleDOMEvents: {
@@ -63,8 +63,10 @@ export function beforeInputPlugin(
           // current cursor. We'll restore this later, so that React
           // doesn't panic about unknown DOM nodes.
           const { node: parent } = view.domAtPos($pos.pos);
+          precompositionSnapshot = [];
           parent.childNodes.forEach((node) => {
-            precompositionSnapshot.push(node);
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            precompositionSnapshot!.push(node);
           });
 
           // @ts-expect-error Internal property - input
@@ -81,25 +83,27 @@ export function beforeInputPlugin(
           const { state } = view;
           const { node: parent } = view.domAtPos(state.selection.from);
 
-          // Restore the snapshot of the parent node's children
-          // from before the composition started. This gives us a
-          // clean slate from which to dispatch our transaction
-          // and trigger a React update.
-          precompositionSnapshot.forEach((prevNode, i) => {
-            if (parent.childNodes.length <= i) {
-              parent.appendChild(prevNode);
-              return;
-            }
-            parent.replaceChild(prevNode, parent.childNodes.item(i));
-          });
+          if (precompositionSnapshot) {
+            // Restore the snapshot of the parent node's children
+            // from before the composition started. This gives us a
+            // clean slate from which to dispatch our transaction
+            // and trigger a React update.
+            precompositionSnapshot.forEach((prevNode, i) => {
+              if (parent.childNodes.length <= i) {
+                parent.appendChild(prevNode);
+                return;
+              }
+              parent.replaceChild(prevNode, parent.childNodes.item(i));
+            });
 
-          if (parent.childNodes.length > precompositionSnapshot.length) {
-            for (
-              let i = precompositionSnapshot.length;
-              i < parent.childNodes.length;
-              i++
-            ) {
-              parent.removeChild(parent.childNodes.item(i));
+            if (parent.childNodes.length > precompositionSnapshot.length) {
+              for (
+                let i = precompositionSnapshot.length;
+                i < parent.childNodes.length;
+                i++
+              ) {
+                parent.removeChild(parent.childNodes.item(i));
+              }
             }
           }
 
@@ -110,7 +114,7 @@ export function beforeInputPlugin(
           }
 
           compositionMarks = null;
-          precompositionSnapshot.splice(0, precompositionSnapshot.length);
+          precompositionSnapshot = null;
           setCursorWrapper(null);
           return true;
         },
