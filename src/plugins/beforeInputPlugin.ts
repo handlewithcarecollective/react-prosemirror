@@ -64,10 +64,9 @@ export function beforeInputPlugin(
           // doesn't panic about unknown DOM nodes.
           const { node: parent } = view.domAtPos($pos.pos);
           precompositionSnapshot = [];
-          parent.childNodes.forEach((node) => {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            precompositionSnapshot!.push(node);
-          });
+          for (const node of parent.childNodes) {
+            precompositionSnapshot.push(node);
+          }
 
           // @ts-expect-error Internal property - input
           view.input.composing = true;
