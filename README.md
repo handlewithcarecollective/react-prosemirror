@@ -67,7 +67,11 @@ _Note_: React ProseMirror needs the prosemirror-view stylesheet just as a vanill
 ```css
 @import "prosemirror-view/style/prosemirror.css";
 ```
+Or:
 
+\```ts
+import "prosemirror-view/style/prosemirror.css"
+\```
 <!-- toc -->
 
 - [The Problem](#the-problem)
