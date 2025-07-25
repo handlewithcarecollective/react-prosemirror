@@ -63,6 +63,11 @@ yarn add @handlewithcare/react-prosemirror \
     prosemirror-model
 ```
 
+_Note_: React ProseMirror needs the prosemirror-view stylesheet just as a vanilla ProseMirror set up would. How this stylesheet gets imported can vary based on the application, but may be as simple as:
+```css
+@import "prosemirror-view/style/prosemirror.css";
+```
+
 <!-- toc -->
 
 - [The Problem](#the-problem)
