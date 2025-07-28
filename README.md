@@ -68,6 +68,7 @@ _Note_: React ProseMirror needs the prosemirror-view stylesheet just as a vanill
 /* editor.css */
 @import "prosemirror-view/style/prosemirror.css";
 ```
+
 Or:
 
 ```ts
