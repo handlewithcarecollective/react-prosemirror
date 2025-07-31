@@ -39,6 +39,7 @@ type ReactWidgetSpec = {
   stopEvent?: (event: Event) => boolean;
   ignoreSelection?: boolean;
   key?: string;
+  [key: string]: unknown;
 };
 
 const noSpec = { side: 0 };
