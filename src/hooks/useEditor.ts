@@ -77,11 +77,8 @@ export class ReactEditorView extends EditorView {
     // else ourselves.
     const cleanup = setSsrStubs();
     super(place, {
-      state: EditorState.create({
-        schema: props.state.schema,
-        plugins: props.state.plugins,
-      }),
-      plugins: props.plugins,
+      state: props.state,
+      plugins: props.plugins
     });
     cleanup();
 
