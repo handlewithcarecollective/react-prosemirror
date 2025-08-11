@@ -81,9 +81,7 @@ export class ReactEditorView extends EditorView {
     super(place, {
       state: EditorState.create({
         schema: props.state.schema,
-        plugins: props.state.plugins,
       }),
-      plugins: props.plugins,
     });
     cleanup();
     this.ready = props.ready;
