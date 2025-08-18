@@ -162,6 +162,7 @@ export function beforeInputPlugin(
               break;
             }
             case "deleteWordBackward":
+            case "deleteHardLineBackward":
             case "deleteContentBackward":
             case "deleteWordForward":
             case "deleteContentForward":
