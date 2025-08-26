@@ -1505,6 +1505,7 @@ __metadata:
     prosemirror-view: 1.39.2
     react: ">=17 <=19.1.0"
     react-dom: ">=17 <=19.1.0"
+    react-reconciler: ">=0.26.1 <=0.32.0"
   languageName: unknown
   linkType: soft
 
