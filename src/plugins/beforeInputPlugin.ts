@@ -163,8 +163,11 @@ export function beforeInputPlugin(
             }
             case "deleteWordBackward":
             case "deleteHardLineBackward":
+            case "deleteSoftLineBackward":
             case "deleteContentBackward":
             case "deleteWordForward":
+            case "deleteHardLineForward":
+            case "deleteSoftLineForward":
             case "deleteContentForward":
             case "deleteContent": {
               const targetRanges = event.getTargetRanges();
