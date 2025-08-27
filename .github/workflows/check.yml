@@ -57,7 +57,7 @@ jobs:
         run: |
           PACKAGE_VERSION=$(node -p -e "require('./package.json').version")
           ./scripts/if-version-change.sh git tag v${PACKAGE_VERSION}
-          git push --tags
+          git push origin tag v${PACKAGE_VERSION}
 
   test:
     runs-on: ubuntu-latest
