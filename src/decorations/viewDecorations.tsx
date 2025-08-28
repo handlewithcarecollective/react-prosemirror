@@ -1,11 +1,8 @@
 import { Node } from "prosemirror-model";
 import { Mapping } from "prosemirror-transform";
-import {
-  Decoration,
-  DecorationSet,
-  DecorationSource,
-  EditorView,
-} from "prosemirror-view";
+import { Decoration, DecorationSet, DecorationSource } from "prosemirror-view";
+
+import { AbstractEditorView } from "../AbstractEditorView.js";
 
 import {
   InternalDecoration,
@@ -179,7 +176,10 @@ function insertAhead(array: Decoration[], i: number, deco: Decoration) {
   array.splice(i, 0, deco);
 }
 
-const ViewDecorationsCache = new WeakMap<EditorView, DecorationSource>();
+const ViewDecorationsCache = new WeakMap<
+  AbstractEditorView,
+  DecorationSource
+>();
 
 /**
  * Produces the DecorationSource for the current state, based
@@ -193,7 +193,7 @@ const ViewDecorationsCache = new WeakMap<EditorView, DecorationSource>();
  * if its result is used in a dependencies array for a hook.
  */
 export function viewDecorations(
-  view: EditorView,
+  view: AbstractEditorView,
   cursorWrapper: Decoration | null
 ): DecorationSource {
   const found: DecorationSource[] = [];

@@ -241,22 +241,27 @@ export const CodeBlock = forwardRef<
     view.dispatch(tr);
   });
 
-  const cmElRef = useEditorEventCallback((view, cmRef: ReactCodeMirrorRef) => {
-    const cmView = cmRef?.view ?? null;
-    if (cmViewRef.current === cmView) {
-      return;
+  const cmRef = useRef<ReactCodeMirrorRef>(null);
+
+  const onCreateEditor = useEditorEventCallback(
+    (view, cmView: CodeMirrorView) => {
+      if (cmViewRef.current === cmView) {
+        return;
+      }
+
+      cmViewRef.current = cmView;
+
+      // When a new CodeBlock is created, if it contains
+      // the ProseMirror selection, focus it
+      if (
+        cmViewRef.current &&
+        view.state.selection.from >= getPos() &&
+        view.state.selection.to <= getPos() + node.nodeSize
+      ) {
+        cmViewRef.current.focus();
+      }
     }
-    cmViewRef.current = cmView;
-    // When a new CodeBlock is created, if it contains
-    // the ProseMirror selection, focus it
-    if (
-      cmViewRef.current &&
-      view.state.selection.from >= getPos() &&
-      view.state.selection.to <= getPos() + node.nodeSize
-    ) {
-      cmViewRef.current.focus();
-    }
-  });
+  );
 
   return (
     <div
@@ -278,7 +283,8 @@ export const CodeBlock = forwardRef<
       }}
     >
       <ReactCodeMirror
-        ref={cmElRef}
+        ref={cmRef}
+        onCreateEditor={onCreateEditor}
         onUpdate={onUpdate}
         value={node.textContent}
         theme="dark"

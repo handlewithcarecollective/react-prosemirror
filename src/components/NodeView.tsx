@@ -1,5 +1,9 @@
 import { Node } from "prosemirror-model";
-import { Decoration, DecorationSource } from "prosemirror-view";
+import {
+  Decoration,
+  DecorationSource,
+  NodeViewConstructor,
+} from "prosemirror-view";
 import React, { MutableRefObject, memo, useContext } from "react";
 
 import { EditorContext } from "../contexts/EditorContext.js";
@@ -23,10 +27,9 @@ export const NodeView = memo(function NodeView({
 }: NodeViewProps) {
   const { view } = useContext(EditorContext);
 
-  const customNodeView = view?.someProp(
-    "nodeViews",
-    (nodeViews) => nodeViews?.[node.type.name]
-  );
+  const customNodeView = view.nodeViews[node.type.name] as
+    | NodeViewConstructor
+    | undefined;
 
   if (customNodeView) {
     return (

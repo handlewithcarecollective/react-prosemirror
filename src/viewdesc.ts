@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { Fragment, Mark, Node, TagParseRule } from "prosemirror-model";
-import { Decoration, DecorationSource, EditorView } from "prosemirror-view";
+import { Decoration, DecorationSource } from "prosemirror-view";
 
+import { ReactEditorView } from "./ReactEditorView.js";
 import { browser } from "./browser.js";
 import { InternalDecorationSource } from "./decorations/internalTypes.js";
 import { DOMNode } from "./dom.js";
@@ -460,7 +461,7 @@ export class ViewDesc {
   setSelection(
     anchor: number,
     head: number,
-    view: EditorView,
+    view: ReactEditorView,
     force = false
   ): void {
     // If the selection falls entirely in a child, give it to that child
@@ -484,7 +485,6 @@ export class ViewDesc {
       head == anchor ? anchorDOM : this.domFromPos(head, head ? -1 : 1);
 
     const domSel = (view.root as Document).getSelection()!;
-    // @ts-expect-error - Internal method domSelectionRange
     const selRange = view.domSelectionRange();
 
     let brKludge = false;
@@ -890,7 +890,7 @@ export class NodeViewDesc extends ViewDesc {
     _node: Node,
     _outerDeco: readonly Decoration[],
     _innerDeco: DecorationSource,
-    _view: EditorView
+    _view: ReactEditorView
   ) {
     return true;
   }
@@ -945,7 +945,7 @@ export class TextViewDesc extends NodeViewDesc {
     _node: Node,
     _outerDeco: readonly Decoration[],
     _innerDeco: DecorationSource,
-    _view: EditorView
+    _view: ReactEditorView
   ) {
     return true;
   }

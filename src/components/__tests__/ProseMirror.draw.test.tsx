@@ -159,7 +159,7 @@ describe("EditorView draw", () => {
     expect(view.dom.querySelectorAll("p")[2]).toBe(secondPara);
   });
 
-  it("creates and destroys plugin views", async () => {
+  it("creates, updates,  and destroys plugin views", async () => {
     const events: string[] = [];
     class PluginView {
       update() {

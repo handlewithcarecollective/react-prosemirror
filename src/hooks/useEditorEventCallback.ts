@@ -2,9 +2,24 @@
 import type { EditorView } from "prosemirror-view";
 import { useCallback, useContext, useRef } from "react";
 
+import { AbstractEditorView } from "../AbstractEditorView.js";
+import { ReactEditorView } from "../ReactEditorView.js";
 import { EditorContext } from "../contexts/EditorContext.js";
 
 import { useEditorEffect } from "./useEditorEffect.js";
+
+function assertIsReactEditorView(
+  view: AbstractEditorView
+): asserts view is ReactEditorView {
+  if (view instanceof ReactEditorView) {
+    return;
+  }
+
+  throw new DOMException(
+    "ProseMirror document is not mounted",
+    "InvalidStateError"
+  );
+}
 
 /**
  * Returns a stable function reference to be used as an
@@ -31,12 +46,8 @@ export function useEditorEventCallback<T extends unknown[], R>(
 
   return useCallback(
     (...args: T) => {
-      // It's not actually possible for an event handler to run
-      // while view is null, since view is only ever set to
-      // null in a layout effect that then immediately triggers
-      // a re-render which sets view to a new EditorView
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      return ref.current(view!, ...args);
+      assertIsReactEditorView(view);
+      return ref.current(view, ...args);
     },
     [view]
   );

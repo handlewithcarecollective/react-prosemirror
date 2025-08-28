@@ -1,6 +1,8 @@
-import { Decoration, EditorView } from "prosemirror-view";
+import { Decoration } from "prosemirror-view";
 
-const DocDecorationsCache = new WeakMap<EditorView, [Decoration]>();
+import { AbstractEditorView } from "../AbstractEditorView.js";
+
+const DocDecorationsCache = new WeakMap<AbstractEditorView, [Decoration]>();
 
 /**
  * Produces the outer decorations for the doc node, based
@@ -13,7 +15,7 @@ const DocDecorationsCache = new WeakMap<EditorView, [Decoration]>();
  * This makes it safe to call in a React render function, even
  * if its result is used in a dependencies array for a hook.
  */
-export function computeDocDeco(view: EditorView) {
+export function computeDocDeco(view: AbstractEditorView) {
   const attrs = Object.create(null);
   attrs.class = "ProseMirror";
   attrs.contenteditable = String(view.editable);

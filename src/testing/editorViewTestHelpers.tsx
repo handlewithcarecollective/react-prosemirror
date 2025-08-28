@@ -104,9 +104,6 @@ export function tempEditor({
     return view;
   }
 
-  // We need two renders for the hasContentDOM state to settle
-  rerenderEditor();
-
   return {
     view: view as unknown as EditorView,
     rerender: rerenderEditor,
