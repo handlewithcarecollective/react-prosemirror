@@ -62,18 +62,11 @@ function ProseMirrorInner({
     () => ({
       className: className,
       setMount: setMount,
-      node: editor.view?.state.doc,
+      node: state.doc,
       innerDeco: innerDecos,
       outerDeco: outerDecos,
-      viewDesc: editor.docViewDescRef.current,
     }),
-    [
-      className,
-      editor.docViewDescRef,
-      editor.view?.state.doc,
-      innerDecos,
-      outerDecos,
-    ]
+    [className, state.doc, innerDecos, outerDecos]
   );
 
   return (

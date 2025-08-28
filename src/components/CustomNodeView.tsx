@@ -182,7 +182,6 @@ export const CustomNodeView = memo(function CustomNodeView({
     nodeDomRef,
     innerDeco,
     outerDeco,
-    undefined,
     contentDomRef
   );
 

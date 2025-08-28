@@ -2,7 +2,6 @@ import { Schema } from "prosemirror-model";
 import { EditorState, Plugin, Transaction } from "prosemirror-state";
 import {
   Decoration,
-  DecorationSet,
   DirectEditorProps,
   EditorProps,
   EditorView,
@@ -11,10 +10,10 @@ import {
 } from "prosemirror-view";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { flushSync } from "react-dom";
+import { DOMSelectionRange } from "../dom.js";
 
 import { beforeInputPlugin } from "../plugins/beforeInputPlugin.js";
 import { SelectionDOMObserver } from "../selection/SelectionDOMObserver.js";
-import { setSsrStubs } from "../ssr.js";
 import { NodeViewDesc } from "../viewdesc.js";
 
 import { useClientLayoutEffect } from "./useClientLayoutEffect.js";
@@ -24,6 +23,17 @@ import { useForceUpdate } from "./useForceUpdate.js";
 type NodeViewSet = {
   [name: string]: NodeViewConstructor | MarkViewConstructor;
 };
+
+const EMPTY_SCHEMA = new Schema({
+  nodes: {
+    doc: { content: "text*" },
+    text: { inline: true },
+  },
+});
+
+const EMPTY_STATE = EditorState.create({
+  schema: EMPTY_SCHEMA,
+});
 
 function buildNodeViews(view: ReactEditorView) {
   const result: NodeViewSet = Object.create(null);
@@ -49,162 +59,107 @@ function changedNodeViews(a: NodeViewSet, b: NodeViewSet) {
   return nA != nB;
 }
 
-function changedProps(a: DirectEditorProps, b: DirectEditorProps) {
-  for (const prop of Object.keys(a) as (keyof DirectEditorProps)[]) {
-    if (a[prop] !== b[prop]) return true;
-  }
-  return false;
-}
-
-function getEditable(view: ReactEditorView) {
-  return !view.someProp("editable", (value) => value(view.state) === false);
-}
-
-// @ts-expect-error We're making use of knowledge of internal methods here
+/**
+ * Extends EditorView to make prop and state updates pure, remove the DOM
+ * Mutation Observer, and use a custom document view managed by React.
+ *
+ * @privateRemarks
+ *
+ * The implementation relies on the base class using a private member to store
+ * the committed props and having a public getter that we override to return the
+ * latest, uncommitted props. The base class can then be told to update when the
+ * React effects are commit an update, applying the pending, uncommitted props.
+ */
 export class ReactEditorView extends EditorView {
-  private shouldUpdatePluginViews = false;
+  declare nodeViews: NodeViewSet;
 
-  private oldProps: DirectEditorProps;
+  declare docView: NodeViewDesc;
 
-  private _props: DirectEditorProps;
+  declare domObserver: SelectionDOMObserver;
 
-  public ready: boolean;
+  declare domSelectionRange: () => DOMSelectionRange;
 
-  constructor(
-    place: { mount: HTMLElement } | null,
-    props: DirectEditorProps & { docView: NodeViewDesc; ready: boolean }
-  ) {
-    // Call the superclass constructor with an empty
-    // document and limited props. We'll set everything
-    // else ourselves.
-    const cleanup = setSsrStubs();
-    super(place, {
-      state: EditorState.create({
-        schema: props.state.schema,
-      }),
-    });
-    cleanup();
-    this.ready = props.ready;
+  private nextProps: DirectEditorProps;
 
-    this.shouldUpdatePluginViews = true;
+  private prevState: EditorState;
 
-    this._props = props;
-    this.oldProps = { state: props.state };
+  constructor(place: { mount: HTMLElement }, props: DirectEditorProps) {
+    // By the time the editor view mounts this should exist.
+    // We assume it is not possible to set the mount point otherwise.
+    const docView = place.mount.pmViewDesc as NodeViewDesc;
+
+    // Prevent the base class from destroying the React-managed nodes.
+    // Then restore them after invoking the base class constructor.
+    const reactDOM = document.createDocumentFragment();
+    reactDOM.replaceChildren(...place.mount.childNodes);
+    try {
+      // Call the superclass constructor with only a state and no plugins.
+      // We'll set everything else ourselves and apply props during layout.
+      super(place, { state: EMPTY_STATE });
+      this.domObserver.stop();
+    } finally {
+      place.mount.replaceChildren(...reactDOM.childNodes);
+    }
+
+    this.prevState = EMPTY_STATE;
+    this.nextProps = props;
     this.state = props.state;
-
-    // @ts-expect-error We're making use of knowledge of internal attributes here
-    this.domObserver.stop();
-    // @ts-expect-error We're making use of knowledge of internal attributes here
-    this.domObserver = new SelectionDOMObserver(this);
-    // @ts-expect-error We're making use of knowledge of internal attributes here
-    this.domObserver.start();
-
-    this.editable = getEditable(this);
-
-    // Destroy the DOM created by the default
-    // ProseMirror ViewDesc implementation; we
-    // have a NodeViewDesc from React instead.
-    // @ts-expect-error We're making use of knowledge of internal attributes here
-    this.docView.dom.replaceChildren();
-    // @ts-expect-error We're making use of knowledge of internal attributes here
     this.nodeViews = buildNodeViews(this);
-    // @ts-expect-error We're making use of knowledge of internal attributes here
-    this.docView = props.docView;
+    this.docView = docView;
+    this.dom.pmViewDesc = docView;
+
+    this.domObserver = new SelectionDOMObserver(this);
+    this.domObserver.start();
   }
 
-  /**
-   * Whether the EditorView's updateStateInner method thinks that the
-   * docView needs to be blown away and redrawn.
-   *
-   * @privateremarks
-   *
-   * When ProseMirror View detects that the EditorState has been reconfigured
-   * to provide new custom node views, it calls an internal function that
-   * we can't override in order to recreate the entire editor DOM.
-   *
-   * This property mimics that check, so that we can replace the EditorView
-   * with another of our own, preventing ProseMirror View from taking over
-   * DOM management responsibility.
-   */
-  get needsRedraw() {
-    if (
-      this.oldProps.state.plugins === this._props.state.plugins &&
-      this._props.plugins === this.oldProps.plugins
-    ) {
-      return false;
-    }
-
-    const newNodeViews = buildNodeViews(this);
-    // @ts-expect-error Internal property
-    return changedNodeViews(this.nodeViews, newNodeViews);
+  get props() {
+    return this.nextProps;
   }
 
-  /**
-   * Like setProps, but without executing any side effects.
-   * Safe to use in a component render method.
-   */
-  pureSetProps(props: Partial<DirectEditorProps>) {
-    // this.oldProps = this.props;
-    this._props = {
-      ...this._props,
-      ...props,
-    };
-    this.state = this._props.state;
-
-    this.editable = getEditable(this);
-  }
-
-  /**
-   * Triggers any side effects that have been queued by previous
-   * calls to pureSetProps.
-   */
-  runPendingEffects() {
-    if (changedProps(this.props, this.oldProps)) {
-      const newProps = this.props;
-      this._props = this.oldProps;
-      this.state = this._props.state;
-      this.update(newProps);
-    }
+  setProps(props: Partial<DirectEditorProps>) {
+    this.update({ ...this.props, ...props });
   }
 
   update(props: DirectEditorProps) {
-    super.update(props);
-    // Ensure that side effects aren't re-triggered until
-    // pureSetProps is called again
-    this.oldProps = props;
-  }
+    const prevProps = this.nextProps;
 
-  updatePluginViews(prevState?: EditorState) {
-    if (this.shouldUpdatePluginViews) {
-      // @ts-expect-error We're making use of knowledge of internal methods here
-      super.updatePluginViews(prevState);
-    }
-  }
+    this.nextProps = props;
+    this.state = props.state;
 
-  // We want to trigger the default EditorView cleanup, but without
-  // the actual view.dom cleanup (which React will have already handled).
-  // So we give the EditorView a dummy DOM element and ask it to clean up
-  destroy() {
-    // If needsRedraw returns true, then we will destroy and recreate
-    // the EditorView, but will likely leave the ProseMirrorDoc node as-is.
-    // In this case, this.dom will still be connected when destroy runs, and
-    // it will be reused for the next EditorView, so we need to manually reset
-    // it.
-    if (this.dom.isConnected) {
-      // We need to manually execute this code from super.destroy(),
-      // because when super.destroy() runs, it will have been given a dummy
-      // dom node
-      // @ts-expect-error Internal property - input
-      for (const type in this.input.eventHandlers) {
-        // @ts-expect-error Internal property - input
-        this.dom.removeEventListener(type, this.input.eventHandlers[type]);
+    if (
+      prevProps.state.plugins !== props.state.plugins ||
+      prevProps.plugins !== props.plugins
+    ) {
+      const nodeViews = buildNodeViews(this);
+      if (changedNodeViews(this.nodeViews, nodeViews)) {
+        this.nodeViews = nodeViews;
       }
     }
+  }
 
-    // @ts-expect-error we're intentionally overwriting this property
-    // to prevent side effects
-    this.dom = document.createElement("div");
-    super.destroy();
+  updateState(state: EditorState) {
+    this.setProps({ state });
+  }
+
+  /**
+   * Commit effects by appling the pending props and state.
+   *
+   * Ensures the DOM selection is correct and updates plugin views.
+   *
+   * @privateRemarks
+   *
+   * The correctness of this depends on the pure update function ensuring that
+   * the node view set is up to date so that it does not try to redraw.
+   */
+  runPendingEffects() {
+    // The base class updates state lazily, but we update it eagerly.
+    // We need to temporarily roll back so that update can see the old state.
+    this.state = this.prevState;
+
+    super.update(this.nextProps);
+
+    // Store the new previous state.
+    this.prevState = this.state;
   }
 }
 
@@ -214,17 +169,6 @@ export interface UseEditorOptions extends EditorProps {
   plugins?: Plugin[];
   dispatchTransaction?(this: EditorView, tr: Transaction): void;
 }
-
-const EMPTY_SCHEMA = new Schema({
-  nodes: {
-    doc: { content: "text*" },
-    text: { inline: true },
-  },
-});
-
-const EMPTY_STATE = EditorState.create({
-  schema: EMPTY_SCHEMA,
-});
 
 let didWarnValueDefaultValue = false;
 
@@ -312,47 +256,14 @@ export function useEditor<T extends HTMLElement = HTMLElement>(
     [options.dispatchTransaction, options.state]
   );
 
-  const cleanup = setSsrStubs();
-  const tempDom = document.createElement("div");
-  cleanup();
-
-  const docViewDescRef = useRef<NodeViewDesc>(
-    new NodeViewDesc(
-      undefined,
-      [],
-      () => -1,
-      state.doc,
-      [],
-      DecorationSet.empty,
-      tempDom,
-      null,
-      tempDom,
-      () => false,
-      () => {
-        /* The doc node can't have a node selection*/
-      },
-      () => {
-        /* The doc node can't have a node selection*/
-      },
-      () => false
-    )
-  );
-
   const directEditorProps = {
     ...options,
     state,
     plugins,
     dispatchTransaction,
-    docView: docViewDescRef.current,
-    ready: true,
   };
 
-  const [view, setView] = useState<ReactEditorView | null>(
-    // During the initial render, we create something of a dummy
-    // EditorView. This allows us to ensure that the first render actually
-    // renders the document, which is necessary for SSR.
-    () => new ReactEditorView(null, { ...directEditorProps, ready: false })
-  );
+  const [view, setView] = useState<ReactEditorView | null>(null);
 
   useClientLayoutEffect(() => {
     return () => {
@@ -367,32 +278,18 @@ export function useEditor<T extends HTMLElement = HTMLElement>(
   useClientLayoutEffect(() => {
     if (!mount) {
       setView(null);
-      return;
-    }
-
-    if (!view || view.dom !== mount) {
+    } else if (!view) {
       const newView = new ReactEditorView({ mount }, directEditorProps);
       setView(newView);
       newView.dom.addEventListener("compositionend", forceUpdate);
-      return;
-    }
-
-    // TODO: We should be able to put this in previous branch,
-    // but we need to convince EditorView's constructor not to
-    // clear out the DOM when passed a mount that already has
-    // content in it, otherwise React blows up when it tries
-    // to clean up.
-    if (view.needsRedraw) {
+    } else if (view.dom !== mount) {
       setView(null);
-      return;
+    } else {
+      view.runPendingEffects();
     }
-
-    // @ts-expect-error Internal property - domObserver
-    view?.domObserver.selectionToDOM();
-    view?.runPendingEffects();
   });
 
-  view?.pureSetProps(directEditorProps);
+  view?.update(directEditorProps);
 
   const editor = useMemo(
     () => ({
@@ -400,7 +297,6 @@ export function useEditor<T extends HTMLElement = HTMLElement>(
       registerEventListener,
       unregisterEventListener,
       cursorWrapper,
-      docViewDescRef,
       flushSyncRef,
     }),
     [view, registerEventListener, unregisterEventListener, cursorWrapper]

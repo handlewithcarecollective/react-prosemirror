@@ -24,18 +24,17 @@ import {
 import { useClientLayoutEffect } from "./useClientLayoutEffect.js";
 
 export function useNodeViewDescriptor(
-  node: Node | undefined,
+  node: Node,
   getPos: () => number,
   domRef: undefined | MutableRefObject<HTMLElement | null>,
   nodeDomRef: MutableRefObject<HTMLElement | null>,
   innerDecorations: DecorationSource,
   outerDecorations: readonly Decoration[],
-  viewDesc?: NodeViewDesc,
   contentDOMRef?: MutableRefObject<HTMLElement | null>
 ) {
   const { view } = useContext(EditorContext);
   const [hasContentDOM, setHasContentDOM] = useState(true);
-  const nodeViewDescRef = useRef<NodeViewDesc | undefined>(viewDesc);
+  const nodeViewDescRef = useRef<NodeViewDesc>();
   const stopEvent = useRef<(event: Event) => boolean | undefined>(() => false);
   const setStopEvent = useCallback(
     (newStopEvent: (event: Event) => boolean | undefined) => {
@@ -53,14 +52,14 @@ export function useNodeViewDescriptor(
     []
   );
   const selectNode = useRef<() => void>(() => {
-    if (!nodeDomRef.current || !node) return;
+    if (!nodeDomRef.current) return;
     if (nodeDomRef.current.nodeType == 1)
       nodeDomRef.current.classList.add("ProseMirror-selectednode");
     if (contentDOMRef?.current || !node.type.spec.draggable)
       (domRef?.current ?? nodeDomRef.current).draggable = true;
   });
   const deselectNode = useRef<() => void>(() => {
-    if (!nodeDomRef.current || !node) return;
+    if (!nodeDomRef.current) return;
     if (nodeDomRef.current.nodeType == 1) {
       (nodeDomRef.current as HTMLElement).classList.remove(
         "ProseMirror-selectednode"
@@ -92,7 +91,7 @@ export function useNodeViewDescriptor(
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useClientLayoutEffect(() => {
-    if (!node || !nodeDomRef.current) return;
+    if (!nodeDomRef.current) return;
 
     const firstChildDesc = childDescriptors.current[0];
 
