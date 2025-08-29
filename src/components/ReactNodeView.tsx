@@ -66,7 +66,6 @@ export const ReactNodeView = memo(function ReactNodeView({
     nodeDomRef,
     innerDeco,
     outerDeco,
-    undefined,
     contentDomRef
   );
 

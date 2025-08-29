@@ -1,5 +1,4 @@
 import { Selection } from "prosemirror-state";
-import { EditorView } from "prosemirror-view";
 
 import { browser } from "../browser.js";
 import {
@@ -8,6 +7,7 @@ import {
   parentNode,
   selectionCollapsed,
 } from "../dom.js";
+import { ReactEditorView } from "../hooks/useEditor.js";
 
 import { hasFocusAndSelection } from "./hasFocusAndSelection.js";
 import { selectionFromDOM } from "./selectionFromDOM.js";
@@ -45,7 +45,7 @@ export class SelectionDOMObserver {
   currentSelection = new SelectionState();
   suppressingSelectionUpdates = false;
 
-  constructor(readonly view: EditorView) {
+  constructor(readonly view: ReactEditorView) {
     this.view = view;
     this.onSelectionChange = this.onSelectionChange.bind(this);
   }
@@ -78,7 +78,6 @@ export class SelectionDOMObserver {
   }
 
   setCurSelection() {
-    // @ts-expect-error Internal method
     this.currentSelection.set(this.view.domSelectionRange());
   }
 
@@ -97,13 +96,13 @@ export class SelectionDOMObserver {
         container = scan;
         break;
       }
-    // @ts-expect-error Internal property (docView)
     const desc = container && this.view.docView.nearestDesc(container);
     if (
       desc &&
       desc.ignoreMutation({
         type: "selection",
-        target: container?.nodeType == 3 ? container?.parentNode : container,
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        target: container!.nodeType == 3 ? container!.parentNode! : container!,
       })
     ) {
       this.setCurSelection();
@@ -153,17 +152,14 @@ export class SelectionDOMObserver {
   selectionToDOM() {
     const { view } = this;
     selectionToDOM(view);
-    // @ts-expect-error Internal property (domSelectionRange)
     const sel = view.domSelectionRange();
     this.currentSelection.set(sel);
   }
 
   flush() {
     const { view } = this;
-    // @ts-expect-error Internal property (docView)
     if (!view.docView || this.flushingSoon > -1) return;
 
-    // @ts-expect-error Internal property (domSelectionRange)
     const sel = view.domSelectionRange();
     const newSel =
       !this.suppressingSelectionUpdates &&
@@ -219,7 +215,6 @@ export class SelectionDOMObserver {
       browser.ie_version <= 11 &&
       !this.view.state.selection.empty
     ) {
-      // @ts-expect-error Internal method
       const sel = this.view.domSelectionRange();
       // Selection.isCollapsed isn't reliable on IE
       if (
