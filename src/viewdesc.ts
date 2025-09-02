@@ -6,8 +6,7 @@ import { Decoration, DecorationSource } from "prosemirror-view";
 import { ReactEditorView } from "./ReactEditorView.js";
 import { browser } from "./browser.js";
 import { InternalDecorationSource } from "./decorations/internalTypes.js";
-import { DOMNode } from "./dom.js";
-import { domIndex, isEquivalentPosition } from "./selection/selectionToDOM.js";
+import { DOMNode, domIndex, isEquivalentPosition } from "./dom.js";
 
 declare global {
   interface Node {
@@ -892,6 +891,7 @@ export class NodeViewDesc extends ViewDesc {
     _innerDeco: DecorationSource,
     _view: ReactEditorView
   ) {
+    this.dirty = NOT_DIRTY;
     return true;
   }
 
@@ -947,6 +947,7 @@ export class TextViewDesc extends NodeViewDesc {
     _innerDeco: DecorationSource,
     _view: ReactEditorView
   ) {
+    this.dirty = NOT_DIRTY;
     return true;
   }
 

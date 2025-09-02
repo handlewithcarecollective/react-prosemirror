@@ -9,8 +9,6 @@ import {
 import { AbstractEditorView, NodeViewSet } from "./AbstractEditorView.js";
 import { EMPTY_STATE } from "./constants.js";
 import { DOMNode, DOMSelection, DOMSelectionRange } from "./dom.js";
-import { SelectionDOMObserver } from "./selection/SelectionDOMObserver.js";
-import { selectionToDOM } from "./selection/selectionToDOM.js";
 import { NodeViewDesc, ViewDesc } from "./viewdesc.js";
 
 function buildNodeViews(view: ReactEditorView) {
@@ -35,6 +33,13 @@ function changedNodeViews(a: NodeViewSet, b: NodeViewSet) {
   }
   for (const _ in b) nB++;
   return nA != nB;
+}
+
+interface DOMObserver {
+  observer: MutationObserver | null;
+  queue: MutationRecord[];
+  start(): void;
+  stop(): void;
 }
 
 interface InputState {
@@ -81,13 +86,11 @@ export class ReactEditorView extends EditorView implements AbstractEditorView {
 
   declare input: InputState;
 
-  declare domObserver: SelectionDOMObserver;
+  declare domObserver: DOMObserver;
 
   declare domSelectionRange: () => DOMSelectionRange;
 
   declare domSelection: () => DOMSelection | null;
-
-  declare scrollToSelection: () => void;
 
   private nextProps: DirectEditorProps;
 
@@ -114,6 +117,8 @@ export class ReactEditorView extends EditorView implements AbstractEditorView {
       // We'll set everything else ourselves and apply props during layout.
       super(place, { state: EMPTY_STATE });
       this.domObserver.stop();
+      this.domObserver.observer = null;
+      this.domObserver.queue = [];
     } finally {
       place.mount.replaceChildren(...reactContent);
 
@@ -132,9 +137,6 @@ export class ReactEditorView extends EditorView implements AbstractEditorView {
     this.nodeViews = buildNodeViews(this);
     this.docView = docView;
     this.dom.pmViewDesc = docView;
-
-    this.domObserver = new SelectionDOMObserver(this);
-    this.domObserver.start();
   }
 
   get props() {
@@ -233,9 +235,10 @@ export class ReactEditorView extends EditorView implements AbstractEditorView {
     // Temporarily roll it back so the base class can handle the updates.
     this.state = this.prevState;
 
-    // Always update the selection. The base class is not aware that some React
-    // updates might effect the selection even if the state did not change.
-    selectionToDOM(this);
+    // Force the base class to try to update the document. React updated it, but
+    // this ensures that the base class validates the DOM selection and invokes
+    // node view selection callbacks.
+    this.docView.markDirty(-1, -1);
 
     super.update(this.nextProps);
 

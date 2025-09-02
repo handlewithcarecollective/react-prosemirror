@@ -36,10 +36,6 @@ export class StaticEditorView implements AbstractEditorView {
     this.setProps({ state });
   }
 
-  scrollToSelection() {
-    // pass
-  }
-
   someProp<PropName extends keyof EditorProps>(
     propName: PropName
   ): EditorProps[PropName] | undefined;
