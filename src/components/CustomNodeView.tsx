@@ -17,6 +17,7 @@ import React, {
 } from "react";
 import { createPortal } from "react-dom";
 
+import { ReactEditorView } from "../ReactEditorView.js";
 import { ChildDescriptorsContext } from "../contexts/ChildDescriptorsContext.js";
 import { EditorContext } from "../contexts/EditorContext.js";
 import { useClientLayoutEffect } from "../hooks/useClientLayoutEffect.js";
@@ -41,7 +42,11 @@ export const CustomNodeView = memo(function CustomNodeView({
   innerDeco,
   outerDeco,
 }: Props) {
-  const { view } = useContext(EditorContext);
+  const editor = useContext(EditorContext);
+
+  // Only ReactEditorView supports custom node views.
+  const view = editor.view as ReactEditorView;
+
   const domRef = useRef<HTMLElement | null>(null);
   const nodeDomRef = useRef<HTMLElement | null>(null);
   const contentDomRef = useRef<HTMLElement | null>(null);
@@ -69,10 +74,7 @@ export const CustomNodeView = memo(function CustomNodeView({
     if (!customNodeViewRef.current) {
       customNodeViewRef.current = customNodeView(
         nodeRef.current,
-        // customNodeView will only be set if view is set, and we can only reach
-        // this line if customNodeView is set
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        view!,
+        view,
         getPosFunc,
         outerDecoRef.current,
         innerDecoRef.current
@@ -120,7 +122,7 @@ export const CustomNodeView = memo(function CustomNodeView({
     // destroyed and recreated this node view, then we need to
     // resync the selectNode state
     if (
-      view?.state.selection instanceof NodeSelection &&
+      view.state.selection instanceof NodeSelection &&
       view.state.selection.node === nodeRef.current
     ) {
       customNodeViewRef.current.selectNode?.();
@@ -156,10 +158,7 @@ export const CustomNodeView = memo(function CustomNodeView({
 
     customNodeViewRef.current = customNodeView(
       nodeRef.current,
-      // customNodeView will only be set if view is set, and we can only reach
-      // this line if customNodeView is set
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      view!,
+      view,
       getPosFunc,
       outerDecoRef.current,
       innerDecoRef.current
@@ -182,7 +181,6 @@ export const CustomNodeView = memo(function CustomNodeView({
     nodeDomRef,
     innerDeco,
     outerDeco,
-    undefined,
     contentDomRef
   );
 
@@ -204,10 +202,7 @@ export const CustomNodeView = memo(function CustomNodeView({
   if (!customNodeViewRef.current) {
     customNodeViewRef.current = customNodeView(
       nodeRef.current,
-      // customNodeView will only be set if view is set, and we can only reach
-      // this line if customNodeView is set
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      view!,
+      view,
       () => getPos.current(),
       outerDecoRef.current,
       innerDecoRef.current

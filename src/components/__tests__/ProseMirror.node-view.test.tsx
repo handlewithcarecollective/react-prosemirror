@@ -139,12 +139,8 @@ describe("nodeViews prop", () => {
         ),
       },
     });
-    // TODO: This gets destroyed once essentially
-    // immediately, due to the dummy EditorView that
-    // we create and then immediately destroy for SSR
-    expect(destroyed).toBe(1);
     view.dispatch(view.state.tr.delete(3, 5));
-    expect(destroyed).toBe(2);
+    expect(destroyed).toBe(1);
   });
 
   it("can query its own position", async () => {
@@ -446,12 +442,8 @@ describe("customNodeViews prop", () => {
         },
       },
     });
-    // TODO: This gets destroyed once essentially
-    // immediately, due to the dummy EditorView that
-    // we create and then immediately destroy for SSR
-    expect(destroyed).toBe(1);
     view.dispatch(view.state.tr.delete(3, 5));
-    expect(destroyed).toBe(2);
+    expect(destroyed).toBe(1);
   });
 
   it("can query its own position", async () => {

@@ -1,12 +1,12 @@
 import { ResolvedPos } from "prosemirror-model";
 import { NodeSelection, TextSelection } from "prosemirror-state";
-import { EditorView } from "prosemirror-view";
 
+import { ReactEditorView } from "../ReactEditorView.js";
 import { isOnEdge, selectionCollapsed } from "../dom.js";
 import { NodeViewDesc } from "../viewdesc.js";
 
 export function selectionBetween(
-  view: EditorView,
+  view: ReactEditorView,
   $anchor: ResolvedPos,
   $head: ResolvedPos,
   bias?: number
@@ -18,17 +18,14 @@ export function selectionBetween(
 }
 
 export function selectionFromDOM(
-  view: EditorView,
+  view: ReactEditorView,
   origin: string | null = null
 ) {
-  // @ts-expect-error Internal method
   const domSel = view.domSelectionRange(),
     doc = view.state.doc;
   if (!domSel.focusNode) return null;
-  // @ts-expect-error Internal method
   let nearestDesc = view.docView.nearestDesc(domSel.focusNode);
   const inWidget = nearestDesc && nearestDesc.size == 0;
-  // @ts-expect-error Internal method
   let head = view.docView.posFromDOM(domSel.focusNode, domSel.focusOffset, 1);
   if (head < 0) return null;
   let $head = doc.resolve(head),
@@ -63,12 +60,10 @@ export function selectionFromDOM(
         const range = domSel.getRangeAt(i);
         min = Math.min(
           min,
-          // @ts-expect-error Internal method
           view.docView.posFromDOM(range.startContainer, range.startOffset, 1)
         );
         max = Math.max(
           max,
-          // @ts-expect-error Internal method
           view.docView.posFromDOM(range.endContainer, range.endOffset, -1)
         );
       }
@@ -77,7 +72,6 @@ export function selectionFromDOM(
         max == view.state.selection.anchor ? [max, min] : [min, max];
       $head = doc.resolve(head);
     } else {
-      // @ts-expect-error Internal method
       anchor = view.docView.posFromDOM(
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         domSel.anchorNode!,

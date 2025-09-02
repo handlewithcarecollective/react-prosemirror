@@ -1,12 +1,11 @@
-import { EditorView } from "prosemirror-view";
+import { ReactEditorView } from "../ReactEditorView.js";
 
-export function hasFocusAndSelection(view: EditorView) {
+export function hasFocusAndSelection(view: ReactEditorView) {
   if (view.editable && !view.hasFocus()) return false;
   return hasSelection(view);
 }
 
-export function hasSelection(view: EditorView) {
-  // @ts-expect-error Internal method
+export function hasSelection(view: ReactEditorView) {
   const sel = view.domSelectionRange();
   if (!sel.anchorNode) return false;
   try {

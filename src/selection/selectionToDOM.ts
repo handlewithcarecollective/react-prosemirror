@@ -1,9 +1,8 @@
 import { NodeSelection, Selection, TextSelection } from "prosemirror-state";
-import { Decoration, EditorView } from "prosemirror-view";
 
+import { ReactEditorView } from "../ReactEditorView.js";
 import { browser } from "../browser.js";
-import { DOMNode, DOMSelection } from "../dom.js";
-import { NodeViewDesc, ViewDesc } from "../viewdesc.js";
+import { NodeViewDesc } from "../viewdesc.js";
 
 // Scans forward and backward through DOM positions equivalent to the
 // given one to see if the two are in the same place (i.e. after a
@@ -80,63 +79,43 @@ export function nodeSize(node: Node) {
   return node.nodeType == 3 ? node.nodeValue!.length : node.childNodes.length;
 }
 
-interface InternalView extends EditorView {
-  docView: ViewDesc;
-  lastSelectedViewDesc: ViewDesc | undefined;
-  domSelectionRange(): {
-    focusNode: DOMNode | null;
-    focusOffset: number;
-    anchorNode: DOMNode | null;
-    anchorOffset: number;
-  };
-  domSelection(): DOMSelection;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  domObserver: any;
-  cursorWrapper: { dom: DOMNode; deco: Decoration } | null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  input: any;
-}
-
-export function syncNodeSelection(view: EditorView, sel: Selection) {
-  const v = view as InternalView;
+export function syncNodeSelection(view: ReactEditorView, sel: Selection) {
   if (sel instanceof NodeSelection) {
-    const desc = v.docView.descAt(sel.from);
-    if (desc != v.lastSelectedViewDesc) {
-      clearNodeSelection(v);
+    const desc = view.docView.descAt(sel.from);
+    if (desc != view.lastSelectedViewDesc) {
+      clearNodeSelection(view);
       if (desc) (desc as NodeViewDesc).selectNode();
-      v.lastSelectedViewDesc = desc;
+      view.lastSelectedViewDesc = desc;
     }
   } else {
-    clearNodeSelection(v);
+    clearNodeSelection(view);
   }
 }
 
 // Clear all DOM statefulness of the last node selection.
-function clearNodeSelection(view: EditorView) {
-  const v = view as InternalView;
-  if (v.lastSelectedViewDesc) {
-    if (v.lastSelectedViewDesc.parent)
-      (v.lastSelectedViewDesc as NodeViewDesc).deselectNode();
-    v.lastSelectedViewDesc = undefined;
+function clearNodeSelection(view: ReactEditorView) {
+  if (view.lastSelectedViewDesc) {
+    if (view.lastSelectedViewDesc.parent)
+      (view.lastSelectedViewDesc as NodeViewDesc).deselectNode();
+    view.lastSelectedViewDesc = undefined;
   }
 }
 
-export function hasSelection(view: EditorView) {
-  const v = view as InternalView;
-  const sel = v.domSelectionRange();
+export function hasSelection(view: ReactEditorView) {
+  const sel = view.domSelectionRange();
   if (!sel.anchorNode) return false;
   try {
     // Firefox will raise 'permission denied' errors when accessing
     // properties of `sel.anchorNode` when it's in a generated CSS
     // element.
     return (
-      v.dom.contains(
+      view.dom.contains(
         sel.anchorNode.nodeType == 3
           ? sel.anchorNode.parentNode
           : sel.anchorNode
       ) &&
-      (v.editable ||
-        v.dom.contains(
+      (view.editable ||
+        view.dom.contains(
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           sel.focusNode!.nodeType == 3
             ? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -149,7 +128,7 @@ export function hasSelection(view: EditorView) {
   }
 }
 
-function editorOwnsSelection(view: EditorView) {
+function editorOwnsSelection(view: ReactEditorView) {
   return view.editable
     ? view.hasFocus()
     : hasSelection(view) &&
@@ -157,13 +136,12 @@ function editorOwnsSelection(view: EditorView) {
         document.activeElement.contains(view.dom);
 }
 
-function selectCursorWrapper(view: EditorView) {
-  const v = view as InternalView;
-  const domSel = v.domSelection(),
+function selectCursorWrapper(view: ReactEditorView) {
+  const domSel = view.domSelection(),
     range = document.createRange();
   if (!domSel) return;
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const node = v.cursorWrapper!.dom,
+  const node = view.cursorWrapper!.dom,
     img = node.nodeName == "IMG";
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   if (img) range.setStart(node.parentNode!, domIndex(node) + 1);
@@ -178,7 +156,7 @@ function selectCursorWrapper(view: EditorView) {
   // focused element.
   if (
     !img &&
-    !v.state.selection.visible &&
+    !view.state.selection.visible &&
     browser.ie &&
     browser.ie_version <= 11
   ) {
@@ -189,9 +167,8 @@ function selectCursorWrapper(view: EditorView) {
   }
 }
 
-function temporarilyEditableNear(view: EditorView, pos: number) {
-  const v = view as InternalView;
-  const { node, offset } = v.docView.domFromPos(pos, 0);
+function temporarilyEditableNear(view: ReactEditorView, pos: number) {
+  const { node, offset } = view.docView.domFromPos(pos, 0);
   const after =
     offset < node.childNodes.length ? node.childNodes[offset] : null;
   const before = offset ? node.childNodes[offset - 1] : null;
@@ -231,23 +208,25 @@ function resetEditable(element: HTMLElement) {
   }
 }
 
-function removeClassOnSelectionChange(view: EditorView) {
-  const v = view as InternalView;
-  const doc = v.dom.ownerDocument;
+function removeClassOnSelectionChange(view: ReactEditorView) {
+  const doc = view.dom.ownerDocument;
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  doc.removeEventListener("selectionchange", v.input.hideSelectionGuard!);
-  const domSel = v.domSelectionRange();
+  doc.removeEventListener("selectionchange", view.input.hideSelectionGuard!);
+  const domSel = view.domSelectionRange();
   const node = domSel.anchorNode,
     offset = domSel.anchorOffset;
   doc.addEventListener(
     "selectionchange",
-    (v.input.hideSelectionGuard = () => {
+    (view.input.hideSelectionGuard = () => {
       if (domSel.anchorNode != node || domSel.anchorOffset != offset) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        doc.removeEventListener("selectionchange", v.input.hideSelectionGuard!);
+        doc.removeEventListener(
+          "selectionchange",
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          view.input.hideSelectionGuard!
+        );
         setTimeout(() => {
-          if (!editorOwnsSelection(v) || v.state.selection.visible)
-            v.dom.classList.remove("ProseMirror-hideselection");
+          if (!editorOwnsSelection(view) || view.state.selection.visible)
+            view.dom.classList.remove("ProseMirror-hideselection");
         }, 20);
       }
     })
@@ -257,24 +236,23 @@ function removeClassOnSelectionChange(view: EditorView) {
 const brokenSelectBetweenUneditable =
   browser.safari || (browser.chrome && browser.chrome_version < 63);
 
-export function selectionToDOM(view: EditorView, force = false) {
-  const v = view as InternalView;
-  const sel = v.state.selection;
-  syncNodeSelection(v, sel);
+export function selectionToDOM(view: ReactEditorView, force = false) {
+  const sel = view.state.selection;
+  syncNodeSelection(view, sel);
 
-  if (!editorOwnsSelection(v)) return;
+  if (!editorOwnsSelection(view)) return;
 
   // The delayed drag selection causes issues with Cell Selections
   // in Safari. And the drag selection delay is to workarond issues
   // which only present in Chrome.
   if (
     !force &&
-    v.input.mouseDown &&
-    v.input.mouseDown.allowDefault &&
+    view.input.mouseDown &&
+    view.input.mouseDown.allowDefault &&
     browser.chrome
   ) {
-    const domSel = v.domSelectionRange(),
-      curSel = v.domObserver.currentSelection;
+    const domSel = view.domSelectionRange(),
+      curSel = view.domObserver.currentSelection;
     if (
       domSel.anchorNode &&
       curSel.anchorNode &&
@@ -285,39 +263,39 @@ export function selectionToDOM(view: EditorView, force = false) {
         curSel.anchorOffset
       )
     ) {
-      v.input.mouseDown.delayedSelectionSync = true;
-      v.domObserver.setCurSelection();
+      view.input.mouseDown.delayedSelectionSync = true;
+      view.domObserver.setCurSelection();
       return;
     }
   }
 
-  v.domObserver.disconnectSelection();
+  view.domObserver.disconnectSelection();
 
-  if (v.cursorWrapper) {
-    selectCursorWrapper(v);
+  if (view.cursorWrapper) {
+    selectCursorWrapper(view);
   } else {
     const { anchor, head } = sel;
     let resetEditableFrom;
     let resetEditableTo;
     if (brokenSelectBetweenUneditable && !(sel instanceof TextSelection)) {
       if (!sel.$from.parent.inlineContent)
-        resetEditableFrom = temporarilyEditableNear(v, sel.from);
+        resetEditableFrom = temporarilyEditableNear(view, sel.from);
       if (!sel.empty && !sel.$from.parent.inlineContent)
-        resetEditableTo = temporarilyEditableNear(v, sel.to);
+        resetEditableTo = temporarilyEditableNear(view, sel.to);
     }
-    v.docView.setSelection(anchor, head, v, force);
+    view.docView.setSelection(anchor, head, view, force);
     if (brokenSelectBetweenUneditable) {
       if (resetEditableFrom) resetEditable(resetEditableFrom);
       if (resetEditableTo) resetEditable(resetEditableTo);
     }
     if (sel.visible) {
-      v.dom.classList.remove("ProseMirror-hideselection");
+      view.dom.classList.remove("ProseMirror-hideselection");
     } else {
-      v.dom.classList.add("ProseMirror-hideselection");
-      if ("onselectionchange" in document) removeClassOnSelectionChange(v);
+      view.dom.classList.add("ProseMirror-hideselection");
+      if ("onselectionchange" in document) removeClassOnSelectionChange(view);
     }
   }
 
-  v.domObserver.setCurSelection();
-  v.domObserver.connectSelection();
+  view.domObserver.setCurSelection();
+  view.domObserver.connectSelection();
 }

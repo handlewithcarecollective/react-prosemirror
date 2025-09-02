@@ -3,9 +3,9 @@ import type { EditorView } from "prosemirror-view";
 import { useContext } from "react";
 import type { DependencyList } from "react";
 
+import { ReactEditorView } from "../ReactEditorView.js";
 import { EditorContext } from "../contexts/EditorContext.js";
 
-import type { ReactEditorView } from "./useEditor.js";
 import { useLayoutGroupEffect } from "./useLayoutGroupEffect.js";
 
 /**
@@ -37,8 +37,7 @@ export function useEditorEffect(
   // be defined inline and run on every re-render.
   useLayoutGroupEffect(
     () => {
-      // @ts-expect-error We're making use of knowledge of internal attributes here
-      if (view?.docView && (view as ReactEditorView).ready) {
+      if (view instanceof ReactEditorView) {
         flushSyncRef.current = false;
         const result = effect(view);
         flushSyncRef.current = true;

@@ -1,11 +1,14 @@
 /* Copyright (c) The New York Times Company */
-import type { DOMEventMap, EditorView } from "prosemirror-view";
+import type { DOMEventMap, Decoration } from "prosemirror-view";
 import { MutableRefObject, createContext } from "react";
 
-import type { EventHandler } from "../plugins/componentEventListeners";
+import { AbstractEditorView } from "../AbstractEditorView.js";
+import type { EventHandler } from "../plugins/componentEventListeners.js";
 
 export interface EditorContextValue {
-  view: EditorView | null;
+  view: AbstractEditorView;
+  cursorWrapper: Decoration | null;
+  flushSyncRef: MutableRefObject<boolean>;
   registerEventListener<EventType extends keyof DOMEventMap>(
     eventType: EventType,
     handler: EventHandler<EventType>
@@ -14,7 +17,6 @@ export interface EditorContextValue {
     eventType: EventType,
     handler: EventHandler<EventType>
   ): void;
-  flushSyncRef: MutableRefObject<boolean>;
 }
 
 /**

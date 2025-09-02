@@ -19,7 +19,6 @@ import React, {
 
 import { ChildDescriptorsContext } from "../contexts/ChildDescriptorsContext.js";
 import { useNodeViewDescriptor } from "../hooks/useNodeViewDescriptor.js";
-import { NodeViewDesc } from "../viewdesc.js";
 
 import { ChildNodeViews, wrapInDeco } from "./ChildNodeViews.js";
 
@@ -31,11 +30,10 @@ const getPos = {
 
 export type DocNodeViewProps = {
   className?: string;
-  node: Node | undefined;
+  node: Node;
   innerDeco: DecorationSource;
   outerDeco: Decoration[];
   as?: ReactElement;
-  viewDesc?: NodeViewDesc;
 } & Omit<DetailedHTMLProps<HTMLAttributes<HTMLElement>, HTMLDivElement>, "ref">;
 
 export const DocNodeView = memo(
@@ -46,7 +44,6 @@ export const DocNodeView = memo(
       innerDeco,
       outerDeco,
       as,
-      viewDesc,
       ...elementProps
     }: DocNodeViewProps,
     ref: ForwardedRef<HTMLDivElement | null>
@@ -67,8 +64,7 @@ export const DocNodeView = memo(
       innerRef,
       innerRef,
       innerDeco,
-      outerDeco,
-      viewDesc
+      outerDeco
     );
 
     const childContextValue = useMemo(
@@ -110,15 +106,6 @@ export const DocNodeView = memo(
           </ChildDescriptorsContext.Provider>
         );
 
-    if (!node) return element;
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const nodeDecorations = outerDeco.filter((deco) => !(deco as any).inline);
-    if (!nodeDecorations.length) {
-      return element;
-    }
-
-    const wrapped = nodeDecorations.reduce(wrapInDeco, element);
-    return wrapped;
+    return outerDeco.reduce(wrapInDeco, element);
   })
 );

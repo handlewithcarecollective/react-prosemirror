@@ -15,7 +15,6 @@ import { EditorContext } from "../contexts/EditorContext.js";
 import { ReactWidgetDecoration } from "../decorations/ReactWidgetType.js";
 import { InternalDecorationSource } from "../decorations/internalTypes.js";
 import { iterDeco } from "../decorations/iterDeco.js";
-// import { useEditorState } from "../hooks/useEditorState.js";
 import { useReactKeys } from "../hooks/useReactKeys.js";
 import { htmlAttrsToReactProps, mergeReactProps } from "../props.js";
 
@@ -60,6 +59,7 @@ function areChildrenEqual(a: Child, b: Child) {
               prevDeco.from === nextDeco.from &&
               prevDeco.to &&
               nextDeco.to &&
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               (prevDeco as any).type.eq((nextDeco as any).type)
           )
         ) &&
@@ -409,7 +409,6 @@ export const ChildNodeViews = memo(function ChildNodeViews({
   node: Node | undefined;
   innerDecorations: DecorationSource;
 }) {
-  // const editorState = useEditorState();
   const reactKeys = useReactKeys();
 
   const getInnerPos = useRef(() => getPos.current() + 1);

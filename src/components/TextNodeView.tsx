@@ -1,7 +1,8 @@
 import { Node } from "prosemirror-model";
-import { Decoration, DecorationSet, EditorView } from "prosemirror-view";
+import { Decoration, DecorationSet } from "prosemirror-view";
 import { Component, MutableRefObject } from "react";
 
+import { AbstractEditorView } from "../AbstractEditorView.js";
 import { findDOMNode } from "../findDOMNode.js";
 import {
   CompositionViewDesc,
@@ -48,7 +49,7 @@ function shallowEqual(
 }
 
 type Props = {
-  view: EditorView | null;
+  view: AbstractEditorView;
   node: Node;
   getPos: MutableRefObject<() => number>;
   siblingsRef: MutableRefObject<ViewDesc[]>;
@@ -71,7 +72,7 @@ export class TextNodeView extends Component<Props> {
     // when a composition was started that produces a new text node.
     // Otherwise we just rely on re-rendering the renderRef
     if (!dom) {
-      if (!view?.composing) return;
+      if (!view.composing) return;
 
       this.viewDescRef = new CompositionViewDesc(
         parentRef.current,
@@ -154,7 +155,7 @@ export class TextNodeView extends Component<Props> {
     // we freeze the DOM of this element so that it doesn't
     // interrupt the composition
     if (
-      view?.composing &&
+      view.composing &&
       view.state.selection.from >= getPos.current() &&
       view.state.selection.from <= getPos.current() + node.nodeSize
     ) {

@@ -1,11 +1,11 @@
 /* Copyright (c) The New York Times Company */
 /* eslint-disable @typescript-eslint/no-empty-function */
 import { render } from "@testing-library/react";
-import type { EditorState } from "prosemirror-state";
-import type { EditorView } from "prosemirror-view";
 import React from "react";
 
+import { ReactEditorView } from "../../ReactEditorView.js";
 import { LayoutGroup } from "../../components/LayoutGroup.js";
+import { EMPTY_STATE } from "../../constants.js";
 import { EditorContext } from "../../contexts/EditorContext.js";
 import { EditorStateContext } from "../../contexts/EditorStateContext.js";
 import { useEditorEffect } from "../useEditorEffect.js";
@@ -25,8 +25,11 @@ function TestComponent({
 describe("useEditorEffect", () => {
   it("should run the effect", () => {
     const effect = jest.fn();
-    const editorView = { docView: {}, ready: true } as unknown as EditorView;
-    const editorState = {} as EditorState;
+    const editorState = EMPTY_STATE;
+    const editorView = new ReactEditorView(
+      { mount: document.createElement("div") },
+      { state: editorState }
+    );
     const registerEventListener = () => {};
     const unregisterEventListener = () => {};
     const flushSyncRef = { current: true };
@@ -36,9 +39,10 @@ describe("useEditorEffect", () => {
         <EditorContext.Provider
           value={{
             view: editorView,
+            cursorWrapper: null,
+            flushSyncRef,
             registerEventListener,
             unregisterEventListener,
-            flushSyncRef,
           }}
         >
           <EditorStateContext.Provider value={editorState}>
@@ -54,16 +58,20 @@ describe("useEditorEffect", () => {
 
   it("should not re-run the effect if no dependencies change", () => {
     const effect = jest.fn();
-    const editorView = { docView: {}, ready: true } as unknown as EditorView;
-    const editorState = {} as EditorState;
+    const editorState = EMPTY_STATE;
+    const editorView = new ReactEditorView(
+      { mount: document.createElement("div") },
+      { state: editorState }
+    );
     const registerEventListener = () => {};
     const unregisterEventListener = () => {};
 
     const contextValue = {
       view: editorView,
+      cursorWrapper: null,
+      flushSyncRef: { current: true },
       registerEventListener,
       unregisterEventListener,
-      flushSyncRef: { current: true },
     };
 
     const { rerender } = render(
@@ -91,8 +99,11 @@ describe("useEditorEffect", () => {
 
   it("should re-run the effect if dependencies change", () => {
     const effect = jest.fn();
-    const editorView = { docView: {}, ready: true } as unknown as EditorView;
-    const editorState = {} as EditorState;
+    const editorState = EMPTY_STATE;
+    const editorView = new ReactEditorView(
+      { mount: document.createElement("div") },
+      { state: editorState }
+    );
     const registerEventListener = () => {};
     const unregisterEventListener = () => {};
 
@@ -101,9 +112,10 @@ describe("useEditorEffect", () => {
         <EditorContext.Provider
           value={{
             view: editorView,
+            cursorWrapper: null,
+            flushSyncRef: { current: true },
             registerEventListener,
             unregisterEventListener,
-            flushSyncRef: { current: true },
           }}
         >
           <EditorStateContext.Provider value={editorState}>
@@ -120,6 +132,7 @@ describe("useEditorEffect", () => {
             view: editorView,
             registerEventListener,
             unregisterEventListener,
+            cursorWrapper: null,
             flushSyncRef: { current: true },
           }}
         >
