@@ -1,5 +1,4 @@
 import { Node } from "prosemirror-model";
-import { NodeSelection } from "prosemirror-state";
 import {
   Decoration,
   DecorationSource,
@@ -117,16 +116,6 @@ export const CustomNodeView = memo(function CustomNodeView({
 
     nodeDomRef.current = customNodeViewRootRef.current;
     customNodeViewRootRef.current.appendChild(dom);
-
-    // Layout effects can run multiple times — if this effect
-    // destroyed and recreated this node view, then we need to
-    // resync the selectNode state
-    if (
-      view.state.selection instanceof NodeSelection &&
-      view.state.selection.node === nodeRef.current
-    ) {
-      customNodeViewRef.current.selectNode?.();
-    }
 
     const nodeView = customNodeViewRef.current;
 

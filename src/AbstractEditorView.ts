@@ -22,7 +22,6 @@ export interface AbstractEditorView {
   setProps(props: Partial<DirectEditorProps>): void;
   update(props: DirectEditorProps): void;
   updateState(state: EditorState): void;
-  scrollToSelection(): void;
   someProp<PropName extends keyof EditorProps>(
     propName: PropName
   ): EditorProps[PropName] | undefined;
