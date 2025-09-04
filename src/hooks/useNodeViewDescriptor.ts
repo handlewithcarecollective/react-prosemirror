@@ -116,7 +116,6 @@ export function useNodeViewDescriptor(
       nodeViewDescRef.current.parent = parentRef.current;
       nodeViewDescRef.current.children = childDescriptors.current;
       nodeViewDescRef.current.node = node;
-      nodeViewDescRef.current.getPos = getPos;
       nodeViewDescRef.current.outerDeco = outerDecorations;
       nodeViewDescRef.current.innerDeco = innerDecorations;
       nodeViewDescRef.current.dom = domRef?.current ?? nodeDomRef.current;

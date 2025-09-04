@@ -2,7 +2,6 @@ import { DOMOutputSpec, Node } from "prosemirror-model";
 import { Decoration, DecorationSource } from "prosemirror-view";
 import React, {
   ComponentType,
-  MutableRefObject,
   cloneElement,
   memo,
   useContext,
@@ -23,7 +22,7 @@ import { OutputSpec } from "./OutputSpec.js";
 
 type Props = {
   outerDeco: readonly Decoration[];
-  getPos: MutableRefObject<() => number>;
+  getPos: () => number;
   node: Node;
   innerDeco: DecorationSource;
 };
@@ -38,7 +37,6 @@ export const ReactNodeView = memo(function ReactNodeView({
   const domRef = useRef<HTMLElement | null>(null);
   const nodeDomRef = useRef<HTMLElement | null>(null);
   const contentDomRef = useRef<HTMLElement | null>(null);
-  const getPosFunc = useRef(() => getPos.current()).current;
 
   const { nodeViews } = useContext(NodeViewContext);
 
@@ -61,7 +59,7 @@ export const ReactNodeView = memo(function ReactNodeView({
     nodeViewDescRef,
   } = useNodeViewDescriptor(
     node,
-    () => getPos.current(),
+    getPos,
     domRef,
     nodeDomRef,
     innerDeco,
@@ -80,11 +78,11 @@ export const ReactNodeView = memo(function ReactNodeView({
   const nodeProps = useMemo(
     () => ({
       node: node,
-      getPos: getPosFunc,
+      getPos: getPos,
       decorations: outerDeco,
       innerDecorations: innerDeco,
     }),
-    [getPosFunc, innerDeco, node, outerDeco]
+    [getPos, innerDeco, node, outerDeco]
   );
 
   if (Component) {

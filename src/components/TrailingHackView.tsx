@@ -1,11 +1,11 @@
-import React, { MutableRefObject, useContext, useRef } from "react";
+import React, { useContext, useRef } from "react";
 
 import { ChildDescriptorsContext } from "../contexts/ChildDescriptorsContext.js";
 import { useClientLayoutEffect } from "../hooks/useClientLayoutEffect.js";
 import { TrailingHackViewDesc, sortViewDescs } from "../viewdesc.js";
 
 type Props = {
-  getPos: MutableRefObject<() => number>;
+  getPos: () => number;
 };
 
 export function TrailingHackView({ getPos }: Props) {
@@ -32,14 +32,13 @@ export function TrailingHackView({ getPos }: Props) {
       viewDescRef.current = new TrailingHackViewDesc(
         parentRef.current,
         [],
-        () => getPos.current(),
+        getPos,
         ref.current,
         null
       );
     } else {
       viewDescRef.current.parent = parentRef.current;
       viewDescRef.current.dom = ref.current;
-      viewDescRef.current.getPos = () => getPos.current();
     }
     if (!siblingsRef.current.includes(viewDescRef.current)) {
       siblingsRef.current.push(viewDescRef.current);

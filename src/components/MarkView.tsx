@@ -1,6 +1,5 @@
 import { Mark } from "prosemirror-model";
 import React, {
-  MutableRefObject,
   ReactNode,
   forwardRef,
   memo,
@@ -18,7 +17,7 @@ import { OutputSpec } from "./OutputSpec.js";
 
 type Props = {
   mark: Mark;
-  getPos: MutableRefObject<() => number>;
+  getPos: () => number;
   children: ReactNode;
 };
 
@@ -65,7 +64,7 @@ export const MarkView = memo(
         viewDescRef.current = new MarkViewDesc(
           parentRef.current,
           childDescriptors.current,
-          () => getPos.current(),
+          getPos,
           mark,
           domRef.current,
           firstChildDesc?.dom.parentElement ?? domRef.current,
@@ -81,7 +80,6 @@ export const MarkView = memo(
         viewDescRef.current.spec.contentDOM = viewDescRef.current.contentDOM =
           firstChildDesc?.dom.parentElement ?? domRef.current;
         viewDescRef.current.mark = mark;
-        viewDescRef.current.getPos = () => getPos.current();
       }
       if (!siblingsRef.current.includes(viewDescRef.current)) {
         siblingsRef.current.push(viewDescRef.current);

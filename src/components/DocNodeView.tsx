@@ -22,11 +22,9 @@ import { useNodeViewDescriptor } from "../hooks/useNodeViewDescriptor.js";
 
 import { ChildNodeViews, wrapInDeco } from "./ChildNodeViews.js";
 
-const getPos = {
-  current() {
-    return -1;
-  },
-};
+function getPos() {
+  return -1;
+}
 
 export type DocNodeViewProps = {
   className?: string;
@@ -60,7 +58,7 @@ export const DocNodeView = memo(
 
     const { childDescriptors, nodeViewDescRef } = useNodeViewDescriptor(
       node,
-      () => getPos.current(),
+      getPos,
       innerRef,
       innerRef,
       innerDeco,

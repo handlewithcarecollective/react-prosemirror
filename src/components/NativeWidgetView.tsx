@@ -1,5 +1,5 @@
 import { Decoration, EditorView } from "prosemirror-view";
-import React, { MutableRefObject, useContext, useRef } from "react";
+import React, { useContext, useRef } from "react";
 
 import { ChildDescriptorsContext } from "../contexts/ChildDescriptorsContext.js";
 import { useClientLayoutEffect } from "../hooks/useClientLayoutEffect.js";
@@ -8,7 +8,7 @@ import { WidgetViewDesc, sortViewDescs } from "../viewdesc.js";
 
 type Props = {
   widget: Decoration;
-  getPos: MutableRefObject<() => number>;
+  getPos: () => number;
 };
 
 export function NativeWidgetView({ widget, getPos }: Props) {
@@ -35,8 +35,7 @@ export function NativeWidgetView({ widget, getPos }: Props) {
     const toDOM = (widget as any).type.toDOM as
       | HTMLElement
       | ((view: EditorView, getPos: () => number) => HTMLElement);
-    let dom =
-      typeof toDOM === "function" ? toDOM(view, () => getPos.current()) : toDOM;
+    let dom = typeof toDOM === "function" ? toDOM(view, getPos) : toDOM;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if (!(widget as any).type.spec.raw) {
       if (dom.nodeType != 1) {
@@ -58,14 +57,13 @@ export function NativeWidgetView({ widget, getPos }: Props) {
     if (!viewDescRef.current) {
       viewDescRef.current = new WidgetViewDesc(
         parentRef.current,
-        () => getPos.current(),
+        getPos,
         widget,
         rootDomRef.current
       );
     } else {
       viewDescRef.current.parent = parentRef.current;
       viewDescRef.current.widget = widget;
-      viewDescRef.current.getPos = () => getPos.current();
       viewDescRef.current.dom = rootDomRef.current;
     }
     if (!siblingsRef.current.includes(viewDescRef.current)) {

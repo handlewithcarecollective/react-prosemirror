@@ -51,7 +51,7 @@ function shallowEqual(
 type Props = {
   view: AbstractEditorView;
   node: Node;
-  getPos: MutableRefObject<() => number>;
+  getPos: () => number;
   siblingsRef: MutableRefObject<ViewDesc[]>;
   parentRef: MutableRefObject<ViewDesc | undefined>;
   decorations: readonly Decoration[];
@@ -76,7 +76,7 @@ export class TextNodeView extends Component<Props> {
 
       this.viewDescRef = new CompositionViewDesc(
         parentRef.current,
-        () => getPos.current(),
+        getPos,
         // These are just placeholders/dummies. We can't
         // actually find the correct DOM nodes from here,
         // so we let our parent do it.
@@ -99,7 +99,7 @@ export class TextNodeView extends Component<Props> {
       this.viewDescRef = new TextViewDesc(
         undefined,
         [],
-        () => getPos.current(),
+        getPos,
         node,
         decorations,
         DecorationSet.empty,
@@ -110,7 +110,6 @@ export class TextNodeView extends Component<Props> {
       this.viewDescRef.parent = parentRef.current;
       this.viewDescRef.children = [];
       this.viewDescRef.node = node;
-      this.viewDescRef.getPos = () => getPos.current();
       this.viewDescRef.outerDeco = decorations;
       this.viewDescRef.innerDeco = DecorationSet.empty;
       this.viewDescRef.dom = dom;
@@ -156,8 +155,8 @@ export class TextNodeView extends Component<Props> {
     // interrupt the composition
     if (
       view.composing &&
-      view.state.selection.from >= getPos.current() &&
-      view.state.selection.from <= getPos.current() + node.nodeSize
+      view.state.selection.from >= getPos() &&
+      view.state.selection.from <= getPos() + node.nodeSize
     ) {
       return this.renderRef;
     }
