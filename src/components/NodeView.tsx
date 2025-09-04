@@ -4,7 +4,7 @@ import {
   DecorationSource,
   NodeViewConstructor,
 } from "prosemirror-view";
-import React, { MutableRefObject, memo, useContext } from "react";
+import React, { memo, useContext } from "react";
 
 import { EditorContext } from "../contexts/EditorContext.js";
 
@@ -13,7 +13,7 @@ import { ReactNodeView } from "./ReactNodeView.js";
 
 type NodeViewProps = {
   outerDeco: readonly Decoration[];
-  getPos: MutableRefObject<() => number>;
+  getPos: () => number;
   node: Node;
   innerDeco: DecorationSource;
 };

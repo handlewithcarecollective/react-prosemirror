@@ -1,4 +1,4 @@
-import React, { MutableRefObject, useContext, useRef, useState } from "react";
+import React, { useContext, useRef, useState } from "react";
 
 import { browser } from "../browser.js";
 import { ChildDescriptorsContext } from "../contexts/ChildDescriptorsContext.js";
@@ -6,7 +6,7 @@ import { useClientLayoutEffect } from "../hooks/useClientLayoutEffect.js";
 import { TrailingHackViewDesc, sortViewDescs } from "../viewdesc.js";
 
 type Props = {
-  getPos: MutableRefObject<() => number>;
+  getPos: () => number;
 };
 
 export function SeparatorHackView({ getPos }: Props) {
@@ -45,14 +45,13 @@ export function SeparatorHackView({ getPos }: Props) {
       viewDescRef.current = new TrailingHackViewDesc(
         parentRef.current,
         [],
-        () => getPos.current(),
+        getPos,
         ref.current,
         null
       );
     } else {
       viewDescRef.current.parent = parentRef.current;
       viewDescRef.current.dom = ref.current;
-      viewDescRef.current.getPos = () => getPos.current();
     }
     if (!siblingsRef.current.includes(viewDescRef.current)) {
       siblingsRef.current.push(viewDescRef.current);

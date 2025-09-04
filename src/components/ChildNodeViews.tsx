@@ -1,11 +1,12 @@
 import { Mark, Node } from "prosemirror-model";
 import { Decoration, DecorationSource } from "prosemirror-view";
 import React, {
-  MutableRefObject,
+  ComponentType,
   ReactNode,
   cloneElement,
   createElement,
   memo,
+  useCallback,
   useContext,
   useRef,
 } from "react";
@@ -95,13 +96,23 @@ type ChildNode = {
   innerDeco: DecorationSource;
   outerDeco: readonly Decoration[];
   offset: number;
+  index: number;
   key: string;
 };
 
-type Child = ChildNode | ChildWidget | ChildNativeWidget;
+type ChildHack = {
+  type: "hack";
+  component: ComponentType<{ getPos: () => number }>;
+  marks: readonly Mark[];
+  offset: number;
+  index: number;
+  key: string;
+};
+
+type Child = ChildNode | ChildWidget | ChildNativeWidget | ChildHack;
 
 type SharedMarksProps = {
-  getInnerPos: MutableRefObject<() => number>;
+  getInnerPos: () => number;
   childViews: Child[];
 };
 
@@ -110,31 +121,34 @@ const ChildView = memo(function ChildView({
   getInnerPos,
 }: {
   child: Child;
-  getInnerPos: MutableRefObject<() => number>;
+  getInnerPos: () => number;
 }) {
   const { view } = useContext(EditorContext);
-  const getChildPos = useRef(() => getInnerPos.current() + child.offset);
-  getChildPos.current = () => getInnerPos.current() + child.offset;
+
+  const childRef = useRef<Child>(child);
+  childRef.current = child;
+
+  const getPos = useCallback(() => {
+    return getInnerPos() + childRef.current.offset;
+  }, [getInnerPos]);
 
   return child.type === "widget" ? (
     <WidgetView
       key={child.key}
       widget={child.widget as unknown as ReactWidgetDecoration}
-      getPos={getChildPos}
+      getPos={getPos}
     />
   ) : child.type === "native-widget" ? (
-    <NativeWidgetView
-      key={child.key}
-      widget={child.widget}
-      getPos={getChildPos}
-    />
+    <NativeWidgetView key={child.key} widget={child.widget} getPos={getPos} />
+  ) : child.type === "hack" ? (
+    <child.component key={child.key} getPos={getPos} />
   ) : child.node.isText ? (
     <ChildDescriptorsContext.Consumer key={child.key}>
       {({ siblingsRef, parentRef }) => (
         <TextNodeView
           view={view}
           node={child.node}
-          getPos={getChildPos}
+          getPos={getPos}
           siblingsRef={siblingsRef}
           parentRef={parentRef}
           decorations={child.outerDeco}
@@ -145,7 +159,7 @@ const ChildView = memo(function ChildView({
     <NodeView
       key={child.key}
       node={child.node}
-      getPos={getChildPos}
+      getPos={getPos}
       outerDeco={child.outerDeco}
       innerDeco={child.innerDeco}
     />
@@ -157,13 +171,15 @@ const InlinePartition = memo(function InlinePartition({
   getInnerPos,
 }: {
   childViews: [Child, ...Child[]];
-  getInnerPos: MutableRefObject<() => number>;
+  getInnerPos: () => number;
 }) {
   const firstChild = childViews[0];
-  const getFirstChildPos = useRef(
-    () => getInnerPos.current() + firstChild.offset
-  );
-  getFirstChildPos.current = () => getInnerPos.current() + firstChild.offset;
+  const firstChildRef = useRef(firstChild);
+  firstChildRef.current = firstChild;
+
+  const getPos = useCallback(() => {
+    return getInnerPos() + firstChildRef.current.offset;
+  }, [getInnerPos]);
 
   const firstMark = firstChild.marks[0];
   if (!firstMark) {
@@ -183,7 +199,7 @@ const InlinePartition = memo(function InlinePartition({
   }
 
   return (
-    <MarkView getPos={getFirstChildPos} key={firstChild.key} mark={firstMark}>
+    <MarkView key={firstChild.key} mark={firstMark} getPos={getPos}>
       <InlineView
         key={firstChild.key}
         getInnerPos={getInnerPos}
@@ -247,10 +263,10 @@ const InlineView = memo(function InlineView({
 function createKey(
   innerPos: number,
   offset: number,
+  index: number,
   type: Child["type"],
   posToKey: Map<number, string> | undefined,
-  widget?: ReactWidgetDecoration | Decoration,
-  index?: number
+  widget?: ReactWidgetDecoration | Decoration
 ) {
   const pos = innerPos + offset;
   const key = posToKey?.get(pos);
@@ -337,15 +353,19 @@ const ChildElement = memo(
     getInnerPos,
   }: {
     child: Child;
-    getInnerPos: MutableRefObject<() => number>;
+    getInnerPos: () => number;
   }) {
-    const getNodePos = useRef(() => getInnerPos.current() + child.offset);
-    getNodePos.current = () => getInnerPos.current() + child.offset;
+    const childRef = useRef<Child>(child);
+    childRef.current = child;
+
+    const getPos = useCallback(() => {
+      return getInnerPos() + childRef.current.offset;
+    }, [getInnerPos]);
 
     if (child.type === "node") {
       return child.marks.reduce(
         (element, mark) => (
-          <MarkView getPos={getNodePos} mark={mark}>
+          <MarkView mark={mark} getPos={getPos}>
             {element}
           </MarkView>
         ),
@@ -354,7 +374,7 @@ const ChildElement = memo(
           outerDeco={child.outerDeco}
           node={child.node}
           innerDeco={child.innerDeco}
-          getPos={getNodePos}
+          getPos={getPos}
         />
       );
     } else {
@@ -378,7 +398,7 @@ const ChildElement = memo(
 
 function createChildElements(
   children: Child[],
-  getInnerPos: MutableRefObject<() => number>
+  getInnerPos: () => number
 ): ReactNode[] {
   if (!children.length) return [];
 
@@ -405,13 +425,13 @@ export const ChildNodeViews = memo(function ChildNodeViews({
   node,
   innerDecorations,
 }: {
-  getPos: MutableRefObject<() => number>;
+  getPos: () => number;
   node: Node | undefined;
   innerDecorations: DecorationSource;
 }) {
   const reactKeys = useReactKeys();
 
-  const getInnerPos = useRef(() => getPos.current() + 1);
+  const getInnerPos = useCallback(() => getPos() + 1, [getPos]);
 
   const childMap = useRef(new Map<string, Child>()).current;
 
@@ -431,12 +451,12 @@ export const ChildNodeViews = memo(function ChildNodeViews({
       let key;
       if (isNative) {
         key = createKey(
-          getInnerPos.current(),
+          getInnerPos(),
           offset,
+          index,
           "native-widget",
           reactKeys?.posToKey,
-          widget,
-          index
+          widget
         );
         const child = {
           type: "native-widget",
@@ -455,12 +475,12 @@ export const ChildNodeViews = memo(function ChildNodeViews({
         keysSeen.set(key, keysSeen.size);
       } else {
         key = createKey(
-          getInnerPos.current(),
+          getInnerPos(),
           offset,
+          index,
           "widget",
           reactKeys?.posToKey,
-          widget,
-          index
+          widget
         );
         const child = {
           type: "widget",
@@ -485,10 +505,11 @@ export const ChildNodeViews = memo(function ChildNodeViews({
         childMap.get(key) as ChildWidget | ChildNativeWidget
       );
     },
-    (childNode, outerDeco, innerDeco, offset) => {
+    (childNode, outerDeco, innerDeco, offset, index) => {
       const key = createKey(
-        getInnerPos.current(),
+        getInnerPos(),
         offset,
+        index,
         "node",
         reactKeys?.posToKey
       );
@@ -499,6 +520,7 @@ export const ChildNodeViews = memo(function ChildNodeViews({
         innerDeco,
         outerDeco,
         offset,
+        index,
         key,
       } as const;
       const prevChild = childMap.get(key);
@@ -528,8 +550,6 @@ export const ChildNodeViews = memo(function ChildNodeViews({
     (a, b) => keysSeen.get(a.key)! - keysSeen.get(b.key)!
   );
 
-  const childElements = createChildElements(children, getInnerPos);
-
   if (node.isTextblock) {
     const lastChild = children[children.length - 1];
 
@@ -541,12 +561,28 @@ export const ChildNodeViews = memo(function ChildNodeViews({
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       /\n$/.test(lastChild.node.text!)
     ) {
-      childElements.push(
-        <SeparatorHackView getPos={getInnerPos} key="trailing-hack-img" />,
-        <TrailingHackView getPos={getInnerPos} key="trailing-hack-br" />
+      children.push(
+        {
+          type: "hack",
+          component: TrailingHackView,
+          marks: [],
+          offset: lastChild?.offset ?? 0,
+          index: (lastChild?.index ?? 0) + 1,
+          key: "trailing-hack-br",
+        },
+        {
+          type: "hack",
+          component: SeparatorHackView,
+          marks: [],
+          offset: lastChild?.offset ?? 0,
+          index: (lastChild?.index ?? 0) + 2,
+          key: "trailing-hack-img",
+        }
       );
     }
   }
+
+  const childElements = createChildElements(children, getInnerPos);
 
   return <>{childElements}</>;
 });

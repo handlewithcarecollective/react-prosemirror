@@ -6,7 +6,6 @@ import {
   NodeView as NodeViewT,
 } from "prosemirror-view";
 import React, {
-  MutableRefObject,
   cloneElement,
   createElement,
   memo,
@@ -29,7 +28,7 @@ import { ChildNodeViews, wrapInDeco } from "./ChildNodeViews.js";
 interface Props {
   customNodeView: NodeViewConstructor;
   node: Node;
-  getPos: MutableRefObject<() => number>;
+  getPos: () => number;
   innerDeco: DecorationSource;
   outerDeco: readonly Decoration[];
 }
@@ -49,7 +48,6 @@ export const CustomNodeView = memo(function CustomNodeView({
   const domRef = useRef<HTMLElement | null>(null);
   const nodeDomRef = useRef<HTMLElement | null>(null);
   const contentDomRef = useRef<HTMLElement | null>(null);
-  const getPosFunc = useRef(() => getPos.current()).current;
 
   const nodeRef = useRef(node);
   nodeRef.current = node;
@@ -74,7 +72,7 @@ export const CustomNodeView = memo(function CustomNodeView({
       customNodeViewRef.current = customNodeView(
         nodeRef.current,
         view,
-        getPosFunc,
+        getPos,
         outerDecoRef.current,
         innerDecoRef.current
       );
@@ -129,7 +127,7 @@ export const CustomNodeView = memo(function CustomNodeView({
     // _has_ to be called after this hook, so that the effects run
     // in the correct order
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [customNodeView, getPosFunc, view]);
+  }, [customNodeView, getPos, view]);
 
   useClientLayoutEffect(() => {
     if (!customNodeView || !customNodeViewRef.current) return;
@@ -148,14 +146,14 @@ export const CustomNodeView = memo(function CustomNodeView({
     customNodeViewRef.current = customNodeView(
       nodeRef.current,
       view,
-      getPosFunc,
+      getPos,
       outerDecoRef.current,
       innerDecoRef.current
     );
     const { dom } = customNodeViewRef.current;
     nodeDomRef.current = customNodeViewRootRef.current;
     customNodeViewRootRef.current.appendChild(dom);
-  }, [customNodeView, view, innerDeco, node, outerDeco, getPos, getPosFunc]);
+  }, [customNodeView, view, innerDeco, node, outerDeco, getPos]);
 
   const {
     childDescriptors,
@@ -165,7 +163,7 @@ export const CustomNodeView = memo(function CustomNodeView({
     setIgnoreMutation,
   } = useNodeViewDescriptor(
     node,
-    getPosFunc,
+    getPos,
     domRef,
     nodeDomRef,
     innerDeco,
@@ -192,7 +190,7 @@ export const CustomNodeView = memo(function CustomNodeView({
     customNodeViewRef.current = customNodeView(
       nodeRef.current,
       view,
-      () => getPos.current(),
+      getPos,
       outerDecoRef.current,
       innerDecoRef.current
     );
