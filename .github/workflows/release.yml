@@ -8,6 +8,10 @@ on:
 
 jobs:
   release:
+    permissions:
+      contents: write
+      id-token: write
+
     runs-on: ubuntu-latest
 
     steps:
@@ -20,10 +24,6 @@ jobs:
 
   publish:
     runs-on: ubuntu-latest
-
-    permissions:
-      contents: write
-      id-token: write
 
     steps:
       - uses: actions/checkout@v3
