@@ -51,6 +51,7 @@ jobs:
 
     permissions:
       contents: write
+      actions: write
 
     steps:
       - uses: actions/checkout@v3
@@ -66,6 +67,9 @@ jobs:
           PACKAGE_VERSION=$(node -p -e "require('./package.json').version")
           ./scripts/if-version-change.sh git tag v${PACKAGE_VERSION}
           git push origin tag v${PACKAGE_VERSION}
+          gh workflow run release --ref v${PACKAGE_VERSION}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   test:
     runs-on: ubuntu-latest
