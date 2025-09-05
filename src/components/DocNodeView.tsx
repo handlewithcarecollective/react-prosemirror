@@ -62,7 +62,8 @@ export const DocNodeView = memo(
       innerRef,
       innerRef,
       innerDeco,
-      outerDeco
+      outerDeco,
+      innerRef
     );
 
     const childContextValue = useMemo(
