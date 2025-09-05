@@ -105,7 +105,7 @@ export function useNodeViewDescriptor(
         outerDecorations,
         innerDecorations,
         domRef?.current ?? nodeDomRef.current,
-        firstChildDesc?.dom.parentElement ?? null,
+        contentDOMRef?.current ?? firstChildDesc?.dom.parentElement ?? null,
         nodeDomRef.current,
         (event) => !!stopEvent.current(event),
         () => selectNode.current(),
