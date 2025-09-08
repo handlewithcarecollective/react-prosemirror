@@ -130,9 +130,7 @@ export function beforeInputPlugin(
               // We want to prevent that hack, because we run the Enter event handlers
               // here, where there is no such bug. So we set this flag, which prosemirror-view
               // uses to check whether it should run the deferred event handlers.
-              if (view instanceof ReactEditorView) {
-                view.input.lastIOSEnter = 0;
-              }
+              (view as ReactEditorView).input.lastIOSEnter = 0;
 
               // Fire a synthetic keydown event to trigger ProseMirror's keymap
               const keyEvent = new KeyboardEvent("keydown", {
