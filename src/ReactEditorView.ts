@@ -46,7 +46,7 @@ interface InputState {
   compositionID: number;
   compositionNodes: ViewDesc[];
   compositionPendingChanges: number;
-  lastFocus: number;
+  hideSelectionGuard: (() => void) | null;
   lastClick: {
     time: number;
     x: number;
@@ -54,6 +54,8 @@ interface InputState {
     type: string;
     button: number;
   };
+  lastFocus: number;
+  lastIOSEnter: number;
   lastSelectionOrigin: string | null;
   lastSelectionTime: number;
   lastTouch: number;
@@ -61,7 +63,6 @@ interface InputState {
     allowDefault: boolean;
     delayedSelectionSync: boolean;
   };
-  hideSelectionGuard: (() => void) | null;
 }
 
 /**

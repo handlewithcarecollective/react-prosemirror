@@ -2,6 +2,7 @@ import { Mark } from "prosemirror-model";
 import { Plugin } from "prosemirror-state";
 import { Decoration, EditorView } from "prosemirror-view";
 
+import { ReactEditorView } from "../ReactEditorView.js";
 import { CursorWrapper } from "../components/CursorWrapper.js";
 import { widget } from "../decorations/ReactWidgetType.js";
 import { DOMNode } from "../dom.js";
@@ -122,6 +123,15 @@ export function beforeInputPlugin(
           switch (event.inputType) {
             case "insertParagraph":
             case "insertLineBreak": {
+              // ProseMirror-view has a hack that runs the Enter event handlers
+              // on iOS, to avoid a bug in Safari with calling event.preventDefault() on
+              // Enter events.
+              //
+              // We want to prevent that hack, because we run the Enter event handlers
+              // here, where there is no such bug. So we set this flag, which prosemirror-view
+              // uses to check whether it should run the deferred event handlers.
+              (view as ReactEditorView).input.lastIOSEnter = 0;
+
               // Fire a synthetic keydown event to trigger ProseMirror's keymap
               const keyEvent = new KeyboardEvent("keydown", {
                 bubbles: true,
