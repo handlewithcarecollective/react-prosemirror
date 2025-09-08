@@ -62,6 +62,7 @@ interface InputState {
     delayedSelectionSync: boolean;
   };
   hideSelectionGuard: (() => void) | null;
+  lastIOSEnter: number;
 }
 
 /**
