@@ -2,10 +2,10 @@ import { Mark } from "prosemirror-model";
 import { Plugin } from "prosemirror-state";
 import { Decoration, EditorView } from "prosemirror-view";
 
+import { ReactEditorView } from "../ReactEditorView.js";
 import { CursorWrapper } from "../components/CursorWrapper.js";
 import { widget } from "../decorations/ReactWidgetType.js";
 import { DOMNode } from "../dom.js";
-import { ReactEditorView } from "../ReactEditorView.js";
 
 function insertText(
   view: EditorView,
