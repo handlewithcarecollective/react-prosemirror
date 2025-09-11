@@ -85,25 +85,21 @@ export const ReactNodeView = memo(function ReactNodeView({
     [getPos, innerDeco, node, outerDeco]
   );
 
+  const children = !node.isLeaf ? (
+    <ChildNodeViews getPos={getPos} node={node} innerDecorations={innerDeco} />
+  ) : null;
+
   if (Component) {
     element = (
       <Component {...finalProps} ref={nodeDomRef} nodeProps={nodeProps}>
-        <ChildNodeViews
-          getPos={getPos}
-          node={node}
-          innerDecorations={innerDeco}
-        />
+        {children}
       </Component>
     );
   } else {
     if (outputSpec) {
       element = (
         <OutputSpec {...finalProps} ref={nodeDomRef} outputSpec={outputSpec}>
-          <ChildNodeViews
-            getPos={getPos}
-            node={node}
-            innerDecorations={innerDeco}
-          />
+          {children}
         </OutputSpec>
       );
     }

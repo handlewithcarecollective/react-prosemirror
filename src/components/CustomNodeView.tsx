@@ -216,6 +216,19 @@ export const CustomNodeView = memo(function CustomNodeView({
   }
   const { contentDOM } = customNodeViewRef.current;
   contentDomRef.current = contentDOM ?? null;
+
+  const children =
+    !node.isLeaf && contentDOM
+      ? createPortal(
+          <ChildNodeViews
+            getPos={getPos}
+            node={node}
+            innerDecorations={innerDeco}
+          />,
+          contentDOM
+        )
+      : null;
+
   const element = createElement(
     node.isInline ? "span" : "div",
     {
@@ -223,15 +236,7 @@ export const CustomNodeView = memo(function CustomNodeView({
       contentEditable: !!contentDOM,
       suppressContentEditableWarning: true,
     },
-    contentDOM &&
-      createPortal(
-        <ChildNodeViews
-          getPos={getPos}
-          node={node}
-          innerDecorations={innerDeco}
-        />,
-        contentDOM
-      )
+    children
   );
 
   const decoratedElement = cloneElement(
