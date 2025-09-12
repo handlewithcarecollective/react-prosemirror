@@ -42,7 +42,7 @@ export function useEditor<T extends HTMLElement = HTMLElement>(
       !didWarnValueDefaultValue
     ) {
       console.error(
-        "A component contains a ProseMirror editor with both value and defaultValue props. " +
+        "A component contains a ProseMirror editor with both state and defaultState props. " +
           "ProseMirror editors must be either controlled or uncontrolled " +
           "(specify either the state prop, or the defaultState prop, but not both). " +
           "Decide between using a controlled or uncontrolled ProseMirror editor " +
