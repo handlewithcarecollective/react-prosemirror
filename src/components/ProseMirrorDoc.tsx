@@ -1,73 +1,34 @@
+import { Node } from "prosemirror-model";
+import { Decoration, DecorationSource } from "prosemirror-view";
 import React, {
-  DetailedHTMLProps,
-  ForwardedRef,
-  HTMLAttributes,
+  HTMLProps,
   ReactElement,
   createContext,
   forwardRef,
   useContext,
-  useImperativeHandle,
-  useMemo,
-  useRef,
 } from "react";
 
-import { ChildDescriptorsContext } from "../contexts/ChildDescriptorsContext.js";
-import { ViewDesc } from "../viewdesc.js";
+import { DocNodeView } from "./DocNodeView.js";
 
-import { DocNodeView, DocNodeViewProps } from "./DocNodeView.js";
-
-type DocNodeViewContextValue = Omit<DocNodeViewProps, "as"> & {
+interface DocNodeViewContextValue {
+  node: Node;
+  getPos: () => number;
+  decorations: readonly Decoration[];
+  innerDecorations: DecorationSource;
   setMount: (mount: HTMLElement | null) => void;
-};
+}
 
 export const DocNodeViewContext = createContext<DocNodeViewContextValue>(
   null as unknown as DocNodeViewContextValue
 );
 
-type Props = {
+interface Props extends Omit<HTMLProps<HTMLElement>, "as"> {
   as?: ReactElement;
-} & Omit<DetailedHTMLProps<HTMLAttributes<HTMLElement>, HTMLDivElement>, "ref">;
-
-function ProseMirrorDoc(
-  { as, ...props }: Props,
-  ref: ForwardedRef<HTMLDivElement | null>
-) {
-  const childDescriptors = useRef<ViewDesc[]>([]);
-  const innerRef = useRef<HTMLDivElement | null>(null);
-  const { setMount, ...docProps } = useContext(DocNodeViewContext);
-  const viewDescRef = useRef(undefined);
-
-  useImperativeHandle<HTMLDivElement | null, HTMLDivElement | null>(
-    ref,
-    () => {
-      return innerRef.current;
-    },
-    []
-  );
-
-  const childContextValue = useMemo(
-    () => ({
-      parentRef: viewDescRef,
-      siblingsRef: childDescriptors,
-    }),
-    [childDescriptors, viewDescRef]
-  );
-
-  return (
-    <ChildDescriptorsContext.Provider value={childContextValue}>
-      <DocNodeView
-        ref={(el) => {
-          innerRef.current = el;
-          setMount(el);
-        }}
-        {...props}
-        {...docProps}
-        as={as}
-      />
-    </ChildDescriptorsContext.Provider>
-  );
 }
 
-const ForwardedProseMirrorDoc = forwardRef(ProseMirrorDoc);
-
-export { ForwardedProseMirrorDoc as ProseMirrorDoc };
+export const ProseMirrorDoc = forwardRef<HTMLElement, Props>(
+  function ProseMirrorDoc({ as, ...props }, ref) {
+    const docProps = useContext(DocNodeViewContext);
+    return <DocNodeView ref={ref} {...props} {...docProps} as={as} />;
+  }
+);

@@ -1,7 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { Fragment, Mark, Node, TagParseRule } from "prosemirror-model";
-import { Decoration, DecorationSource } from "prosemirror-view";
+import {
+  Decoration,
+  DecorationSource,
+  EditorView,
+  NodeView,
+} from "prosemirror-view";
 
 import { ReactEditorView } from "./ReactEditorView.js";
 import { browser } from "./browser.js";
@@ -117,7 +122,9 @@ export class ViewDesc {
   }
 
   destroy() {
-    // pass
+    this.parent = undefined;
+    if (this.dom.pmViewDesc == this) this.dom.pmViewDesc = undefined;
+    for (let i = 0; i < this.children.length; i++) this.children[i]!.destroy();
   }
 
   posBeforeChild(child: ViewDesc): number {
@@ -815,17 +822,9 @@ export class NodeViewDesc extends ViewDesc {
     public innerDeco: DecorationSource,
     dom: DOMNode,
     contentDOM: HTMLElement | null,
-    public nodeDOM: DOMNode,
-    public stopEvent: (event: Event) => boolean,
-    public selectNode: () => void,
-    public deselectNode: () => void,
-    public ignoreMutation: (mutation: ViewMutationRecord) => boolean
+    public nodeDOM: DOMNode
   ) {
     super(parent, children, getPos, dom, contentDOM);
-  }
-
-  updateOuterDeco() {
-    // pass
   }
 
   parseRule() {
@@ -883,16 +882,58 @@ export class NodeViewDesc extends ViewDesc {
     return this.node.isLeaf ? 0 : 1;
   }
 
+  updateChildren(_view: EditorView, _pos: number) {
+    // Omitted to avoid reproducing lots of unused code.
+    // Overidden elsewhere in case this is ever vendored.
+  }
+
   // If this desc must be updated to match the given node decoration,
   // do so and return true.
   update(
-    _node: Node,
-    _outerDeco: readonly Decoration[],
-    _innerDeco: DecorationSource,
-    _view: ReactEditorView
+    node: Node,
+    outerDeco: readonly Decoration[],
+    innerDeco: DecorationSource,
+    view: EditorView
   ) {
-    this.dirty = NOT_DIRTY;
+    if (this.dirty == NODE_DIRTY || !node.sameMarkup(this.node)) return false;
+    this.updateInner(node, outerDeco, innerDeco, view);
     return true;
+  }
+
+  updateInner(
+    node: Node,
+    outerDeco: readonly Decoration[],
+    innerDeco: DecorationSource,
+    view: EditorView
+  ) {
+    this.updateOuterDeco(outerDeco);
+    this.node = node;
+    this.innerDeco = innerDeco;
+    if (this.contentDOM) this.updateChildren(view, this.posAtStart);
+    this.dirty = NOT_DIRTY;
+  }
+
+  updateOuterDeco(outerDeco: readonly Decoration[]) {
+    this.outerDeco = outerDeco;
+  }
+
+  // Mark this node as being the selected node.
+  selectNode() {
+    if (this.nodeDOM.nodeType == 1)
+      (this.nodeDOM as HTMLElement).classList.add("ProseMirror-selectednode");
+    if (this.contentDOM || !this.node.type.spec.draggable)
+      (this.dom as HTMLElement).draggable = true;
+  }
+
+  // Remove selected node marking from this node.
+  deselectNode() {
+    if (this.nodeDOM.nodeType == 1) {
+      (this.nodeDOM as HTMLElement).classList.remove(
+        "ProseMirror-selectednode"
+      );
+      if (this.contentDOM || !this.node.type.spec.draggable)
+        (this.dom as HTMLElement).removeAttribute("draggable");
+    }
   }
 
   get domAtom() {
@@ -920,17 +961,7 @@ export class TextViewDesc extends NodeViewDesc {
       innerDeco,
       dom,
       null,
-      nodeDOM,
-      () => false,
-      () => {
-        /* Text nodes can't have node selections */
-      },
-      () => {
-        /* Text nodes can't have node selections */
-      },
-      (mutation) => {
-        return mutation.type != "characterData" && mutation.type != "selection";
-      }
+      nodeDOM
     );
   }
 
@@ -996,6 +1027,111 @@ export class TrailingHackViewDesc extends ViewDesc {
   }
   get ignoreForCoords() {
     return this.dom.nodeName == "IMG";
+  }
+}
+
+// A separate subclass is used for customized node views, so that the
+// extra checks only have to be made for nodes that are actually
+// customized.
+class CustomNodeViewDesc extends NodeViewDesc {
+  constructor(
+    parent: ViewDesc | undefined,
+    children: ViewDesc[],
+    getPos: () => number,
+    node: Node,
+    outerDeco: readonly Decoration[],
+    innerDeco: DecorationSource,
+    dom: DOMNode,
+    contentDOM: HTMLElement | null,
+    nodeDOM: DOMNode,
+    readonly spec: NodeView
+  ) {
+    super(
+      parent,
+      children,
+      getPos,
+      node,
+      outerDeco,
+      innerDeco,
+      dom,
+      contentDOM,
+      nodeDOM
+    );
+  }
+
+  // A custom `update` method gets to decide whether the update goes
+  // through. If it does, and there's a `contentDOM` node, our logic
+  // updates the children.
+  update(
+    node: Node,
+    outerDeco: readonly Decoration[],
+    innerDeco: DecorationSource,
+    view: EditorView
+  ) {
+    if (this.dirty == NODE_DIRTY) return false;
+    if (
+      this.spec.update &&
+      (this.node.type == node.type || this.spec.multiType)
+    ) {
+      const result = this.spec.update(node, outerDeco, innerDeco);
+      if (result) this.updateInner(node, outerDeco, innerDeco, view);
+      return result;
+    } else if (!this.contentDOM && !node.isLeaf) {
+      return false;
+    } else {
+      return super.update(node, outerDeco, innerDeco, view);
+    }
+  }
+
+  selectNode() {
+    this.spec.selectNode ? this.spec.selectNode() : super.selectNode();
+  }
+
+  deselectNode() {
+    this.spec.deselectNode ? this.spec.deselectNode() : super.deselectNode();
+  }
+
+  setSelection(
+    anchor: number,
+    head: number,
+    view: ReactEditorView,
+    force: boolean
+  ) {
+    this.spec.setSelection
+      ? this.spec.setSelection(anchor, head, view.root)
+      : super.setSelection(anchor, head, view, force);
+  }
+
+  destroy() {
+    if (this.spec.destroy) this.spec.destroy();
+    super.destroy();
+  }
+
+  stopEvent(event: Event) {
+    return this.spec.stopEvent ? this.spec.stopEvent(event) : false;
+  }
+
+  ignoreMutation(mutation: ViewMutationRecord) {
+    return this.spec.ignoreMutation
+      ? this.spec.ignoreMutation(mutation)
+      : super.ignoreMutation(mutation);
+  }
+}
+
+export class ReactNodeViewDesc extends CustomNodeViewDesc {
+  updateChildren(_view: EditorView, _pos: number) {
+    // React has already updated the children.
+  }
+
+  updateOuterDeco(outerDeco: readonly Decoration[]) {
+    // React has already updated the decorations.
+    this.outerDeco = outerDeco;
+  }
+
+  destroy() {
+    // React has already destroyed the children (if needed).
+    this.children = [];
+    super.destroy();
   }
 }
 

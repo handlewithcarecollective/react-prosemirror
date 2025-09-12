@@ -1,12 +1,7 @@
-// TODO: I must be missing something, but I do not know why
-// this linting rule is only broken in this file
-/* eslint-disable react/prop-types */
 import { Node } from "prosemirror-model";
 import { Decoration, DecorationSource } from "prosemirror-view";
 import React, {
-  DetailedHTMLProps,
-  ForwardedRef,
-  HTMLAttributes,
+  HTMLProps,
   ReactElement,
   cloneElement,
   createElement,
@@ -22,89 +17,77 @@ import { useNodeViewDescriptor } from "../hooks/useNodeViewDescriptor.js";
 
 import { ChildNodeViews, wrapInDeco } from "./ChildNodeViews.js";
 
-function getPos() {
-  return -1;
+export interface DocNodeViewProps extends Omit<HTMLProps<HTMLElement>, "as"> {
+  as?: ReactElement;
+  node: Node;
+  getPos: () => number;
+  decorations: readonly Decoration[];
+  innerDecorations: DecorationSource;
+  setMount: (mount: HTMLElement | null) => void;
 }
 
-export type DocNodeViewProps = {
-  className?: string;
-  node: Node;
-  innerDeco: DecorationSource;
-  outerDeco: Decoration[];
-  as?: ReactElement;
-} & Omit<DetailedHTMLProps<HTMLAttributes<HTMLElement>, HTMLDivElement>, "ref">;
-
 export const DocNodeView = memo(
-  forwardRef(function DocNodeView(
+  forwardRef<HTMLElement, DocNodeViewProps>(function DocNodeView(
     {
-      className,
-      node,
-      innerDeco,
-      outerDeco,
       as,
-      ...elementProps
-    }: DocNodeViewProps,
-    ref: ForwardedRef<HTMLDivElement | null>
-  ) {
-    const innerRef = useRef<HTMLDivElement | null>(null);
-
-    useImperativeHandle<HTMLDivElement | null, HTMLDivElement | null>(
-      ref,
-      () => {
-        return innerRef.current;
-      },
-      []
-    );
-
-    const { childDescriptors, nodeViewDescRef } = useNodeViewDescriptor(
       node,
       getPos,
-      innerRef,
-      innerRef,
-      innerDeco,
-      outerDeco,
-      innerRef
+      decorations,
+      innerDecorations,
+      setMount,
+      ...elementProps
+    },
+    ref
+  ) {
+    const innerRef = useRef<HTMLElement>(null);
+    useImperativeHandle(ref, () => innerRef.current as HTMLElement);
+    useImperativeHandle(setMount, () => innerRef.current as HTMLElement);
+
+    const nodeProps = useMemo(
+      () => ({
+        node,
+        getPos,
+        decorations,
+        innerDecorations,
+      }),
+      [node, getPos, decorations, innerDecorations]
     );
 
-    const childContextValue = useMemo(
-      () => ({
-        parentRef: nodeViewDescRef,
-        siblingsRef: childDescriptors,
-      }),
-      [childDescriptors, nodeViewDescRef]
+    const { childContextValue } = useNodeViewDescriptor(
+      innerRef,
+      () => {
+        const dom = innerRef.current as HTMLElement;
+        return {
+          dom,
+          contentDOM: dom,
+          update() {
+            return true;
+          },
+        };
+      },
+      nodeProps
+    );
+
+    const children = (
+      <ChildDescriptorsContext.Provider value={childContextValue}>
+        <ChildNodeViews
+          getPos={getPos}
+          node={node}
+          innerDecorations={innerDecorations}
+        />
+      </ChildDescriptorsContext.Provider>
     );
 
     const props = {
       ...elementProps,
-      ref: innerRef,
-      className,
       suppressContentEditableWarning: true,
-    };
+      ref: innerRef,
+    } satisfies HTMLProps<HTMLElement>;
 
     const element = as
-      ? cloneElement(
-          as,
-          props,
-          <ChildDescriptorsContext.Provider value={childContextValue}>
-            <ChildNodeViews
-              getPos={getPos}
-              node={node}
-              innerDecorations={innerDeco}
-            />
-          </ChildDescriptorsContext.Provider>
-        )
-      : createElement(
-          "div",
-          props,
-          <ChildDescriptorsContext.Provider value={childContextValue}>
-            <ChildNodeViews
-              getPos={getPos}
-              node={node}
-              innerDecorations={innerDeco}
-            />
-          </ChildDescriptorsContext.Provider>
-        );
+      ? cloneElement(as, props, children)
+      : createElement("div", props, children);
 
-    return outerDeco.reduce(wrapInDeco, element);
+    return nodeProps.decorations.reduce(wrapInDeco, element);
   })
 );

@@ -1,166 +1,183 @@
-import { Node } from "prosemirror-model";
-import {
-  Decoration,
-  DecorationSource,
-  ViewMutationRecord,
-} from "prosemirror-view";
-import {
-  MutableRefObject,
-  useCallback,
-  useContext,
-  useRef,
-  useState,
-} from "react";
+import { NodeViewConstructor } from "prosemirror-view";
+import { useCallback, useContext, useMemo, useRef, useState } from "react";
 
 import { ReactEditorView } from "../ReactEditorView.js";
+import { NodeViewComponentProps } from "../components/NodeViewComponentProps.js";
 import { ChildDescriptorsContext } from "../contexts/ChildDescriptorsContext.js";
 import { EditorContext } from "../contexts/EditorContext.js";
+import { DOMNode } from "../dom.js";
 import {
   CompositionViewDesc,
   NodeViewDesc,
+  ReactNodeViewDesc,
   ViewDesc,
   sortViewDescs,
 } from "../viewdesc.js";
 
 import { useClientLayoutEffect } from "./useClientLayoutEffect.js";
 
+function findContentDOM(
+  source: { contentDOM?: HTMLElement | null } | null,
+  children: ViewDesc[]
+) {
+  return source?.contentDOM ?? children[0]?.dom?.parentElement ?? null;
+}
+
+type Props = NodeViewComponentProps["nodeProps"];
+
 export function useNodeViewDescriptor(
-  node: Node,
-  getPos: () => number,
-  domRef: undefined | MutableRefObject<HTMLElement | null>,
-  nodeDomRef: MutableRefObject<HTMLElement | null>,
-  innerDecorations: DecorationSource,
-  outerDecorations: readonly Decoration[],
-  contentDOMRef?: MutableRefObject<HTMLElement | null>
+  ref: { readonly current: DOMNode | null },
+  createNodeView: NodeViewConstructor,
+  props: Props
 ) {
   const { view } = useContext(EditorContext);
-  const [hasContentDOM, setHasContentDOM] = useState(true);
-  const nodeViewDescRef = useRef<NodeViewDesc | undefined>();
-  const stopEvent = useRef<(event: Event) => boolean>(() => false);
-  const setStopEvent = useCallback(
-    (newStopEvent: (event: Event) => boolean) => {
-      const oldStopEvent = stopEvent.current;
-      stopEvent.current = newStopEvent;
-      return () => {
-        stopEvent.current = oldStopEvent;
-      };
-    },
-    []
-  );
-  const ignoreMutation = useRef<(mutation: ViewMutationRecord) => boolean>(
-    () => false
-  );
-  const setIgnoreMutation = useCallback(
-    (newIgnoreMutation: (mutation: ViewMutationRecord) => boolean) => {
-      const oldIgnoreMutation = ignoreMutation.current;
-      ignoreMutation.current = newIgnoreMutation;
-      return () => {
-        ignoreMutation.current = oldIgnoreMutation;
-      };
-    },
-    []
-  );
-  const selectNode = useRef<() => void>(() => {
-    if (!nodeDomRef.current) return;
-    if (nodeDomRef.current.nodeType == 1)
-      nodeDomRef.current.classList.add("ProseMirror-selectednode");
-    if (contentDOMRef?.current || !node.type.spec.draggable)
-      (domRef?.current ?? nodeDomRef.current).draggable = true;
-  });
-  const deselectNode = useRef<() => void>(() => {
-    if (!nodeDomRef.current) return;
-    if (nodeDomRef.current.nodeType == 1) {
-      (nodeDomRef.current as HTMLElement).classList.remove(
-        "ProseMirror-selectednode"
-      );
-      if (contentDOMRef?.current || !node.type.spec.draggable)
-        (domRef?.current ?? nodeDomRef.current).removeAttribute("draggable");
-    }
-  });
-  const setSelectNode = useCallback(
-    (newSelectNode: () => void, newDeselectNode: () => void) => {
-      const oldSelectNode = selectNode.current;
-      const oldDeselectNode = deselectNode.current;
-      selectNode.current = newSelectNode;
-      deselectNode.current = newDeselectNode;
-      return () => {
-        selectNode.current = oldSelectNode;
-        deselectNode.current = oldDeselectNode;
-      };
-    },
-    []
-  );
-  const { siblingsRef, parentRef } = useContext(ChildDescriptorsContext);
-  const childDescriptors = useRef<ViewDesc[]>([]);
+  const { parentRef, siblingsRef } = useContext(ChildDescriptorsContext);
 
-  useClientLayoutEffect(() => {
-    const siblings = siblingsRef.current;
-    return () => {
-      if (!nodeViewDescRef.current) return;
-      if (siblings.includes(nodeViewDescRef.current)) {
-        const index = siblings.indexOf(nodeViewDescRef.current);
-        siblings.splice(index, 1);
+  const [dom, setDOM] = useState<DOMNode | null>(null);
+  const [nodeDOM, setNodeDOM] = useState<DOMNode | null>(null);
+  const [contentDOM, setContentDOM] = useState<HTMLElement | null>(null);
+
+  const viewDescRef = useRef<NodeViewDesc | undefined>();
+  const childrenRef = useRef<ViewDesc[]>([]);
+
+  const create = useCallback(
+    (props: Props) => {
+      if (!(view instanceof ReactEditorView)) {
+        return;
       }
-    };
-  }, [siblingsRef]);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useClientLayoutEffect(() => {
-    if (!nodeDomRef.current) return;
+      const dom = ref.current;
+      if (!dom) {
+        return;
+      }
 
-    const firstChildDesc = childDescriptors.current[0];
+      const { node, getPos, decorations, innerDecorations } = props;
+      const nodeView = createNodeView(
+        node,
+        view,
+        getPos,
+        decorations,
+        innerDecorations
+      );
+      if (!nodeView) {
+        return;
+      }
 
-    if (!nodeViewDescRef.current) {
-      nodeViewDescRef.current = new NodeViewDesc(
-        parentRef.current,
-        childDescriptors.current,
+      const parent = parentRef.current;
+      const children = childrenRef.current;
+
+      const contentDOM = findContentDOM(nodeView, children);
+      const nodeDOM = nodeView.dom;
+
+      const viewDesc = new ReactNodeViewDesc(
+        parent,
+        children,
         getPos,
         node,
-        outerDecorations,
+        decorations,
         innerDecorations,
-        domRef?.current ?? nodeDomRef.current,
-        contentDOMRef?.current ?? firstChildDesc?.dom.parentElement ?? null,
-        nodeDomRef.current,
-        (event) => !!stopEvent.current(event),
-        () => selectNode.current(),
-        () => deselectNode.current(),
-        (mutation) => ignoreMutation.current(mutation)
+        dom,
+        contentDOM,
+        nodeDOM,
+        nodeView
       );
-    } else {
-      nodeViewDescRef.current.parent = parentRef.current;
-      nodeViewDescRef.current.children = childDescriptors.current;
-      nodeViewDescRef.current.node = node;
-      nodeViewDescRef.current.outerDeco = outerDecorations;
-      nodeViewDescRef.current.innerDeco = innerDecorations;
-      nodeViewDescRef.current.dom = domRef?.current ?? nodeDomRef.current;
-      nodeViewDescRef.current.dom.pmViewDesc = nodeViewDescRef.current;
-      nodeViewDescRef.current.contentDOM =
-        // If there's already a contentDOM, we can just
-        // keep it; it won't have changed. This is especially
-        // important during compositions, where the
-        // firstChildDesc might not have a correct dom node set yet.
-        contentDOMRef?.current ??
-        nodeViewDescRef.current.contentDOM ??
-        firstChildDesc?.dom.parentElement ??
-        null;
-      nodeViewDescRef.current.nodeDOM = nodeDomRef.current;
+
+      setDOM(dom);
+      setContentDOM(contentDOM);
+      setNodeDOM(nodeDOM);
+
+      return viewDesc;
+    },
+    [ref, parentRef, createNodeView, view]
+  );
+
+  const update = useCallback(
+    (props: Props) => {
+      if (!(view instanceof ReactEditorView)) {
+        return false;
+      }
+
+      const viewDesc = viewDescRef.current;
+      if (!viewDesc) {
+        return false;
+      }
+
+      const dom = ref.current;
+      if (!dom || dom !== viewDesc.dom) {
+        return false;
+      }
+
+      const contentDOM = findContentDOM(viewDesc, viewDesc.children);
+      if (contentDOM !== viewDesc.contentDOM) {
+        return false;
+      }
+
+      if (!dom.contains(viewDesc.nodeDOM)) {
+        return false;
+      }
+
+      const { node, decorations, innerDecorations } = props;
+      return (
+        viewDesc.matchesNode(node, decorations, innerDecorations) ||
+        viewDesc.update(node, decorations, innerDecorations, view)
+      );
+    },
+    [ref, view]
+  );
+
+  const destroy = useCallback(() => {
+    const viewDesc = viewDescRef.current;
+    if (!viewDesc) {
+      return;
     }
-    setHasContentDOM(nodeViewDescRef.current.contentDOM !== null);
 
-    if (!siblingsRef.current.includes(nodeViewDescRef.current)) {
-      siblingsRef.current.push(nodeViewDescRef.current);
+    viewDesc.destroy();
+
+    const siblings = siblingsRef.current;
+
+    if (siblings.includes(viewDesc)) {
+      const index = siblings.indexOf(viewDesc);
+      siblings.splice(index, 1);
     }
 
-    siblingsRef.current.sort(sortViewDescs);
+    setDOM(null);
+    setContentDOM(null);
+    setNodeDOM(null);
+  }, [siblingsRef]);
 
-    for (const childDesc of childDescriptors.current) {
-      childDesc.parent = nodeViewDescRef.current;
+  useClientLayoutEffect(() => {
+    if (!update(props)) {
+      destroy();
+      viewDescRef.current = create(props);
+    }
+
+    const viewDesc = viewDescRef.current;
+    if (!viewDesc) {
+      return;
+    }
+
+    if (view.dom === viewDesc.dom && view instanceof ReactEditorView) {
+      view.docView = viewDesc;
+    }
+
+    const parent = parentRef.current;
+    const siblings = siblingsRef.current;
+    const children = childrenRef.current;
+
+    viewDesc.parent = parent;
+
+    if (!siblings.includes(viewDesc)) {
+      siblings.push(viewDesc);
+    }
+    siblings.sort(sortViewDescs);
+
+    for (const child of children) {
+      child.parent = viewDesc;
 
       // Because TextNodeViews can't locate the DOM nodes
       // for compositions, we need to override them here
-      if (childDesc instanceof CompositionViewDesc) {
-        const compositionTopDOM =
-          nodeViewDescRef.current.contentDOM?.firstChild;
+      if (child instanceof CompositionViewDesc) {
+        const compositionTopDOM = viewDesc?.contentDOM?.firstChild;
         if (!compositionTopDOM)
           throw new Error(
             `Started a composition but couldn't find the text node it belongs to.`
@@ -176,35 +193,38 @@ export function useNodeViewDescriptor(
             `Started a composition but couldn't find the text node it belongs to.`
           );
 
-        childDesc.dom = compositionTopDOM;
-        childDesc.textDOM = textDOM;
-        childDesc.text = textDOM.data;
-        childDesc.textDOM.pmViewDesc = childDesc;
+        child.dom = compositionTopDOM;
+        child.textDOM = textDOM;
+        child.text = textDOM.data;
+        child.textDOM.pmViewDesc = child;
 
         // It should not be possible to be in a composition because one could
         // not start between the renders that switch the view type.
-        (view as ReactEditorView).input.compositionNodes.push(childDesc);
+        (view as ReactEditorView).input.compositionNodes.push(child);
       }
     }
-
-    return () => {
-      if (
-        nodeViewDescRef.current?.children[0] instanceof CompositionViewDesc &&
-        !view.composing
-      ) {
-        nodeViewDescRef.current?.children[0].dom.parentNode?.removeChild(
-          nodeViewDescRef.current?.children[0].dom
-        );
-      }
-    };
   });
 
+  useClientLayoutEffect(() => {
+    return () => {
+      destroy();
+      viewDescRef.current = undefined;
+    };
+  }, [destroy]);
+
+  const childContextValue = useMemo(
+    () => ({
+      parentRef: viewDescRef,
+      siblingsRef: childrenRef,
+    }),
+    [childrenRef, viewDescRef]
+  );
+
   return {
-    hasContentDOM,
-    childDescriptors,
-    nodeViewDescRef,
-    setStopEvent,
-    setSelectNode,
-    setIgnoreMutation,
+    childContextValue,
+    dom,
+    contentDOM,
+    nodeDOM,
+    ref,
   };
 }

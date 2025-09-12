@@ -2,25 +2,22 @@ import { Node } from "prosemirror-model";
 import {
   Decoration,
   DecorationSource,
+  NodeView,
   NodeViewConstructor,
-  NodeView as NodeViewT,
 } from "prosemirror-view";
 import React, {
   cloneElement,
   createElement,
   memo,
-  useContext,
   useMemo,
   useRef,
+  useState,
 } from "react";
 import { createPortal } from "react-dom";
 
 import { ReactEditorView } from "../ReactEditorView.js";
 import { ChildDescriptorsContext } from "../contexts/ChildDescriptorsContext.js";
-import { EditorContext } from "../contexts/EditorContext.js";
-import { useClientLayoutEffect } from "../hooks/useClientLayoutEffect.js";
-import { useClientOnly } from "../hooks/useClientOnly.js";
-import { useForceUpdate } from "../hooks/useForceUpdate.js";
+import { DOMNode } from "../dom.js";
 import { useNodeViewDescriptor } from "../hooks/useNodeViewDescriptor.js";
 
 import { ChildNodeViews, wrapInDeco } from "./ChildNodeViews.js";
@@ -40,219 +37,111 @@ export const CustomNodeView = memo(function CustomNodeView({
   innerDeco,
   outerDeco,
 }: Props) {
-  const editor = useContext(EditorContext);
+  const ref = useRef<HTMLElement>(null);
+  const innerRef = useRef<HTMLElement>(null);
 
-  // Only ReactEditorView supports custom node views.
-  const view = editor.view as ReactEditorView;
+  const [selected, setSelected] = useState(false);
 
-  const domRef = useRef<HTMLElement | null>(null);
-  const nodeDomRef = useRef<HTMLElement | null>(null);
-  const contentDomRef = useRef<HTMLElement | null>(null);
-
-  const nodeRef = useRef(node);
-  nodeRef.current = node;
-  const outerDecoRef = useRef(outerDeco);
-  outerDecoRef.current = outerDeco;
-  const innerDecoRef = useRef(innerDeco);
-  innerDecoRef.current = innerDeco;
-
-  const customNodeViewRootRef = useRef<HTMLDivElement | null>(null);
-  const customNodeViewRef = useRef<NodeViewT | null>(null);
-
-  const forceUpdate = useForceUpdate();
-
-  const isOnClient = useClientOnly();
-
-  // In Strict/Concurrent mode, layout effects can be destroyed/re-run
-  // independently of renders. We need to ensure that if the
-  // destructor that destroys the node view is called, we then recreate
-  // the node view when the layout effect is re-run.
-  useClientLayoutEffect(() => {
-    if (!customNodeViewRef.current) {
-      customNodeViewRef.current = customNodeView(
-        nodeRef.current,
-        view,
-        getPos,
-        outerDecoRef.current,
-        innerDecoRef.current
-      );
-      if (customNodeViewRef.current.stopEvent) {
-        setStopEvent(
-          customNodeViewRef.current.stopEvent.bind(customNodeViewRef.current)
-        );
-      }
-      if (customNodeViewRef.current.selectNode) {
-        setSelectNode(
-          customNodeViewRef.current.selectNode.bind(customNodeViewRef.current),
-          customNodeViewRef.current.deselectNode?.bind(
-            customNodeViewRef.current
-            // eslint-disable-next-line @typescript-eslint/no-empty-function
-          ) ?? (() => {})
-        );
-      }
-      if (customNodeViewRef.current.ignoreMutation) {
-        setIgnoreMutation(
-          customNodeViewRef.current.ignoreMutation.bind(
-            customNodeViewRef.current
-          )
-        );
-      }
-
-      // If we've reconstructed the nodeview, then we need to
-      // recreate the portal into its contentDOM, which happens
-      // during the render. So we need to trigger a re-render!
-      forceUpdate();
-    }
-
-    if (!customNodeViewRootRef.current) return;
-
-    const { dom } = customNodeViewRef.current;
-
-    if (customNodeViewRootRef.current.firstChild === dom) {
-      return;
-    }
-
-    nodeDomRef.current = customNodeViewRootRef.current;
-    customNodeViewRootRef.current.appendChild(dom);
-
-    const nodeView = customNodeViewRef.current;
-
-    return () => {
-      nodeView.destroy?.();
-      customNodeViewRef.current = null;
-    };
-    // setStopEvent, setSelectNodee, and setIgnoreMutation are all stable
-    // functions and don't need to be added to the dependencies. They also
-    // can't be, because they come from useNodeViewDescriptor, which
-    // _has_ to be called after this hook, so that the effects run
-    // in the correct order
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [customNodeView, getPos, view]);
-
-  useClientLayoutEffect(() => {
-    if (!customNodeView || !customNodeViewRef.current) return;
-
-    const { destroy, update } = customNodeViewRef.current;
-
-    const updated =
-      update?.call(customNodeViewRef.current, node, outerDeco, innerDeco) ??
-      true;
-    if (updated) return;
-
-    destroy?.call(customNodeViewRef.current);
-
-    if (!customNodeViewRootRef.current) return;
-
-    customNodeViewRef.current = customNodeView(
-      nodeRef.current,
-      view,
-      getPos,
-      outerDecoRef.current,
-      innerDecoRef.current
-    );
-    const { dom } = customNodeViewRef.current;
-    nodeDomRef.current = customNodeViewRootRef.current;
-    customNodeViewRootRef.current.appendChild(dom);
-  }, [customNodeView, view, innerDeco, node, outerDeco, getPos]);
-
-  const {
-    childDescriptors,
-    nodeViewDescRef,
-    setStopEvent,
-    setSelectNode,
-    setIgnoreMutation,
-  } = useNodeViewDescriptor(
-    node,
-    getPos,
-    domRef,
-    nodeDomRef,
-    innerDeco,
-    outerDeco,
-    contentDomRef
-  );
-
-  const childContextValue = useMemo(
+  const nodeProps = useMemo(
     () => ({
-      parentRef: nodeViewDescRef,
-      siblingsRef: childDescriptors,
+      node,
+      getPos,
+      decorations: outerDeco,
+      innerDecorations: innerDeco,
     }),
-    [childDescriptors, nodeViewDescRef]
+    [node, getPos, outerDeco, innerDeco]
   );
 
-  if (!isOnClient) return null;
+  const { childContextValue, contentDOM } = useNodeViewDescriptor(
+    ref,
+    (node, view, getPos, decorations, innerDecorations) => {
+      setSelected(false);
 
-  // In order to render the correct element with the correct
-  // props below, we have to call the customNodeView in the
-  // render function here. We only do this once, and the
-  // results are stored in a ref but not actually appended
-  // to the DOM until a client effect
-  if (!customNodeViewRef.current) {
-    customNodeViewRef.current = customNodeView(
-      nodeRef.current,
-      view,
-      getPos,
-      outerDecoRef.current,
-      innerDecoRef.current
-    );
-    if (customNodeViewRef.current.stopEvent) {
-      setStopEvent(
-        customNodeViewRef.current.stopEvent.bind(customNodeViewRef.current)
+      const nodeView = customNodeView(
+        node,
+        view as ReactEditorView,
+        getPos,
+        decorations,
+        innerDecorations
       );
-    }
-    if (customNodeViewRef.current.selectNode) {
-      setSelectNode(
-        customNodeViewRef.current.selectNode.bind(customNodeViewRef.current),
-        customNodeViewRef.current.deselectNode?.bind(
-          customNodeViewRef.current
-          // eslint-disable-next-line @typescript-eslint/no-empty-function
-        ) ?? (() => {})
-      );
-    }
-    if (customNodeViewRef.current.ignoreMutation) {
-      setIgnoreMutation(
-        customNodeViewRef.current.ignoreMutation.bind(customNodeViewRef.current)
-      );
-    }
-  }
-  const { contentDOM } = customNodeViewRef.current;
-  contentDomRef.current = contentDOM ?? null;
+
+      if (!nodeView || !nodeView.dom) {
+        return {} as NodeView;
+      }
+
+      const contentDOM = nodeView.contentDOM;
+      const nodeDOM = nodeView.dom;
+      const wrapperDOM = (innerRef.current ?? ref.current) as DOMNode;
+      wrapperDOM.appendChild(nodeDOM);
+
+      if (
+        !contentDOM &&
+        nodeDOM instanceof HTMLElement &&
+        nodeDOM.tagName !== "BR"
+      ) {
+        if (!nodeDOM.hasAttribute("contenteditable")) {
+          nodeDOM.contentEditable = "false";
+        }
+      }
+
+      return {
+        ...nodeView,
+        destroy() {
+          if (nodeView.destroy) {
+            nodeView.destroy();
+          }
+
+          wrapperDOM.removeChild(nodeDOM);
+        },
+        selectNode:
+          nodeView.selectNode?.bind(nodeView) ??
+          (() => {
+            if (nodeDOM instanceof HTMLElement) {
+              nodeDOM.classList.add("ProseMirror-selectednode");
+            }
+
+            setSelected(true);
+          }),
+        deselectNode:
+          nodeView.deselectNode?.bind(nodeView) ??
+          (() => {
+            if (nodeDOM instanceof HTMLElement) {
+              nodeDOM.classList.remove("ProseMirror-selectednode");
+            }
+
+            setSelected(false);
+          }),
+        stopEvent: nodeView.stopEvent?.bind(nodeView),
+        ignoreMutation: nodeView.ignoreMutation?.bind(nodeView),
+      };
+    },
+    nodeProps
+  );
 
   const children =
     !node.isLeaf && contentDOM
       ? createPortal(
-          <ChildNodeViews
-            getPos={getPos}
-            node={node}
-            innerDecorations={innerDeco}
-          />,
+          <ChildDescriptorsContext.Provider value={childContextValue}>
+            <ChildNodeViews
+              getPos={getPos}
+              node={node}
+              innerDecorations={innerDeco}
+            />
+          </ChildDescriptorsContext.Provider>,
           contentDOM
         )
       : null;
 
-  const element = createElement(
+  const innerElement = createElement(
     node.isInline ? "span" : "div",
-    {
-      ref: customNodeViewRootRef,
-      contentEditable: !!contentDOM,
-      suppressContentEditableWarning: true,
-    },
+    { ref: innerRef },
     children
   );
 
-  const decoratedElement = cloneElement(
-    outerDeco.reduce(wrapInDeco, element),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    outerDeco.some((d) => (d as any).type.attrs.nodeName)
-      ? { ref: domRef }
-      : // If all of the node decorations were attr-only, then
-        // we've already passed the domRef to the NodeView component
-        // as a prop
-        undefined
-  );
+  const props = {
+    ...(selected || node.type.spec.draggable ? { draggable: true } : null),
+    ref,
+  };
 
-  return (
-    <ChildDescriptorsContext.Provider value={childContextValue}>
-      {decoratedElement}
-    </ChildDescriptorsContext.Provider>
-  );
+  return cloneElement(outerDeco.reduce(wrapInDeco, innerElement), props);
 });

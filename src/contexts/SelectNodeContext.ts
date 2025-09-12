@@ -1,8 +1,11 @@
 import { createContext } from "react";
 
+export type SelectNode = () => void;
+export type DeselectNode = () => void;
+
 type SelectNodeContextValue = (
-  selectNode: () => void,
-  deselectNode: () => void
+  selectNode: SelectNode,
+  deselectNode: DeselectNode
 ) => void;
 
 export const SelectNodeContext = createContext<SelectNodeContextValue>(
