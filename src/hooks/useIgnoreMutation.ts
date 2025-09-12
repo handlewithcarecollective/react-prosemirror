@@ -12,6 +12,6 @@ export function useIgnoreMutation(
   const register = useContext(IgnoreMutationContext);
   const ignoreMutationMemo = useEditorEventCallback(ignoreMutation);
   useEditorEffect(() => {
-    register(ignoreMutationMemo);
+    return register(ignoreMutationMemo);
   }, [register, ignoreMutationMemo]);
 }
