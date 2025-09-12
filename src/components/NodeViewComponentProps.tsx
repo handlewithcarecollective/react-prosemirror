@@ -1,13 +1,12 @@
 import { Node } from "prosemirror-model";
 import { Decoration, DecorationSource } from "prosemirror-view";
-import { HTMLAttributes, LegacyRef, ReactNode } from "react";
+import { AllHTMLAttributes, LegacyRef } from "react";
 
-export type NodeViewComponentProps = {
+export interface NodeViewComponentProps extends AllHTMLAttributes<HTMLElement> {
   nodeProps: {
     decorations: readonly Decoration[];
     innerDecorations: DecorationSource;
     node: Node;
-    children?: ReactNode | ReactNode[];
     getPos: () => number;
   };
   // It's not really feasible to correctly type a Ref constraint,
@@ -16,4 +15,4 @@ export type NodeViewComponentProps = {
   // here, instead of a more useful type like HTMLElement | null
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ref: LegacyRef<any>;
-} & HTMLAttributes<HTMLElement>;
+}
