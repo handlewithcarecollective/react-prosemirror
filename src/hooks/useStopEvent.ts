@@ -12,6 +12,6 @@ export function useStopEvent(
   const register = useContext(StopEventContext);
   const stopEventMemo = useEditorEventCallback(stopEvent);
   useEditorEffect(() => {
-    register(stopEventMemo);
+    return register(stopEventMemo);
   }, [register, stopEventMemo]);
 }

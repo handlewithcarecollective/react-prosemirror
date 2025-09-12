@@ -36,10 +36,14 @@ export function useNodeViewDescriptor(
   const { view } = useContext(EditorContext);
   const [hasContentDOM, setHasContentDOM] = useState(true);
   const nodeViewDescRef = useRef<NodeViewDesc | undefined>();
-  const stopEvent = useRef<(event: Event) => boolean | undefined>(() => false);
+  const stopEvent = useRef<(event: Event) => boolean>(() => false);
   const setStopEvent = useCallback(
-    (newStopEvent: (event: Event) => boolean | undefined) => {
+    (newStopEvent: (event: Event) => boolean) => {
+      const oldStopEvent = stopEvent.current;
       stopEvent.current = newStopEvent;
+      return () => {
+        stopEvent.current = oldStopEvent;
+      };
     },
     []
   );
@@ -48,7 +52,11 @@ export function useNodeViewDescriptor(
   );
   const setIgnoreMutation = useCallback(
     (newIgnoreMutation: (mutation: ViewMutationRecord) => boolean) => {
+      const oldIgnoreMutation = ignoreMutation.current;
       ignoreMutation.current = newIgnoreMutation;
+      return () => {
+        ignoreMutation.current = oldIgnoreMutation;
+      };
     },
     []
   );
@@ -71,8 +79,14 @@ export function useNodeViewDescriptor(
   });
   const setSelectNode = useCallback(
     (newSelectNode: () => void, newDeselectNode: () => void) => {
+      const oldSelectNode = selectNode.current;
+      const oldDeselectNode = deselectNode.current;
       selectNode.current = newSelectNode;
       deselectNode.current = newDeselectNode;
+      return () => {
+        selectNode.current = oldSelectNode;
+        deselectNode.current = oldDeselectNode;
+      };
     },
     []
   );
