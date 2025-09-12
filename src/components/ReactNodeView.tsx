@@ -1,13 +1,6 @@
-import { DOMOutputSpec, Node } from "prosemirror-model";
+import { Node } from "prosemirror-model";
 import { Decoration, DecorationSource } from "prosemirror-view";
-import React, {
-  ComponentType,
-  cloneElement,
-  memo,
-  useContext,
-  useMemo,
-  useRef,
-} from "react";
+import React, { cloneElement, memo, useContext, useMemo, useRef } from "react";
 
 import { ChildDescriptorsContext } from "../contexts/ChildDescriptorsContext.js";
 import { IgnoreMutationContext } from "../contexts/IgnoreMutationContext.js";
@@ -17,8 +10,7 @@ import { StopEventContext } from "../contexts/StopEventContext.js";
 import { useNodeViewDescriptor } from "../hooks/useNodeViewDescriptor.js";
 
 import { ChildNodeViews, wrapInDeco } from "./ChildNodeViews.js";
-import { NodeViewComponentProps } from "./NodeViewComponentProps.js";
-import { OutputSpec } from "./OutputSpec.js";
+import { DefaultNodeView } from "./DefaultNodeView.js";
 
 type Props = {
   outerDeco: readonly Decoration[];
@@ -39,16 +31,6 @@ export const ReactNodeView = memo(function ReactNodeView({
   const contentDomRef = useRef<HTMLElement | null>(null);
 
   const { nodeViews } = useContext(NodeViewContext);
-
-  let element: JSX.Element | null = null;
-
-  const Component: ComponentType<NodeViewComponentProps> | undefined =
-    nodeViews[node.type.name];
-
-  const outputSpec: DOMOutputSpec | undefined = useMemo(
-    () => node.type.spec.toDOM?.(node),
-    [node]
-  );
 
   const {
     hasContentDOM,
@@ -85,29 +67,17 @@ export const ReactNodeView = memo(function ReactNodeView({
     [getPos, innerDeco, node, outerDeco]
   );
 
+  const Component = nodeViews[node.type.name] ?? DefaultNodeView;
+
   const children = !node.isLeaf ? (
     <ChildNodeViews getPos={getPos} node={node} innerDecorations={innerDeco} />
   ) : null;
 
-  if (Component) {
-    element = (
-      <Component {...finalProps} ref={nodeDomRef} nodeProps={nodeProps}>
-        {children}
-      </Component>
-    );
-  } else {
-    if (outputSpec) {
-      element = (
-        <OutputSpec {...finalProps} ref={nodeDomRef} outputSpec={outputSpec}>
-          {children}
-        </OutputSpec>
-      );
-    }
-  }
-
-  if (!element) {
-    throw new Error(`Node spec for ${node.type.name} is missing toDOM`);
-  }
+  const element = (
+    <Component {...finalProps} ref={nodeDomRef} nodeProps={nodeProps}>
+      {children}
+    </Component>
+  );
 
   const decoratedElement = cloneElement(
     outerDeco.reduce(wrapInDeco, element),
