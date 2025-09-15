@@ -156,7 +156,8 @@ export class ReactEditorView extends EditorView implements AbstractEditorView {
 
     if (
       prevProps.state.plugins !== props.state.plugins ||
-      prevProps.plugins !== props.plugins
+      prevProps.plugins !== props.plugins ||
+      prevProps.nodeViews !== props.nodeViews
     ) {
       const nodeViews = buildNodeViews(this);
       if (changedNodeViews(this.nodeViews, nodeViews)) {
