@@ -12,6 +12,10 @@ import { LayoutGroup } from "./LayoutGroup.js";
 import { NodeViewComponentProps } from "./NodeViewComponentProps.js";
 import { DocNodeViewContext } from "./ProseMirrorDoc.js";
 
+function getPos() {
+  return -1;
+}
+
 export type Props = Omit<UseEditorOptions, "nodeViews"> & {
   className?: string;
   children?: ReactNode;
@@ -45,17 +49,18 @@ function ProseMirrorInner({
   );
 
   const node = state.doc;
-  const innerDeco = viewDecorations(editor.view, editor.cursorWrapper);
-  const outerDeco = computeDocDeco(editor.view);
+  const decorations = computeDocDeco(editor.view);
+  const innerDecorations = viewDecorations(editor.view, editor.cursorWrapper);
   const docNodeViewContextValue = useMemo(
     () => ({
       className,
       setMount,
       node,
-      innerDeco,
-      outerDeco,
+      getPos,
+      decorations,
+      innerDecorations,
     }),
-    [className, node, innerDeco, outerDeco]
+    [className, node, decorations, innerDecorations]
   );
 
   return (

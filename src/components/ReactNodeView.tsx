@@ -1,16 +1,33 @@
 import { Node } from "prosemirror-model";
 import { Decoration, DecorationSource } from "prosemirror-view";
-import React, { cloneElement, memo, useContext, useMemo, useRef } from "react";
+import React, {
+  cloneElement,
+  memo,
+  useCallback,
+  useContext,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import { ChildDescriptorsContext } from "../contexts/ChildDescriptorsContext.js";
-import { IgnoreMutationContext } from "../contexts/IgnoreMutationContext.js";
+import {
+  IgnoreMutation,
+  IgnoreMutationContext,
+} from "../contexts/IgnoreMutationContext.js";
 import { NodeViewContext } from "../contexts/NodeViewContext.js";
-import { SelectNodeContext } from "../contexts/SelectNodeContext.js";
-import { StopEventContext } from "../contexts/StopEventContext.js";
+import {
+  DeselectNode,
+  SelectNode,
+  SelectNodeContext,
+} from "../contexts/SelectNodeContext.js";
+import { StopEvent, StopEventContext } from "../contexts/StopEventContext.js";
+import { DOMNode } from "../dom.js";
 import { useNodeViewDescriptor } from "../hooks/useNodeViewDescriptor.js";
 
 import { ChildNodeViews, wrapInDeco } from "./ChildNodeViews.js";
 import { DefaultNodeView } from "./DefaultNodeView.js";
+import { NodeViewComponentProps } from "./NodeViewComponentProps.js";
 
 type Props = {
   outerDeco: readonly Decoration[];
@@ -24,38 +41,50 @@ export const ReactNodeView = memo(function ReactNodeView({
   getPos,
   node,
   innerDeco,
-  ...props
 }: Props) {
-  const domRef = useRef<HTMLElement | null>(null);
-  const nodeDomRef = useRef<HTMLElement | null>(null);
-  const contentDomRef = useRef<HTMLElement | null>(null);
-
   const { nodeViews } = useContext(NodeViewContext);
 
-  const {
-    hasContentDOM,
-    childDescriptors,
-    setStopEvent,
-    setSelectNode,
-    setIgnoreMutation,
-    nodeViewDescRef,
-  } = useNodeViewDescriptor(
-    node,
-    getPos,
-    domRef,
-    nodeDomRef,
-    innerDeco,
-    outerDeco,
-    contentDomRef
+  const [controlSelected, setControlSelected] = useState(false);
+  const [selected, setSelected] = useState(false);
+
+  const ref = useRef<HTMLElement>(null);
+  const innerRef = useRef<HTMLElement>(null);
+
+  const selectNodeRef = useRef<SelectNode | null>(null);
+  const deselectNodeRef = useRef<DeselectNode | null>(null);
+  const stopEventRef = useRef<StopEvent | null>(null);
+  const ignoreMutationRef = useRef<IgnoreMutation | null>(null);
+
+  const setSelectNode = useCallback(
+    (selectHandler: SelectNode, deselectHandler: DeselectNode) => {
+      selectNodeRef.current = selectHandler;
+      deselectNodeRef.current = deselectHandler;
+      setControlSelected(true);
+      return () => {
+        selectNodeRef.current = null;
+        deselectNodeRef.current = null;
+        setControlSelected(false);
+      };
+    },
+    []
   );
 
-  const finalProps = {
-    ...props,
-    ...(!hasContentDOM &&
-      nodeDomRef.current?.tagName !== "BR" && {
-        contentEditable: false,
-      }),
-  };
+  const setStopEvent = useCallback((handler: StopEvent | null) => {
+    stopEventRef.current = handler;
+    return () => {
+      stopEventRef.current = null;
+    };
+  }, []);
+
+  const setIgnoreMutation = useCallback((handler: IgnoreMutation | null) => {
+    ignoreMutationRef.current = handler;
+    return () => {
+      ignoreMutationRef.current = null;
+      return () => {
+        ignoreMutationRef.current = null;
+      };
+    };
+  }, []);
 
   const nodeProps = useMemo(
     () => ({
@@ -67,35 +96,86 @@ export const ReactNodeView = memo(function ReactNodeView({
     [getPos, innerDeco, node, outerDeco]
   );
 
+  const { childContextValue, contentDOM, nodeDOM } = useNodeViewDescriptor(
+    ref,
+    () => {
+      setSelected(false);
+
+      return {
+        dom: (innerRef.current ?? ref.current) as DOMNode,
+        update() {
+          return true;
+        },
+        multiType: true,
+        selectNode() {
+          const selectNode = selectNodeRef.current;
+          if (selectNode) {
+            selectNode();
+          }
+
+          setSelected(true);
+        },
+        deselectNode() {
+          const deselectNode = deselectNodeRef.current;
+          if (deselectNode) {
+            deselectNode();
+          }
+
+          setSelected(false);
+        },
+        stopEvent(event) {
+          const stopEvent = stopEventRef.current;
+          if (stopEvent) {
+            return stopEvent(event);
+          }
+
+          return false;
+        },
+        ignoreMutation(mutation) {
+          const ignoreMutation = ignoreMutationRef.current;
+          if (ignoreMutation) {
+            return ignoreMutation(mutation);
+          }
+
+          return false;
+        },
+      };
+    },
+    nodeProps
+  );
+
   const Component = nodeViews[node.type.name] ?? DefaultNodeView;
 
   const children = !node.isLeaf ? (
     <ChildNodeViews getPos={getPos} node={node} innerDecorations={innerDeco} />
   ) : null;
 
-  const element = (
-    <Component {...finalProps} ref={nodeDomRef} nodeProps={nodeProps}>
-      {children}
-    </Component>
-  );
+  const innerProps = {
+    nodeProps,
+    ...(!contentDOM && !nodeProps.node.isText && nodeDOM?.nodeName !== "BR"
+      ? {
+          contentEditable: false,
+          suppressContentEditableWarning: true,
+        }
+      : null),
+    ...(controlSelected && selected
+      ? { className: "ProseMirror-selectednode" }
+      : null),
+    ref: innerRef,
+  } satisfies NodeViewComponentProps;
+
+  const innerElement = <Component {...innerProps}>{children}</Component>;
+
+  const props = {
+    ...((controlSelected && selected) || node.type.spec.draggable
+      ? { draggable: true }
+      : null),
+    ref,
+  };
 
   const decoratedElement = cloneElement(
-    outerDeco.reduce(wrapInDeco, element),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    outerDeco.some((d) => (d as any).type.attrs.nodeName)
-      ? { ref: domRef }
-      : // If all of the node decorations were attr-only, then
-        // we've already passed the domRef to the NodeView component
-        // as a prop
-        undefined
-  );
-
-  const childContextValue = useMemo(
-    () => ({
-      parentRef: nodeViewDescRef,
-      siblingsRef: childDescriptors,
-    }),
-    [childDescriptors, nodeViewDescRef]
+    outerDeco.reduce(wrapInDeco, innerElement),
+    props
   );
 
   return (
