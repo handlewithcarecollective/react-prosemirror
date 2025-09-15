@@ -1,8 +1,7 @@
-import { Node } from "prosemirror-model";
+import { DOMSerializer, Node } from "prosemirror-model";
 import {
   Decoration,
   DecorationSource,
-  NodeView,
   NodeViewConstructor,
 } from "prosemirror-view";
 import React, {
@@ -15,7 +14,6 @@ import React, {
 } from "react";
 import { createPortal } from "react-dom";
 
-import { ReactEditorView } from "../ReactEditorView.js";
 import { ChildDescriptorsContext } from "../contexts/ChildDescriptorsContext.js";
 import { DOMNode } from "../dom.js";
 import { useNodeViewDescriptor } from "../hooks/useNodeViewDescriptor.js";
@@ -52,23 +50,27 @@ export const CustomNodeView = memo(function CustomNodeView({
     [node, getPos, outerDeco, innerDeco]
   );
 
-  const { childContextValue, contentDOM } = useNodeViewDescriptor(
-    ref,
-    (node, view, getPos, decorations, innerDecorations) => {
-      setSelected(false);
+  const createNodeView: NodeViewConstructor = (...args) => {
+    const nodeView = customNodeView(...args);
 
-      const nodeView = customNodeView(
-        node,
-        view as ReactEditorView,
-        getPos,
-        decorations,
-        innerDecorations
-      );
-
-      if (!nodeView || !nodeView.dom) {
-        return {} as NodeView;
+    if (!nodeView || !nodeView.dom) {
+      const spec = node.type.spec.toDOM?.(node);
+      if (!spec) {
+        throw new Error(`Node spec for ${node.type.name} is missing toDOM`);
       }
 
+      return DOMSerializer.renderSpec(document, spec, null);
+    }
+
+    return nodeView;
+  };
+
+  const { childContextValue, contentDOM } = useNodeViewDescriptor(
+    ref,
+    (...args) => {
+      setSelected(false);
+
+      const nodeView = createNodeView(...args);
       const contentDOM = nodeView.contentDOM;
       const nodeDOM = nodeView.dom;
       const wrapperDOM = (innerRef.current ?? ref.current) as DOMNode;
