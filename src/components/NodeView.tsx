@@ -4,52 +4,44 @@ import {
   DecorationSource,
   NodeViewConstructor,
 } from "prosemirror-view";
-import React, { memo, useContext } from "react";
+import React, { memo, useContext, useMemo } from "react";
 
-import { EditorContext } from "../contexts/EditorContext.js";
+import { NodeViewContext } from "../contexts/NodeViewContext.js";
 
 import { CustomNodeView } from "./CustomNodeView.js";
+import { DefaultNodeView } from "./DefaultNodeView.js";
 import { ReactNodeView } from "./ReactNodeView.js";
 
-type NodeViewProps = {
-  outerDeco: readonly Decoration[];
-  getPos: () => number;
+type Props = {
   node: Node;
+  getPos: () => number;
+  outerDeco: readonly Decoration[];
   innerDeco: DecorationSource;
 };
 
-export const NodeView = memo(function NodeView({
-  outerDeco,
-  getPos,
-  node,
-  innerDeco,
-  ...props
-}: NodeViewProps) {
-  const { view } = useContext(EditorContext);
+export const NodeView = memo(function NodeView(props: Props) {
+  const { components, constructors } = useContext(NodeViewContext);
 
-  const customNodeView = view.nodeViews[node.type.name] as
+  const component = components[props.node.type.name] ?? DefaultNodeView;
+  const constructor = constructors[props.node.type.name] as
     | NodeViewConstructor
     | undefined;
 
-  if (customNodeView) {
-    return (
-      <CustomNodeView
-        customNodeView={customNodeView}
-        node={node}
-        innerDeco={innerDeco}
-        outerDeco={outerDeco}
-        getPos={getPos}
-      />
-    );
-  }
+  // Construct a wrapper component so that the node view remounts when either
+  // its component or constructor changes. A React node view would remount if
+  // its underlying component changed without this wrapper, but a custom node
+  // view otherwise uses the same React components for all custom node views.
+  const Component = useMemo(() => {
+    if (constructor) {
+      return function NodeView(props: Props) {
+        return <CustomNodeView constructor={constructor} {...props} />;
+      };
+    } else {
+      return function NodeView(props: Props) {
+        return <ReactNodeView component={component} {...props} />;
+      };
+    }
+  }, [constructor, component]);
 
-  return (
-    <ReactNodeView
-      node={node}
-      innerDeco={innerDeco}
-      outerDeco={outerDeco}
-      getPos={getPos}
-      {...props}
-    />
-  );
+  return <Component {...props} />;
 });
