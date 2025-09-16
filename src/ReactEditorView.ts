@@ -98,10 +98,6 @@ export class ReactEditorView extends EditorView implements AbstractEditorView {
   private prevState: EditorState;
 
   constructor(place: { mount: HTMLElement }, props: DirectEditorProps) {
-    // By the time the editor view mounts this should exist.
-    // We assume it is not possible to set the mount point otherwise.
-    const docView = place.mount.pmViewDesc as NodeViewDesc;
-
     // Prevent the base class from destroying the React-managed nodes.
     // Restore them below after invoking the base class constructor.
     const reactContent = [...place.mount.childNodes];
@@ -136,8 +132,12 @@ export class ReactEditorView extends EditorView implements AbstractEditorView {
     this.nextProps = props;
     this.state = props.state;
     this.nodeViews = buildNodeViews(this);
-    this.docView = docView;
-    this.dom.pmViewDesc = docView;
+
+    // Destroy the document view description that the base class makes.
+    // A React document view will assign itself to this attribute later.
+    this.docView.destroy();
+    // @ts-expect-error this violates the typing but class does it, too.
+    this.docView = null;
   }
 
   get props() {
