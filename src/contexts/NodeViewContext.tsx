@@ -1,9 +1,11 @@
 import { ComponentType, createContext } from "react";
 
+import { NodeViewSet } from "../AbstractEditorView.js";
 import { NodeViewComponentProps } from "../components/NodeViewComponentProps.js";
 
 export type NodeViewContextValue = {
-  nodeViews: Record<string, ComponentType<NodeViewComponentProps>>;
+  components: Record<string, ComponentType<NodeViewComponentProps>>;
+  constructors: NodeViewSet;
 };
 
 export const NodeViewContext = createContext(

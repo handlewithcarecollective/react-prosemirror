@@ -27,7 +27,7 @@ type Props = NodeViewComponentProps["nodeProps"];
 
 export function useNodeViewDescriptor(
   ref: { readonly current: DOMNode | null },
-  createNodeView: NodeViewConstructor,
+  constructor: NodeViewConstructor,
   props: Props
 ) {
   const { view } = useContext(EditorContext);
@@ -52,7 +52,7 @@ export function useNodeViewDescriptor(
       }
 
       const { node, getPos, decorations, innerDecorations } = props;
-      const nodeView = createNodeView(
+      const nodeView = constructor(
         node,
         view,
         getPos,
@@ -88,7 +88,7 @@ export function useNodeViewDescriptor(
 
       return viewDesc;
     },
-    [ref, parentRef, createNodeView, view]
+    [ref, parentRef, constructor, view]
   );
 
   const update = useCallback(

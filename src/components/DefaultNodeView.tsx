@@ -1,14 +1,11 @@
-import React, { forwardRef, memo } from "react";
+import React, { forwardRef, useMemo } from "react";
 
 import { NodeViewComponentProps } from "./NodeViewComponentProps.js";
 import { OutputSpec } from "./OutputSpec.js";
 
-export const DefaultNodeView = memo(
-  forwardRef<HTMLElement, NodeViewComponentProps>(function DefaultNodeView(
-    { nodeProps: { node }, children, ...props },
-    ref
-  ) {
-    const spec = node.type.spec.toDOM?.(node);
+export const DefaultNodeView = forwardRef<HTMLElement, NodeViewComponentProps>(
+  function DefaultNodeView({ nodeProps: { node }, children, ...props }, ref) {
+    const spec = useMemo(() => node.type.spec.toDOM?.(node), [node]);
     if (!spec) {
       throw new Error(`Node spec for ${node.type.name} is missing toDOM`);
     }
@@ -18,5 +15,5 @@ export const DefaultNodeView = memo(
         {children}
       </OutputSpec>
     );
-  })
+  }
 );

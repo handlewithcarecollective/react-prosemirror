@@ -1,10 +1,10 @@
 import { Node } from "prosemirror-model";
 import { Decoration, DecorationSource } from "prosemirror-view";
 import React, {
+  ComponentType,
   cloneElement,
   memo,
   useCallback,
-  useContext,
   useMemo,
   useRef,
   useState,
@@ -15,7 +15,6 @@ import {
   IgnoreMutation,
   IgnoreMutationContext,
 } from "../contexts/IgnoreMutationContext.js";
-import { NodeViewContext } from "../contexts/NodeViewContext.js";
 import {
   DeselectNode,
   SelectNode,
@@ -26,10 +25,10 @@ import { DOMNode } from "../dom.js";
 import { useNodeViewDescriptor } from "../hooks/useNodeViewDescriptor.js";
 
 import { ChildNodeViews, wrapInDeco } from "./ChildNodeViews.js";
-import { DefaultNodeView } from "./DefaultNodeView.js";
 import { NodeViewComponentProps } from "./NodeViewComponentProps.js";
 
 type Props = {
+  component: ComponentType<NodeViewComponentProps>;
   outerDeco: readonly Decoration[];
   getPos: () => number;
   node: Node;
@@ -37,13 +36,12 @@ type Props = {
 };
 
 export const ReactNodeView = memo(function ReactNodeView({
+  component: Component,
   outerDeco,
   getPos,
   node,
   innerDeco,
 }: Props) {
-  const { nodeViews } = useContext(NodeViewContext);
-
   const [controlSelected, setControlSelected] = useState(false);
   const [selected, setSelected] = useState(false);
 
@@ -143,8 +141,6 @@ export const ReactNodeView = memo(function ReactNodeView({
     },
     nodeProps
   );
-
-  const Component = nodeViews[node.type.name] ?? DefaultNodeView;
 
   const children = !node.isLeaf ? (
     <ChildNodeViews getPos={getPos} node={node} innerDecorations={innerDeco} />

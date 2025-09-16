@@ -3,7 +3,10 @@ import React, { ComponentType, ReactNode, useMemo, useState } from "react";
 
 import { EditorContext } from "../contexts/EditorContext.js";
 import { EditorStateContext } from "../contexts/EditorStateContext.js";
-import { NodeViewContext } from "../contexts/NodeViewContext.js";
+import {
+  NodeViewContext,
+  NodeViewContextValue,
+} from "../contexts/NodeViewContext.js";
 import { computeDocDeco } from "../decorations/computeDocDeco.js";
 import { viewDecorations } from "../decorations/viewDecorations.js";
 import { UseEditorOptions, useEditor } from "../hooks/useEditor.js";
@@ -41,12 +44,13 @@ function ProseMirrorInner({
     nodeViews: customNodeViews,
   });
 
-  const nodeViewContextValue = useMemo(
-    () => ({
-      nodeViews: nodeViews ?? {},
-    }),
-    [nodeViews]
-  );
+  const nodeViewConstructors = editor.view.nodeViews;
+  const nodeViewContextValue = useMemo<NodeViewContextValue>(() => {
+    return {
+      components: { ...nodeViews },
+      constructors: nodeViewConstructors,
+    };
+  }, [nodeViewConstructors, nodeViews]);
 
   const node = state.doc;
   const decorations = computeDocDeco(editor.view);

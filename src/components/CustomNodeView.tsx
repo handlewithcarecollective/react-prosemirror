@@ -21,7 +21,7 @@ import { useNodeViewDescriptor } from "../hooks/useNodeViewDescriptor.js";
 import { ChildNodeViews, wrapInDeco } from "./ChildNodeViews.js";
 
 interface Props {
-  customNodeView: NodeViewConstructor;
+  constructor: NodeViewConstructor;
   node: Node;
   getPos: () => number;
   innerDeco: DecorationSource;
@@ -29,7 +29,7 @@ interface Props {
 }
 
 export const CustomNodeView = memo(function CustomNodeView({
-  customNodeView,
+  constructor,
   node,
   getPos,
   innerDeco,
@@ -51,7 +51,7 @@ export const CustomNodeView = memo(function CustomNodeView({
   );
 
   const createNodeView: NodeViewConstructor = (...args) => {
-    const nodeView = customNodeView(...args);
+    const nodeView = constructor(...args);
 
     if (!nodeView || !nodeView.dom) {
       const spec = node.type.spec.toDOM?.(node);
