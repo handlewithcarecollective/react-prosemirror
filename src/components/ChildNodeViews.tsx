@@ -564,19 +564,19 @@ export const ChildNodeViews = memo(function ChildNodeViews({
       children.push(
         {
           type: "hack",
-          component: TrailingHackView,
-          marks: [],
-          offset: lastChild?.offset ?? 0,
-          index: (lastChild?.index ?? 0) + 1,
-          key: "trailing-hack-br",
-        },
-        {
-          type: "hack",
           component: SeparatorHackView,
           marks: [],
           offset: lastChild?.offset ?? 0,
           index: (lastChild?.index ?? 0) + 2,
           key: "trailing-hack-img",
+        },
+        {
+          type: "hack",
+          component: TrailingHackView,
+          marks: [],
+          offset: lastChild?.offset ?? 0,
+          index: (lastChild?.index ?? 0) + 1,
+          key: "trailing-hack-br",
         }
       );
     }
