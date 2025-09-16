@@ -16,7 +16,7 @@ import { useForceUpdate } from "./useForceUpdate.js";
 export interface UseEditorOptions extends EditorProps {
   defaultState?: EditorState;
   state?: EditorState;
-  plugins?: Plugin[];
+  plugins?: readonly Plugin[];
   dispatchTransaction?(this: EditorView, tr: Transaction): void;
 }
 
