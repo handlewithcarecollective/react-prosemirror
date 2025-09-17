@@ -117,18 +117,14 @@ export function useEditor<T extends HTMLElement = HTMLElement>(
     return new StaticEditorView(directEditorProps);
   });
 
-  useClientLayoutEffect(() => {
-    return () => {
-      view.destroy();
-    };
-  }, [view]);
-
   // This rule is concerned about infinite updates due to the
   // call to setView. These calls are deliberately conditional,
   // so this is not a concern.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useClientLayoutEffect(() => {
     if (mount !== view.dom) {
+      view.destroy();
+
       if (mount) {
         const view = new ReactEditorView({ mount }, directEditorProps);
         view.dom.addEventListener("compositionend", forceUpdate);
