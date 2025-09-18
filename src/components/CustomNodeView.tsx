@@ -4,14 +4,7 @@ import {
   DecorationSource,
   NodeViewConstructor,
 } from "prosemirror-view";
-import React, {
-  cloneElement,
-  createElement,
-  memo,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import React, { cloneElement, memo, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 
 import { ChildDescriptorsContext } from "../contexts/ChildDescriptorsContext.js";
@@ -36,9 +29,7 @@ export const CustomNodeView = memo(function CustomNodeView({
   outerDeco,
 }: Props) {
   const ref = useRef<HTMLElement>(null);
-  const innerRef = useRef<HTMLElement>(null);
-
-  const [selected, setSelected] = useState(false);
+  const innerRef = useRef<HTMLSpanElement & HTMLDivElement>(null);
 
   const nodeProps = useMemo(
     () => ({
@@ -68,8 +59,6 @@ export const CustomNodeView = memo(function CustomNodeView({
   const { childContextValue, contentDOM } = useNodeViewDescriptor(
     ref,
     (...args) => {
-      setSelected(false);
-
       const nodeView = createNodeView(...args);
       const contentDOM = nodeView.contentDOM;
       const nodeDOM = nodeView.dom;
@@ -84,6 +73,9 @@ export const CustomNodeView = memo(function CustomNodeView({
         if (!nodeDOM.hasAttribute("contenteditable")) {
           nodeDOM.contentEditable = "false";
         }
+        if (node.type.spec.draggable) {
+          nodeDOM.draggable = true;
+        }
       }
 
       return {
@@ -95,30 +87,18 @@ export const CustomNodeView = memo(function CustomNodeView({
 
           wrapperDOM.removeChild(nodeDOM);
         },
-        selectNode:
-          nodeView.selectNode?.bind(nodeView) ??
-          (() => {
-            if (nodeDOM instanceof HTMLElement) {
-              nodeDOM.classList.add("ProseMirror-selectednode");
-            }
-
-            setSelected(true);
-          }),
-        deselectNode:
-          nodeView.deselectNode?.bind(nodeView) ??
-          (() => {
-            if (nodeDOM instanceof HTMLElement) {
-              nodeDOM.classList.remove("ProseMirror-selectednode");
-            }
-
-            setSelected(false);
-          }),
+        selectNode: nodeView.selectNode?.bind(nodeView),
+        deselectNode: nodeView.deselectNode?.bind(nodeView),
         stopEvent: nodeView.stopEvent?.bind(nodeView),
         ignoreMutation: nodeView.ignoreMutation?.bind(nodeView),
       };
     },
     nodeProps
   );
+
+  const Component = node.isInline ? "span" : "div";
+
+  const props = { ref: innerRef };
 
   const children =
     !node.isLeaf && contentDOM
@@ -134,16 +114,8 @@ export const CustomNodeView = memo(function CustomNodeView({
         )
       : null;
 
-  const innerElement = createElement(
-    node.isInline ? "span" : "div",
-    { ref: innerRef },
-    children
+  return cloneElement(
+    outerDeco.reduce(wrapInDeco, <Component {...props}>{children}</Component>),
+    { ref }
   );
-
-  const props = {
-    ...(selected || node.type.spec.draggable ? { draggable: true } : null),
-    ref,
-  };
-
-  return cloneElement(outerDeco.reduce(wrapInDeco, innerElement), props);
 });
