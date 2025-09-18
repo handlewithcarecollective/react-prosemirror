@@ -222,6 +222,18 @@ export class ReactEditorView extends EditorView implements AbstractEditorView {
     return undefined;
   }
 
+  destroy() {
+    // Prevent the base class from destroying the React-managed nodes.
+    // Restore them below after invoking the base class method.
+    const reactContent = [...this.dom.childNodes];
+
+    try {
+      super.destroy();
+    } finally {
+      this.dom.replaceChildren(...reactContent);
+    }
+  }
+
   /**
    * Commit effects by appling the pending props and state.
    *
