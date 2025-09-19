@@ -142,11 +142,7 @@ export const ReactNodeView = memo(function ReactNodeView({
     nodeProps
   );
 
-  const children = !node.isLeaf ? (
-    <ChildNodeViews getPos={getPos} node={node} innerDecorations={innerDeco} />
-  ) : null;
-
-  const innerProps = {
+  const props = {
     nodeProps,
     ...(!contentDOM && !nodeProps.node.isText && nodeDOM?.nodeName !== "BR"
       ? {
@@ -157,21 +153,19 @@ export const ReactNodeView = memo(function ReactNodeView({
     ...(controlSelected && selected
       ? { className: "ProseMirror-selectednode" }
       : null),
-    ref: innerRef,
-  } satisfies NodeViewComponentProps;
-
-  const innerElement = <Component {...innerProps}>{children}</Component>;
-
-  const props = {
     ...((controlSelected && selected) || node.type.spec.draggable
       ? { draggable: true }
       : null),
-    ref,
-  };
+    ref: innerRef,
+  } satisfies NodeViewComponentProps;
 
-  const decoratedElement = cloneElement(
-    outerDeco.reduce(wrapInDeco, innerElement),
-    props
+  const children = !node.isLeaf ? (
+    <ChildNodeViews getPos={getPos} node={node} innerDecorations={innerDeco} />
+  ) : null;
+
+  const element = cloneElement(
+    outerDeco.reduce(wrapInDeco, <Component {...props}>{children}</Component>),
+    { ref }
   );
 
   return (
@@ -179,7 +173,7 @@ export const ReactNodeView = memo(function ReactNodeView({
       <StopEventContext.Provider value={setStopEvent}>
         <IgnoreMutationContext.Provider value={setIgnoreMutation}>
           <ChildDescriptorsContext.Provider value={childContextValue}>
-            {decoratedElement}
+            {element}
           </ChildDescriptorsContext.Provider>
         </IgnoreMutationContext.Provider>
       </StopEventContext.Provider>
