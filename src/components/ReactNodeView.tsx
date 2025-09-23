@@ -42,7 +42,7 @@ export const ReactNodeView = memo(function ReactNodeView({
   node,
   innerDeco,
 }: Props) {
-  const [controlSelected, setControlSelected] = useState(false);
+  const [hasCustomSelectNode, setHasCustomSelectNode] = useState(false);
   const [selected, setSelected] = useState(false);
 
   const ref = useRef<HTMLElement>(null);
@@ -57,11 +57,11 @@ export const ReactNodeView = memo(function ReactNodeView({
     (selectHandler: SelectNode, deselectHandler: DeselectNode) => {
       selectNodeRef.current = selectHandler;
       deselectNodeRef.current = deselectHandler;
-      setControlSelected(true);
+      setHasCustomSelectNode(true);
       return () => {
         selectNodeRef.current = null;
         deselectNodeRef.current = null;
-        setControlSelected(false);
+        setHasCustomSelectNode(false);
       };
     },
     []
@@ -150,10 +150,10 @@ export const ReactNodeView = memo(function ReactNodeView({
           suppressContentEditableWarning: true,
         }
       : null),
-    ...(controlSelected && selected
+    ...(!hasCustomSelectNode && selected
       ? { className: "ProseMirror-selectednode" }
       : null),
-    ...((controlSelected && selected) || node.type.spec.draggable
+    ...((!hasCustomSelectNode && selected) || node.type.spec.draggable
       ? { draggable: true }
       : null),
     ref: innerRef,
