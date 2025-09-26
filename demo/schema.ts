@@ -42,6 +42,7 @@ export const schema = new Schema({
     code_block: {
       group: "block",
       content: "text*",
+      code: true,
       toDOM() {
         return ["pre", ["code", 0]];
       },
