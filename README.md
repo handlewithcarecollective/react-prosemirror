@@ -693,15 +693,14 @@ export function SelectionWidget() {
 ### `NodeViewComponentProps`
 
 ```tsx
-type NodeViewComponentProps = {
+interface NodeViewComponentProps extends AllHTMLAttributes<HTMLElement> = {
   nodeProps: {
     decorations: readonly Decoration[];
     innerDecorations: DecorationSource;
     node: Node;
-    children?: ReactNode | ReactNode[];
     getPos: () => number;
   };
-} & HTMLAttributes<HTMLElement>;
+};
 ```
 
 The props that will be passed to all node view components. These props map
