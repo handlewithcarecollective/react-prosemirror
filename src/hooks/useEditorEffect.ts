@@ -21,6 +21,10 @@ import { useLayoutGroupEffect } from "./useLayoutGroupEffect.js";
  * synchronously after all DOM mutations, but they do so
  * _after_ the EditorView has been updated, even when the
  * EditorView lives in an ancestor component.
+ *
+ * This hook can only be used in a component that is mounted
+ * as a child of the TiptapEditorView component, including
+ * React node view components.
  */
 export function useEditorEffect(
   effect: (editorView: EditorView) => void | (() => void),

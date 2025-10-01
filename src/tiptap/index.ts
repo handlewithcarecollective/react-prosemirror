@@ -1,0 +1,9 @@
+export { tiptapNodeView } from "./tiptapNodeView.js";
+export { TiptapEditorView } from "./TiptapEditorView.js";
+export { TiptapEditorContent } from "./TiptapEditorContent.js";
+export { useTiptapEditorEffect } from "./hooks/useTiptapEditorEffect.js";
+export { useTiptapEditorEventCallback } from "./hooks/useTiptapEditorEventCallback.js";
+export {
+  type UseTiptapEditorOptions,
+  useTiptapEditor,
+} from "./hooks/useTiptapEditor.js";
