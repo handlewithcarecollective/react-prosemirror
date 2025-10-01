@@ -28,11 +28,9 @@ function assertIsReactEditorView(
  * The callback will be called with the EditorView instance
  * as its first argument.
  *
- * This hook is dependent on both the
- * `EditorViewContext.Provider` and the
- * `DeferredLayoutEffectProvider`. It can only be used in a
- * component that is mounted as a child of both of these
- * providers.
+ * This hook can only be used in a component that is mounted
+ * as a child of the TiptapEditorView component, including
+ * React node view components.
  */
 export function useEditorEventCallback<T extends unknown[], R>(
   callback: (view: EditorView, ...args: T) => R
