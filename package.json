@@ -1,6 +1,6 @@
 {
   "name": "@handlewithcare/react-prosemirror",
-  "version": "2.5.4",
+  "version": "2.6.0-tiptap.1",
   "license": "Apache-2.0",
   "type": "module",
   "main": "dist/cjs/index.js",
@@ -11,6 +11,11 @@
       "types": "./dist/types/index.d.ts",
       "import": "./dist/esm/index.js",
       "require": "./dist/cjs/index.js"
+    },
+    "./tiptap": {
+      "types": "./dist/types/tiptap/index.d.ts",
+      "import": "./dist/esm/tiptap/index.js",
+      "require": "./dist/cjs/tiptap/index.js"
     },
     "./src": "./src/index.ts"
   },
@@ -127,6 +132,8 @@
     "node": ">=16.9"
   },
   "dependencies": {
+    "@tiptap/core": "^3.0.0",
+    "@tiptap/react": "^3.0.0",
     "classnames": "^2.3.2"
   },
   "publishConfig": {
