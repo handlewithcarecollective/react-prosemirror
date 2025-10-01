@@ -1416,6 +1416,32 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@floating-ui/core@npm:^1.7.3":
+  version: 1.7.3
+  resolution: "@floating-ui/core@npm:1.7.3"
+  dependencies:
+    "@floating-ui/utils": "npm:^0.2.10"
+  checksum: 10/a8952ff2673ddf28f12feeb86d90c54949e45bcb1af5758b7672850ac0dadb36d4bd61aa45dad1b6a35ba40d4756d3573afac6610b90502639d7266b91e0864e
+  languageName: node
+  linkType: hard
+
+"@floating-ui/dom@npm:^1.0.0":
+  version: 1.7.4
+  resolution: "@floating-ui/dom@npm:1.7.4"
+  dependencies:
+    "@floating-ui/core": "npm:^1.7.3"
+    "@floating-ui/utils": "npm:^0.2.10"
+  checksum: 10/d3d6a23e7b9804ba56338c7c666590258683af14b6026270d32afc1202f72b5b82cca359004bdc7830bf2463a045da6c7bd4e7d5351218cf270ff94206197971
+  languageName: node
+  linkType: hard
+
+"@floating-ui/utils@npm:^0.2.10":
+  version: 0.2.10
+  resolution: "@floating-ui/utils@npm:0.2.10"
+  checksum: 10/b635ea865a8be2484b608b7157f5abf9ed439f351011a74b7e988439e2898199a9a8b790f52291e05bdcf119088160dc782d98cff45cc98c5a271bc6f51327ae
+  languageName: node
+  linkType: hard
+
 "@gar/promisify@npm:^1.1.3":
   version: 1.1.3
   resolution: "@gar/promisify@npm:1.1.3"
@@ -1439,6 +1465,8 @@ __metadata:
     "@testing-library/dom": "npm:^10.4.0"
     "@testing-library/react": "npm:^16.3.0"
     "@testing-library/user-event": "npm:^14.6.1"
+    "@tiptap/core": "npm:^3.0.0"
+    "@tiptap/react": "npm:^3.0.0"
     "@types/css-tree": "npm:^2.3.10"
     "@types/jest": "npm:^27.0.0"
     "@types/react": "npm:^18.2.0"
@@ -3099,6 +3127,63 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@tiptap/core@npm:^3.0.0":
+  version: 3.15.3
+  resolution: "@tiptap/core@npm:3.15.3"
+  peerDependencies:
+    "@tiptap/pm": ^3.15.3
+  checksum: 10/58686c46604eb9234d1fbcb34384f5076a43a3656ec6097a58c4626f2b65f74bd2d47a33520e77ee6762b7bbef39751e115ed988b4c6294e9b5b0d4019ebe6b3
+  languageName: node
+  linkType: hard
+
+"@tiptap/extension-bubble-menu@npm:^3.15.3":
+  version: 3.15.3
+  resolution: "@tiptap/extension-bubble-menu@npm:3.15.3"
+  dependencies:
+    "@floating-ui/dom": "npm:^1.0.0"
+  peerDependencies:
+    "@tiptap/core": ^3.15.3
+    "@tiptap/pm": ^3.15.3
+  checksum: 10/3ebf9b1ea0bc3fab3379f2542cd9fd420ed15a51ab7ef9ae53a141316dd9455e513b7999266790b9df2e1f91992a1fe2c2009e5c4279fa8ef356b17d48eb6f7b
+  languageName: node
+  linkType: hard
+
+"@tiptap/extension-floating-menu@npm:^3.15.3":
+  version: 3.15.3
+  resolution: "@tiptap/extension-floating-menu@npm:3.15.3"
+  peerDependencies:
+    "@floating-ui/dom": ^1.0.0
+    "@tiptap/core": ^3.15.3
+    "@tiptap/pm": ^3.15.3
+  checksum: 10/08bb92743d441615f5098df2f2d37157d6648d46243492dae46f8aa88a0bb6be4bfcbe491e4eefa3ee12e19486330f0b5a3949d43d30b86049a907e01f4273f0
+  languageName: node
+  linkType: hard
+
+"@tiptap/react@npm:^3.0.0":
+  version: 3.15.3
+  resolution: "@tiptap/react@npm:3.15.3"
+  dependencies:
+    "@tiptap/extension-bubble-menu": "npm:^3.15.3"
+    "@tiptap/extension-floating-menu": "npm:^3.15.3"
+    "@types/use-sync-external-store": "npm:^0.0.6"
+    fast-equals: "npm:^5.3.3"
+    use-sync-external-store: "npm:^1.4.0"
+  peerDependencies:
+    "@tiptap/core": ^3.15.3
+    "@tiptap/pm": ^3.15.3
+    "@types/react": ^17.0.0 || ^18.0.0 || ^19.0.0
+    "@types/react-dom": ^17.0.0 || ^18.0.0 || ^19.0.0
+    react: ^17.0.0 || ^18.0.0 || ^19.0.0
+    react-dom: ^17.0.0 || ^18.0.0 || ^19.0.0
+  dependenciesMeta:
+    "@tiptap/extension-bubble-menu":
+      optional: true
+    "@tiptap/extension-floating-menu":
+      optional: true
+  checksum: 10/e40912b172b26699a49f6a03c0ca46a9fc8e7874bbb783f803560d2276c039f883f15d3b9bfa8b15b341e332b6fb97e5df454e4866023d4b92a899ab5ada43cb
+  languageName: node
+  linkType: hard
+
 "@tokenizer/token@npm:^0.3.0":
   version: 0.3.0
   resolution: "@tokenizer/token@npm:0.3.0"
@@ -3469,6 +3554,13 @@ __metadata:
   version: 3.0.3
   resolution: "@types/unist@npm:3.0.3"
   checksum: 10/96e6453da9e075aaef1dc22482463898198acdc1eeb99b465e65e34303e2ec1e3b1ed4469a9118275ec284dc98019f63c3f5d49422f0e4ac707e5ab90fb3b71a
+  languageName: node
+  linkType: hard
+
+"@types/use-sync-external-store@npm:^0.0.6":
+  version: 0.0.6
+  resolution: "@types/use-sync-external-store@npm:0.0.6"
+  checksum: 10/a95ce330668501ad9b1c5b7f2b14872ad201e552a0e567787b8f1588b22c7040c7c3d80f142cbb9f92d13c4ea41c46af57a20f2af4edf27f224d352abcfe4049
   languageName: node
   linkType: hard
 
@@ -7428,6 +7520,13 @@ __metadata:
   version: 3.1.3
   resolution: "fast-deep-equal@npm:3.1.3"
   checksum: 10/e21a9d8d84f53493b6aa15efc9cfd53dd5b714a1f23f67fb5dc8f574af80df889b3bce25dc081887c6d25457cce704e636395333abad896ccdec03abaf1f3f9d
+  languageName: node
+  linkType: hard
+
+"fast-equals@npm:^5.3.3":
+  version: 5.4.0
+  resolution: "fast-equals@npm:5.4.0"
+  checksum: 10/bea068ceb7825d486d88a17ccc3fe889d1833efefa8dc64c83806e797f66b3ea953ac4aebd96af022d828de315ec87476e76418a5da774217d0ab66de53d68f5
   languageName: node
   linkType: hard
 
@@ -14635,6 +14734,15 @@ __metadata:
   version: 10.0.0
   resolution: "urlpattern-polyfill@npm:10.0.0"
   checksum: 10/346819dbe718e929988298d02a988b8ddfa601d08daaa7e69b1148eab699c86c0f0f933d68d8c8cf913166fe64156ed28904e673200d18ef7e9ed6b58cea3fc7
+  languageName: node
+  linkType: hard
+
+"use-sync-external-store@npm:^1.4.0":
+  version: 1.5.0
+  resolution: "use-sync-external-store@npm:1.5.0"
+  peerDependencies:
+    react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+  checksum: 10/ddae7c4572511f7f641d6977bd0725340aa7dbeda8250418b54c1a57ec285083d96cf50d1a1acbd6cf729f7a87071b2302c6fbd29310432bf1b21a961a313279
   languageName: node
   linkType: hard
 

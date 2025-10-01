@@ -12,6 +12,11 @@
       "import": "./dist/esm/index.js",
       "require": "./dist/cjs/index.js"
     },
+    "./tiptap": {
+      "types": "./dist/types/tiptap/index.d.ts",
+      "import": "./dist/esm/tiptap/index.js",
+      "require": "./dist/cjs/tiptap/index.js"
+    },
     "./src": "./src/index.ts"
   },
   "files": [
@@ -131,6 +136,8 @@
     "node": ">=16.9"
   },
   "dependencies": {
+    "@tiptap/core": "^3.0.0",
+    "@tiptap/react": "^3.0.0",
     "classnames": "^2.3.2"
   },
   "publishConfig": {
