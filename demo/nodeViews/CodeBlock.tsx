@@ -25,7 +25,6 @@ import {
   type EditorView as CodeMirrorView,
   type Command,
   type KeyBinding,
-  type ViewUpdate,
   keymap as cmKeymap,
   drawSelection,
   dropCursor,
@@ -38,7 +37,6 @@ import {
   CodeMirrorEditor,
   react,
   useEditorEffect as useCodeMirrorEffect,
-  useEditorEventCallback as useCodeMirrorEventCallback,
   useReconfigure,
 } from "@handlewithcare/react-codemirror";
 import { exitCode } from "prosemirror-commands";
@@ -117,6 +115,7 @@ export const CodeBlock = forwardRef<
   if (
     editorState.selection.from >= getPos() &&
     editorState.selection.to <= getPos() + node.nodeSize &&
+    editorState.selection instanceof TextSelection &&
     (codeMirrorState.selection.main.anchor !==
       editorState.selection.$anchor.parentOffset ||
       codeMirrorState.selection.main.head !==
@@ -211,12 +210,13 @@ function Editor({
     (view) => {
       if (
         state.selection.from >= getPos() &&
-        state.selection.to <= getPos() + node.nodeSize
+        state.selection.to <= getPos() + node.nodeSize &&
+        state.selection instanceof TextSelection
       ) {
         view.focus();
       }
     },
-    [getPos, node.nodeSize, state.selection.from, state.selection.to]
+    [getPos, node.nodeSize, state.selection]
   );
 
   const onCommit = useEditorEventCallback((view) => {
