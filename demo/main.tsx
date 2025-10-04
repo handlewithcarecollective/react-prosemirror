@@ -9,12 +9,7 @@ import {
 } from "prosemirror-inputrules";
 import { keymap } from "prosemirror-keymap";
 import { NodeType } from "prosemirror-model";
-import {
-  EditorState,
-  NodeSelection,
-  TextSelection,
-  Transaction,
-} from "prosemirror-state";
+import { EditorState, TextSelection, Transaction } from "prosemirror-state";
 import { columnResizing, tableEditing } from "prosemirror-tables";
 import "prosemirror-tables/style/tables.css";
 import "prosemirror-view/style/prosemirror.css";

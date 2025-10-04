@@ -37,6 +37,7 @@ import {
   CodeMirrorEditor,
   react,
   useEditorEffect as useCodeMirrorEffect,
+  useEditorEventCallback as useCodeMirrorEventCallback,
   useReconfigure,
 } from "@handlewithcare/react-codemirror";
 import { exitCode } from "prosemirror-commands";
@@ -362,5 +363,33 @@ function Editor({
     );
   }, [keymap, reconfigureKeymap]);
 
-  return <CodeMirrorEditor {...props} />;
+  // Only necessary for Safari. In Safari, the CodeMirror editor
+  // element becomes the activeElement before the onselectionchange
+  // event is fired. ProseMirror ignores onselectionchanges that
+  // occur while it is not the activeElement, so ProseMirror will never update
+  // its selection state after a selection change that enters a
+  // CodeBlock in Safari.
+  //
+  // To work around this, we add a focus handler that manually updates
+  // the ProseMirror selection when the CodeMirror editor is focused.
+  const handleFocusPm = useEditorEventCallback(
+    (view, cmView: CodeMirrorView) => {
+      const offset = (getPos() ?? 0) + 1;
+      const { main } = cmView.state.selection;
+      const selAnchor = offset + main.anchor;
+      const selHead = offset + main.head;
+
+      view.dispatch(
+        view.state.tr.setSelection(
+          TextSelection.create(view.state.doc, selAnchor, selHead)
+        )
+      );
+    }
+  );
+
+  const handleFocus = useCodeMirrorEventCallback((view) => {
+    handleFocusPm(view);
+  });
+
+  return <CodeMirrorEditor {...props} onFocus={handleFocus} />;
 }
