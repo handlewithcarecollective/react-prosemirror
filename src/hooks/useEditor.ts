@@ -11,6 +11,7 @@ import { beforeInputPlugin } from "../plugins/beforeInputPlugin.js";
 
 import { useClientLayoutEffect } from "./useClientLayoutEffect.js";
 import { useComponentEventListeners } from "./useComponentEventListeners.js";
+import { useEffectEvent } from "./useEffectEvent.js";
 import { useForceUpdate } from "./useForceUpdate.js";
 
 export interface UseEditorOptions extends EditorProps {
@@ -117,27 +118,27 @@ export function useEditor<T extends HTMLElement = HTMLElement>(
     return new StaticEditorView(directEditorProps);
   });
 
+  const createEditorView = useEffectEvent((mount: T | null) => {
+    if (mount) {
+      const view = new ReactEditorView({ mount }, directEditorProps);
+      view.dom.addEventListener("compositionend", forceUpdate);
+      return view;
+    }
+
+    return new StaticEditorView(directEditorProps);
+  });
+
   useClientLayoutEffect(() => {
+    const view = createEditorView(mount);
+    setView(view);
+
     return () => {
       view.destroy();
     };
-  }, [view]);
+  }, [createEditorView, mount]);
 
-  // This rule is concerned about infinite updates due to the
-  // call to setView. These calls are deliberately conditional,
-  // so this is not a concern.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useClientLayoutEffect(() => {
-    if (mount !== view.dom) {
-      if (mount) {
-        const view = new ReactEditorView({ mount }, directEditorProps);
-        view.dom.addEventListener("compositionend", forceUpdate);
-        setView(view);
-      } else {
-        const view = new StaticEditorView(directEditorProps);
-        setView(view);
-      }
-    } else if (view instanceof ReactEditorView) {
+    if (view instanceof ReactEditorView) {
       view.commitPendingEffects();
     }
   });
