@@ -15,6 +15,7 @@ import {
 } from "../viewdesc.js";
 
 import { useClientLayoutEffect } from "./useClientLayoutEffect.js";
+import useEffectEvent from "./useEffectEvent.js";
 
 function findContentDOM(
   source: { contentDOM?: HTMLElement | null } | null,
@@ -145,6 +146,15 @@ export function useNodeViewDescriptor(
     setNodeDOM(null);
   }, [siblingsRef]);
 
+  const createEvent = useEffectEvent(() => create(props));
+
+  useClientLayoutEffect(() => {
+    viewDescRef.current = createEvent();
+    return () => {
+      destroy();
+    };
+  }, [createEvent, destroy]);
+
   useClientLayoutEffect(() => {
     if (!update(props)) {
       destroy();
@@ -204,13 +214,6 @@ export function useNodeViewDescriptor(
       }
     }
   });
-
-  useClientLayoutEffect(() => {
-    return () => {
-      destroy();
-      viewDescRef.current = undefined;
-    };
-  }, [destroy]);
 
   const childContextValue = useMemo(
     () => ({
