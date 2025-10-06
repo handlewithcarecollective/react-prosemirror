@@ -42,6 +42,11 @@ export const schema = new Schema({
     code_block: {
       group: "block",
       content: "text*",
+      code: true,
+      marks: "",
+      atom: true,
+      defining: true,
+      isolating: true,
       toDOM() {
         return ["pre", ["code", 0]];
       },

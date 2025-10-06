@@ -1,39 +1,224 @@
+import {
+  autocompletion,
+  closeBrackets,
+  closeBracketsKeymap,
+  completionKeymap,
+} from "@codemirror/autocomplete";
 import { defaultKeymap } from "@codemirror/commands";
 import { javascript } from "@codemirror/lang-javascript";
-import { type Line, Prec, type SelectionRange } from "@codemirror/state";
+import {
+  bracketMatching,
+  defaultHighlightStyle,
+  indentOnInput,
+  syntaxHighlighting,
+} from "@codemirror/language";
+import { diff } from "@codemirror/merge";
+import {
+  EditorState as CodeMirrorState,
+  Compartment,
+  type Line,
+  type SelectionRange,
+  Transaction,
+} from "@codemirror/state";
+import { oneDark } from "@codemirror/theme-one-dark";
 import {
   type EditorView as CodeMirrorView,
   type Command,
   type KeyBinding,
-  type ViewUpdate,
   keymap as cmKeymap,
   drawSelection,
+  dropCursor,
+  highlightActiveLine,
+  highlightActiveLineGutter,
+  highlightSpecialChars,
 } from "@codemirror/view";
-import ReactCodeMirror, {
-  type ReactCodeMirrorRef,
-  oneDark,
-} from "@uiw/react-codemirror";
+import {
+  CodeMirror,
+  CodeMirrorEditor,
+  react,
+  useEditorEffect as useCodeMirrorEffect,
+  useEditorEventCallback as useCodeMirrorEventCallback,
+  useReconfigure,
+} from "@handlewithcare/react-codemirror";
 import { exitCode } from "prosemirror-commands";
 import { redo, undo } from "prosemirror-history";
-import { Selection, TextSelection } from "prosemirror-state";
-import React, { forwardRef, useMemo, useRef } from "react";
+import { Node } from "prosemirror-model";
+import { EditorState, Selection, TextSelection } from "prosemirror-state";
+import React, { HTMLProps, forwardRef, useMemo, useState } from "react";
 
 import {
   type NodeViewComponentProps,
   useEditorEventCallback,
-  useStopEvent,
+  useEditorState,
 } from "../../src/index.js";
 import { schema } from "../schema.js";
+
+const keymapCompartment = new Compartment();
+
+const extensions = [
+  highlightActiveLineGutter(),
+  highlightSpecialChars(),
+  drawSelection(),
+  dropCursor(),
+  indentOnInput(),
+  syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
+  bracketMatching({
+    brackets: "()[]{}<>",
+  }),
+  closeBrackets(),
+  autocompletion(),
+  highlightActiveLine(),
+  keymapCompartment.of(
+    cmKeymap.of([...closeBracketsKeymap, ...defaultKeymap, ...completionKeymap])
+  ),
+  javascript({ jsx: true, typescript: true }),
+  react,
+  oneDark,
+];
 
 export const CodeBlock = forwardRef<
   HTMLDivElement | null,
   NodeViewComponentProps
->(function CodeBlock({ nodeProps, ...props }, outerRef) {
-  const ref = useRef<HTMLDivElement | null>(null);
-
+>(function CodeBlock({ nodeProps, ...props }, ref) {
   const { node, getPos } = nodeProps;
 
-  const cmViewRef = useRef<CodeMirrorView | null>(null);
+  const editorState = useEditorState();
+
+  const [codeMirrorState, setCodeMirrorState] = useState(() =>
+    CodeMirrorState.create({ doc: node.textContent, extensions })
+  );
+
+  // We need to maintain extension state and selection
+  // between renders, so we can't recompute the CodeMirror
+  // EditorState from node.textContent on each render.
+  //
+  // The next best thing is to update state during render
+  // when the node content doesn’t match the EditorState.
+  // This will trigger another render, but React will abort
+  // this render without running effects or committing
+  // to the DOM, so we avoid any state tearing.
+  if (node.textContent !== codeMirrorState.doc.toString()) {
+    setCodeMirrorState((prev) => {
+      const current = prev.doc.toString();
+      const incoming = node.textContent;
+      const diffed = diff(current, incoming);
+
+      return prev.update({
+        changes: diffed.map((change) => ({
+          from: change.fromA,
+          to: change.toA,
+          insert: incoming.slice(change.fromB, change.toB),
+        })),
+      }).state;
+    });
+  }
+
+  if (
+    editorState.selection.from >= getPos() &&
+    editorState.selection.to <= getPos() + node.nodeSize &&
+    editorState.selection instanceof TextSelection &&
+    (codeMirrorState.selection.main.anchor !==
+      editorState.selection.$anchor.parentOffset ||
+      codeMirrorState.selection.main.head !==
+        editorState.selection.$head.parentOffset)
+  ) {
+    setCodeMirrorState(
+      (prev) =>
+        prev.update({
+          selection: {
+            anchor: editorState.selection.$anchor.parentOffset,
+            head: editorState.selection.$head.parentOffset,
+          },
+        }).state
+    );
+  }
+
+  const dispatchTransactions = useEditorEventCallback(
+    (view, trs: readonly Transaction[], cmView: CodeMirrorView) => {
+      const newState = trs.at(-1)?.state;
+      if (!newState) return;
+
+      // We have to store extensions etc in local state,
+      // so even if the doc didn't change, we need to update
+      // our local state. Otherwise, effects like reconfiguring
+      // the keymap will just be dropped.
+      if (!trs.some((tr) => tr.docChanged || !!tr.selection)) {
+        setCodeMirrorState(newState);
+        return;
+      }
+
+      if (!cmView.hasFocus) {
+        return;
+      }
+
+      let offset = (getPos() ?? 0) + 1;
+      const { main } = newState.selection;
+      const selAnchor = offset + main.anchor;
+      const selHead = offset + main.head;
+
+      const pmTr = view.state.tr;
+
+      const pmSel = pmTr.selection;
+      if (trs.some((tr) => tr.docChanged)) {
+        trs.forEach((tr) => {
+          tr.changes.iterChanges((fromA, toA, fromB, toB, text) => {
+            if (text.length) {
+              pmTr.replaceWith(
+                offset + fromA,
+                offset + toA,
+                schema.text(text.toString())
+              );
+            } else {
+              pmTr.delete(offset + fromA, offset + toA);
+            }
+            offset += toB - fromB - (toA - fromA);
+          });
+        });
+      }
+
+      if (pmSel.anchor !== selAnchor || pmSel.head !== selHead) {
+        pmTr.setSelection(TextSelection.create(pmTr.doc, selAnchor, selHead));
+      }
+
+      view.dispatch(pmTr);
+    }
+  );
+
+  return (
+    <div {...props} ref={ref} contentEditable={false}>
+      <CodeMirror
+        dispatchTransactions={dispatchTransactions}
+        state={codeMirrorState}
+        extensions={extensions}
+      >
+        <Editor state={editorState} node={node} getPos={getPos} />
+      </CodeMirror>
+    </div>
+  );
+});
+
+function Editor({
+  state,
+  node,
+  getPos,
+  ...props
+}: {
+  state: EditorState;
+  node: Node;
+  getPos: () => number;
+} & HTMLProps<HTMLDivElement>) {
+  useCodeMirrorEffect(
+    (view) => {
+      if (
+        state.selection.from >= getPos() &&
+        state.selection.to <= getPos() + node.nodeSize &&
+        state.selection instanceof TextSelection
+      ) {
+        view.focus();
+      }
+    },
+    [getPos, node.nodeSize, state.selection]
+  );
 
   const onCommit = useEditorEventCallback((view) => {
     if (!exitCode(view.state, view.dispatch)) {
@@ -58,11 +243,7 @@ export const CodeBlock = forwardRef<
 
       const tr = view.state.tr;
 
-      tr.replaceRangeWith(
-        pos,
-        pos + nodeProps.node.nodeSize + 1,
-        emptyParagraph
-      )
+      tr.replaceRangeWith(pos, pos + node.nodeSize + 1, emptyParagraph)
         .setSelection(Selection.near(tr.doc.resolve(tr.mapping.map(pos)), 1))
         .scrollIntoView();
 
@@ -169,134 +350,46 @@ export const CodeBlock = forwardRef<
     [onCommit, onDelete, onRedo, onUndo, withMaybeEscape]
   );
 
-  const onUpdate = useEditorEventCallback((view, update: ViewUpdate) => {
-    if (update.state.doc.toString() === node.textContent) {
-      return;
-    }
-    if (!update.view.hasFocus) {
-      return;
-    }
+  const reconfigureKeymap = useReconfigure(keymapCompartment);
 
-    let offset = (getPos() ?? 0) + 1;
-    const { main } = update.state.selection;
-    const selFrom = offset + main.from;
-    const selTo = offset + main.to;
+  useCodeMirrorEffect(() => {
+    reconfigureKeymap(
+      cmKeymap.of([
+        ...keymap,
+        ...closeBracketsKeymap,
+        ...defaultKeymap,
+        ...completionKeymap,
+      ])
+    );
+  }, [keymap, reconfigureKeymap]);
 
-    const tr = view.state.tr;
-
-    const pmSel = tr.selection;
-    if (update.docChanged || pmSel.from != selFrom || pmSel.to != selTo) {
-      update.changes.iterChanges((fromA, toA, fromB, toB, text) => {
-        if (text.length) {
-          tr.replaceWith(
-            offset + fromA,
-            offset + toA,
-            schema.text(text.toString())
-          );
-        } else {
-          tr.delete(offset + fromA, offset + toA);
-        }
-        offset += toB - fromB - (toA - fromA);
-      });
-
-      tr.setSelection(TextSelection.create(tr.doc, selFrom, selTo));
-    }
-
-    view.dispatch(tr);
-  });
-
-  const extensions = useMemo(
-    () => [
-      oneDark,
-      Prec.highest(cmKeymap.of([...keymap, ...defaultKeymap])),
-      drawSelection(),
-      javascript({ jsx: true, typescript: true }),
-    ],
-    [keymap]
-  );
-
-  useStopEvent((view, event) => {
-    if (event instanceof InputEvent) return true;
-    return false;
-  });
-
-  const onFocus = useEditorEventCallback((view) => {
-    const pmSel = view.state.selection;
-    const cmSel = cmViewRef.current?.state.selection.main;
-
-    if (!cmSel) {
-      return;
-    }
-
-    const offset = (getPos() ?? 0) + 1;
-    const selFrom = offset + cmSel.from;
-    const selTo = offset + cmSel.to;
-
-    if (pmSel.from === selFrom && pmSel.to === selTo) {
-      return;
-    }
-
-    let tr = view.state.tr;
-    tr = tr.setSelection(TextSelection.create(tr.doc, selFrom, selTo));
-    view.dispatch(tr);
-  });
-
-  const cmRef = useRef<ReactCodeMirrorRef>(null);
-
-  const onCreateEditor = useEditorEventCallback(
+  // Only necessary for Safari. In Safari, the CodeMirror editor
+  // element becomes the activeElement before the onselectionchange
+  // event is fired. ProseMirror ignores onselectionchanges that
+  // occur while it is not the activeElement, so ProseMirror will never update
+  // its selection state after a selection change that enters a
+  // CodeBlock in Safari.
+  //
+  // To work around this, we add a focus handler that manually updates
+  // the ProseMirror selection when the CodeMirror editor is focused.
+  const handleFocusPm = useEditorEventCallback(
     (view, cmView: CodeMirrorView) => {
-      if (cmViewRef.current === cmView) {
-        return;
-      }
+      const offset = (getPos() ?? 0) + 1;
+      const { main } = cmView.state.selection;
+      const selAnchor = offset + main.anchor;
+      const selHead = offset + main.head;
 
-      cmViewRef.current = cmView;
-
-      // When a new CodeBlock is created, if it contains
-      // the ProseMirror selection, focus it
-      if (
-        cmViewRef.current &&
-        view.state.selection.from >= getPos() &&
-        view.state.selection.to <= getPos() + node.nodeSize
-      ) {
-        cmViewRef.current.focus();
-      }
+      view.dispatch(
+        view.state.tr.setSelection(
+          TextSelection.create(view.state.doc, selAnchor, selHead)
+        )
+      );
     }
   );
 
-  return (
-    <div
-      {...props}
-      ref={(el) => {
-        ref.current = el;
-        if (!outerRef) {
-          return;
-        }
-        if (typeof outerRef === "function") {
-          outerRef(el);
-        } else {
-          outerRef.current = el;
-        }
-      }}
-      contentEditable={false}
-      onClick={(e) => {
-        cmViewRef.current?.focus();
-      }}
-    >
-      <ReactCodeMirror
-        ref={cmRef}
-        onCreateEditor={onCreateEditor}
-        onUpdate={onUpdate}
-        value={node.textContent}
-        theme="dark"
-        basicSetup={{
-          lineNumbers: false,
-          foldGutter: false,
-          highlightActiveLine: false,
-          autocompletion: true,
-        }}
-        extensions={extensions}
-        onFocus={onFocus}
-      />
-    </div>
-  );
-});
+  const handleFocus = useCodeMirrorEventCallback((view) => {
+    handleFocusPm(view);
+  });
+
+  return <CodeMirrorEditor {...props} onFocus={handleFocus} />;
+}
