@@ -98,6 +98,8 @@ export class ReactEditorView extends EditorView implements AbstractEditorView {
 
   private prevState: EditorState;
 
+  private _destroyed: boolean;
+
   constructor(place: { mount: HTMLElement }, props: DirectEditorProps) {
     // Prevent the base class from destroying the React-managed nodes.
     // Restore them below after invoking the base class constructor.
@@ -149,10 +151,24 @@ export class ReactEditorView extends EditorView implements AbstractEditorView {
     this.docView.destroy();
     // @ts-expect-error this violates the typing but class does it, too.
     this.docView = null;
+    this._destroyed = false;
   }
 
   get props() {
     return this.nextProps;
+  }
+
+  /**
+   * @privateremarks
+   *
+   * We override this getter because the base implementation
+   * relies on checking `docView === null`, but we unconditionally
+   * set view.docView in a layout effect in the DocNodeView.
+   * This has the effect of "un-destroying" the EditorView,
+   * making it impossible to determine whether it's been destroyed.
+   */
+  get isDestroyed() {
+    return this._destroyed;
   }
 
   setProps(props: Partial<DirectEditorProps>) {
@@ -242,6 +258,7 @@ export class ReactEditorView extends EditorView implements AbstractEditorView {
       super.destroy();
     } finally {
       this.dom.replaceChildren(...reactContent);
+      this._destroyed = true;
     }
   }
 
