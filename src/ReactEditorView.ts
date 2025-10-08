@@ -40,6 +40,7 @@ interface DOMObserver {
   queue: MutationRecord[];
   start(): void;
   stop(): void;
+  onSelectionChange(): void;
 }
 
 interface InputState {
@@ -116,6 +117,16 @@ export class ReactEditorView extends EditorView implements AbstractEditorView {
       this.domObserver.stop();
       this.domObserver.observer = null;
       this.domObserver.queue = [];
+      const originalOnSelectionChange = this.domObserver.onSelectionChange;
+      this.domObserver.onSelectionChange = () => {
+        // During a composition, we completely pause React-driven
+        // selection and DOM updates. Compositions are "fragile";
+        // in Safari, even updating the selection to the same
+        // position it's already set to will end the current
+        // composition.
+        if (this.composing) return;
+        originalOnSelectionChange();
+      };
     } finally {
       place.mount.replaceChildren(...reactContent);
 
