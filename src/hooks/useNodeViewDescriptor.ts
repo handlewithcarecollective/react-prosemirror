@@ -1,5 +1,5 @@
 import { NodeViewConstructor } from "prosemirror-view";
-import { useCallback, useContext, useMemo, useRef, useState } from "react";
+import { useContext, useMemo, useRef, useState } from "react";
 
 import { ReactEditorView } from "../ReactEditorView.js";
 import { NodeViewComponentProps } from "../components/NodeViewComponentProps.js";
@@ -15,6 +15,7 @@ import {
 } from "../viewdesc.js";
 
 import { useClientLayoutEffect } from "./useClientLayoutEffect.js";
+import { useEffectEvent } from "./useEffectEvent.js";
 
 function findContentDOM(
   source: { contentDOM?: HTMLElement | null } | null,
@@ -40,92 +41,86 @@ export function useNodeViewDescriptor(
   const viewDescRef = useRef<NodeViewDesc | undefined>();
   const childrenRef = useRef<ViewDesc[]>([]);
 
-  const create = useCallback(
-    (props: Props) => {
-      if (!(view instanceof ReactEditorView)) {
-        return;
-      }
+  const create = useEffectEvent(() => {
+    if (!(view instanceof ReactEditorView)) {
+      return;
+    }
 
-      const dom = ref.current;
-      if (!dom) {
-        return;
-      }
+    const dom = ref.current;
+    if (!dom) {
+      return;
+    }
 
-      const { node, getPos, decorations, innerDecorations } = props;
-      const nodeView = constructor(
-        node,
-        view,
-        getPos,
-        decorations,
-        innerDecorations
-      );
-      if (!nodeView) {
-        return;
-      }
+    const { node, getPos, decorations, innerDecorations } = props;
+    const nodeView = constructor(
+      node,
+      view,
+      getPos,
+      decorations,
+      innerDecorations
+    );
+    if (!nodeView) {
+      return;
+    }
 
-      const parent = parentRef.current;
-      const children = childrenRef.current;
+    const parent = parentRef.current;
+    const children = childrenRef.current;
 
-      const contentDOM = findContentDOM(nodeView, children);
-      const nodeDOM = nodeView.dom;
+    const contentDOM = findContentDOM(nodeView, children);
+    const nodeDOM = nodeView.dom;
 
-      const viewDesc = new ReactNodeViewDesc(
-        parent,
-        children,
-        getPos,
-        node,
-        decorations,
-        innerDecorations,
-        dom,
-        contentDOM,
-        nodeDOM,
-        nodeView
-      );
+    const viewDesc = new ReactNodeViewDesc(
+      parent,
+      children,
+      getPos,
+      node,
+      decorations,
+      innerDecorations,
+      dom,
+      contentDOM,
+      nodeDOM,
+      nodeView
+    );
 
-      setDOM(dom);
-      setContentDOM(contentDOM);
-      setNodeDOM(nodeDOM);
+    setDOM(dom);
+    setContentDOM(contentDOM);
+    setNodeDOM(nodeDOM);
 
-      return viewDesc;
-    },
-    [ref, parentRef, constructor, view]
-  );
+    return viewDesc;
+  });
 
-  const update = useCallback(
-    (props: Props) => {
-      if (!(view instanceof ReactEditorView)) {
-        return false;
-      }
+  const update = useEffectEvent(() => {
+    if (!(view instanceof ReactEditorView)) {
+      return false;
+    }
 
-      const viewDesc = viewDescRef.current;
-      if (!viewDesc) {
-        return false;
-      }
+    const viewDesc = viewDescRef.current;
+    if (!viewDesc) {
+      return false;
+    }
 
-      const dom = ref.current;
-      if (!dom || dom !== viewDesc.dom) {
-        return false;
-      }
+    const dom = ref.current;
+    if (!dom || dom !== viewDesc.dom) {
+      return false;
+    }
 
-      const contentDOM = findContentDOM(viewDesc, viewDesc.children);
-      if (contentDOM !== viewDesc.contentDOM) {
-        return false;
-      }
+    const contentDOM = findContentDOM(viewDesc, viewDesc.children);
+    if (contentDOM !== viewDesc.contentDOM) {
+      return false;
+    }
 
-      if (!dom.contains(viewDesc.nodeDOM)) {
-        return false;
-      }
+    if (!dom.contains(viewDesc.nodeDOM)) {
+      return false;
+    }
 
-      const { node, decorations, innerDecorations } = props;
-      return (
-        viewDesc.matchesNode(node, decorations, innerDecorations) ||
-        viewDesc.update(node, decorations, innerDecorations, view)
-      );
-    },
-    [ref, view]
-  );
+    const { node, decorations, innerDecorations } = props;
+    return (
+      viewDesc.matchesNode(node, decorations, innerDecorations) ||
+      viewDesc.update(node, decorations, innerDecorations, view)
+    );
+  });
 
-  const destroy = useCallback(() => {
+  const destroy = useEffectEvent(() => {
     const viewDesc = viewDescRef.current;
     if (!viewDesc) {
       return;
@@ -143,12 +138,19 @@ export function useNodeViewDescriptor(
     setDOM(null);
     setContentDOM(null);
     setNodeDOM(null);
-  }, [siblingsRef]);
+  });
 
   useClientLayoutEffect(() => {
-    if (!update(props)) {
+    viewDescRef.current = create();
+    return () => {
       destroy();
-      viewDescRef.current = create(props);
+    };
+  }, [create, destroy]);
+
+  useClientLayoutEffect(() => {
+    if (!update()) {
+      destroy();
+      viewDescRef.current = create();
     }
 
     const viewDesc = viewDescRef.current;
@@ -204,13 +206,6 @@ export function useNodeViewDescriptor(
       }
     }
   });
-
-  useClientLayoutEffect(() => {
-    return () => {
-      destroy();
-      viewDescRef.current = undefined;
-    };
-  }, [destroy]);
 
   const childContextValue = useMemo(
     () => ({
