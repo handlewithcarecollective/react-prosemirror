@@ -138,7 +138,10 @@ export function useEditor<T extends HTMLElement = HTMLElement>(
   }, [createEditorView, mount]);
 
   useClientLayoutEffect(() => {
-    if (view instanceof ReactEditorView) {
+    // Ensure that the EditorView hasn't been destroyed before
+    // running effects. Running effects will reattach selection
+    // change listeners if the EditorView has been destroyed.
+    if (view instanceof ReactEditorView && !view.isDestroyed) {
       view.commitPendingEffects();
     }
   });
