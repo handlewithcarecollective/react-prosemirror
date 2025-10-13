@@ -1465,8 +1465,8 @@ __metadata:
     "@testing-library/dom": "npm:^10.4.0"
     "@testing-library/react": "npm:^16.3.0"
     "@testing-library/user-event": "npm:^14.6.1"
-    "@tiptap/core": "npm:^3.6.2"
-    "@tiptap/react": "npm:^3.6.2"
+    "@tiptap/core": "npm:^3.0.0"
+    "@tiptap/react": "npm:^3.0.0"
     "@types/css-tree": "npm:^2.3.10"
     "@types/jest": "npm:^27.0.0"
     "@types/react": "npm:^18.2.0"
@@ -1528,19 +1528,12 @@ __metadata:
     webdriver: "npm:^9.18.0"
     webdriverio: "npm:^9.18.1"
   peerDependencies:
-    "@tiptap/core": ^3.6.2
-    "@tiptap/react": ^3.6.2
     prosemirror-model: ^1.0.0
     prosemirror-state: ^1.0.0
     prosemirror-view: 1.39.2
     react: ">=17 <20"
     react-dom: ">=17 <20"
     react-reconciler: ">=0.26.1 <=0.32.0"
-  peerDependenciesMeta:
-    "@tiptap/core":
-      optional: true
-    "@tiptap/react":
-      optional: true
   languageName: unknown
   linkType: soft
 
@@ -3134,50 +3127,50 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tiptap/core@npm:^3.6.2":
-  version: 3.6.2
-  resolution: "@tiptap/core@npm:3.6.2"
+"@tiptap/core@npm:^3.0.0":
+  version: 3.6.6
+  resolution: "@tiptap/core@npm:3.6.6"
   peerDependencies:
-    "@tiptap/pm": ^3.6.2
-  checksum: 10/e5a053c7d532e8c650d13b1f03a4f2a47c6c2284a668cbeab3df09634416bd3d830203cc521119db644b62f9b04a0cec503839b4a0bd65361d2bc73518ac922d
+    "@tiptap/pm": ^3.6.6
+  checksum: 10/03b97e71e359431ce54319112355f58219858b36cb3039d10b3c99e472e429795b71f030018dd80abad993e67ad8d5a4702052fc56c2d95902717c9cde9e6eab
   languageName: node
   linkType: hard
 
-"@tiptap/extension-bubble-menu@npm:^3.6.2":
-  version: 3.6.2
-  resolution: "@tiptap/extension-bubble-menu@npm:3.6.2"
+"@tiptap/extension-bubble-menu@npm:^3.6.6":
+  version: 3.6.6
+  resolution: "@tiptap/extension-bubble-menu@npm:3.6.6"
   dependencies:
     "@floating-ui/dom": "npm:^1.0.0"
   peerDependencies:
-    "@tiptap/core": ^3.6.2
-    "@tiptap/pm": ^3.6.2
-  checksum: 10/aeb1c28cfc300a4e7238550920b335f26c18ba8cd9c54ea705f318dfeed2854abb7315ff05d35f821b91d5b85e344a4efa0101e1a60c2e48e9ca8737445de6da
+    "@tiptap/core": ^3.6.6
+    "@tiptap/pm": ^3.6.6
+  checksum: 10/af3684781ea57bae65aaa74393191cda36a178bc49e063e6c0832e5d2e51af136e881e2784d055a8de341a0b00d5a57757e7075e28c747882d1bd872bde16f54
   languageName: node
   linkType: hard
 
-"@tiptap/extension-floating-menu@npm:^3.6.2":
-  version: 3.6.2
-  resolution: "@tiptap/extension-floating-menu@npm:3.6.2"
+"@tiptap/extension-floating-menu@npm:^3.6.6":
+  version: 3.6.6
+  resolution: "@tiptap/extension-floating-menu@npm:3.6.6"
   peerDependencies:
     "@floating-ui/dom": ^1.0.0
-    "@tiptap/core": ^3.6.2
-    "@tiptap/pm": ^3.6.2
-  checksum: 10/4a264e6e6abb77e2bb06cb21d96ef10de6847d8d383945b9b996d24f772673219a0eafe58210a886e1b7ff17d167a1f87e76a117cfc0850c82ce656030ae11e4
+    "@tiptap/core": ^3.6.6
+    "@tiptap/pm": ^3.6.6
+  checksum: 10/4ad648933906ae020a8c2d71303848dc46b48cd3d350fb95bbc9a9ee95376e7e0d596ef20b445df7820ad6c6f0310557d68e7d1f4e3a37705322aae79475f50b
   languageName: node
   linkType: hard
 
-"@tiptap/react@npm:^3.6.2":
-  version: 3.6.2
-  resolution: "@tiptap/react@npm:3.6.2"
+"@tiptap/react@npm:^3.0.0":
+  version: 3.6.6
+  resolution: "@tiptap/react@npm:3.6.6"
   dependencies:
-    "@tiptap/extension-bubble-menu": "npm:^3.6.2"
-    "@tiptap/extension-floating-menu": "npm:^3.6.2"
+    "@tiptap/extension-bubble-menu": "npm:^3.6.6"
+    "@tiptap/extension-floating-menu": "npm:^3.6.6"
     "@types/use-sync-external-store": "npm:^0.0.6"
     fast-deep-equal: "npm:^3.1.3"
     use-sync-external-store: "npm:^1.4.0"
   peerDependencies:
-    "@tiptap/core": ^3.6.2
-    "@tiptap/pm": ^3.6.2
+    "@tiptap/core": ^3.6.6
+    "@tiptap/pm": ^3.6.6
     "@types/react": ^17.0.0 || ^18.0.0 || ^19.0.0
     "@types/react-dom": ^17.0.0 || ^18.0.0 || ^19.0.0
     react: ^17.0.0 || ^18.0.0 || ^19.0.0
@@ -3187,7 +3180,7 @@ __metadata:
       optional: true
     "@tiptap/extension-floating-menu":
       optional: true
-  checksum: 10/e1216e9e65d277ec6e68ac104b75daddc2fbeb96314fea18b4ee968e3eef194dcb1480ae27acfc0614b398dcbce5e9c17d341b3de831f5db3c4f2157d10c47e4
+  checksum: 10/c829bda933c65d8331a268fa1e7fb243f65bf72ebdff8792c6c24da3ecead0de7dbdf3d5215ad4cf870ddeaf22068d61c57e2f3009cf165fa1eee762c923e04f
   languageName: node
   linkType: hard
 
