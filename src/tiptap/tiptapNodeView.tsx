@@ -3,8 +3,7 @@ import {
   getRenderedAttributes,
 } from "@tiptap/core";
 import {
-  ReactNodeViewContext,
-  ReactNodeViewContextProps,
+  ReactNodeViewContentProvider,
   type ReactNodeViewProps,
   useCurrentEditor,
 } from "@tiptap/react";
@@ -74,7 +73,7 @@ export interface TiptapNodeViewProps {
 export function tiptapNodeView({
   component: WrappedComponent,
   extension,
-  as: OuterTag = "div",
+  as,
   className = "",
   attrs,
   contentDOMElementTag: InnerTag = "div",
@@ -86,6 +85,9 @@ export function tiptapNodeView({
       function TiptapNodeView({ children, nodeProps, ...props }, ref) {
         const { node, getPos, decorations, innerDecorations } = nodeProps;
 
+        const OuterTag = (
+          as ?? node.type.isInline ? "span" : "div"
+        ) as ElementType;
         const { editor } = useCurrentEditor();
         const extensionManager = editor?.extensionManager ?? null;
         const extensions = extensionManager?.extensions ?? null;
@@ -174,24 +176,22 @@ export function tiptapNodeView({
           editor.commands.deleteRange({ from, to });
         });
 
-        const nodeViewContext = useMemo<ReactNodeViewContextProps>(
-          () => ({
-            nodeViewContentChildren: (
-              <InnerTag
-                data-node-view-content-inner={node.type.name}
-                style={{ whitespace: "inherit" }}
-              >
-                {children}
-              </InnerTag>
-            ),
-          }),
+        const nodeViewContent = useMemo(
+          () => (
+            <InnerTag
+              data-node-view-content-inner={node.type.name}
+              style={{ whitespace: "inherit" }}
+            >
+              {children}
+            </InnerTag>
+          ),
           [children, node.type.name]
         );
 
         if (!editor) return null;
 
         return (
-          <ReactNodeViewContext.Provider value={nodeViewContext}>
+          <ReactNodeViewContentProvider content={nodeViewContent}>
             <OuterTag
               ref={ref}
               className={finalClassName}
@@ -213,7 +213,7 @@ export function tiptapNodeView({
                 deleteNode={deleteNode}
               />
             </OuterTag>
-          </ReactNodeViewContext.Provider>
+          </ReactNodeViewContentProvider>
         );
       }
     )
