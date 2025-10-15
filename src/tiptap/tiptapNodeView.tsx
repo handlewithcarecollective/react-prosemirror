@@ -96,7 +96,10 @@ export function tiptapNodeView({
 
         useStopEvent((_, event) => {
           if (stopEvent) {
-            return stopEvent({ event });
+            return stopEvent.call(
+              { name: extension.name, editor, type: node.type },
+              { event }
+            );
           }
 
           return false;
@@ -104,7 +107,10 @@ export function tiptapNodeView({
 
         useIgnoreMutation((_, mutation) => {
           if (ignoreMutation) {
-            return ignoreMutation({ mutation });
+            return ignoreMutation.call(
+              { name: extension.name, editor, type: node.type },
+              { mutation }
+            );
           }
 
           return false;
