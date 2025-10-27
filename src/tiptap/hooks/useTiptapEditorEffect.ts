@@ -1,7 +1,9 @@
 import { Editor } from "@tiptap/core";
 import { useCurrentEditor } from "@tiptap/react";
-import { DependencyList } from "react";
+import { DependencyList, useContext } from "react";
 
+import { ReactEditorView } from "../../ReactEditorView.js";
+import { EditorContext } from "../../contexts/EditorContext.js";
 import { useEditorEffect } from "../../hooks/useEditorEffect.js";
 
 /**
@@ -26,15 +28,19 @@ export function useTiptapEditorEffect(
   effect: (editor: Editor) => void | (() => void),
   dependencies?: DependencyList
 ) {
+  const { view } = useContext(EditorContext);
   const { editor } = useCurrentEditor();
 
   useEditorEffect(() => {
-    if (editor) {
+    if (
+      editor?.view instanceof ReactEditorView &&
+      view instanceof ReactEditorView
+    ) {
       return effect(editor);
     }
     // The rules of hooks want to be able to statically
     // verify the dependencies for the effect, but this will
     // have already happened at the call-site.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, dependencies && [editor, ...dependencies]);
+  }, dependencies && [editor, view, ...dependencies]);
 }
