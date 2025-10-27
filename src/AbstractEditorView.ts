@@ -19,6 +19,7 @@ export interface AbstractEditorView {
   readonly nodeViews: NodeViewSet;
   readonly props: DirectEditorProps;
   readonly state: EditorState;
+  readonly isDestroyed: boolean;
   setProps(props: Partial<DirectEditorProps>): void;
   update(props: DirectEditorProps): void;
   updateState(state: EditorState): void;
