@@ -19,6 +19,7 @@ export interface UseEditorOptions extends EditorProps {
   state?: EditorState;
   plugins?: readonly Plugin[];
   dispatchTransaction?(this: EditorView, tr: Transaction): void;
+  static?: boolean;
 }
 
 let didWarnValueDefaultValue = false;
@@ -119,7 +120,7 @@ export function useEditor<T extends HTMLElement = HTMLElement>(
   });
 
   const createEditorView = useEffectEvent((mount: T | null) => {
-    if (mount) {
+    if (mount && !options.static) {
       const view = new ReactEditorView({ mount }, directEditorProps);
       view.dom.addEventListener("compositionend", forceUpdate);
       return view;
@@ -155,8 +156,15 @@ export function useEditor<T extends HTMLElement = HTMLElement>(
       flushSyncRef,
       registerEventListener,
       unregisterEventListener,
+      isStatic: options.static ?? false,
     }),
-    [cursorWrapper, registerEventListener, unregisterEventListener, view]
+    [
+      cursorWrapper,
+      options.static,
+      registerEventListener,
+      unregisterEventListener,
+      view,
+    ]
   );
 
   return { editor, state };
