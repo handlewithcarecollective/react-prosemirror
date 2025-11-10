@@ -17,6 +17,7 @@ export interface EditorContextValue {
     eventType: EventType,
     handler: EventHandler<EventType>
   ): void;
+  isStatic: boolean;
 }
 
 /**
