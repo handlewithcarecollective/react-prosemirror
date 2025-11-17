@@ -7,3 +7,4 @@ export {
   type UseTiptapEditorOptions,
   useTiptapEditor,
 } from "./hooks/useTiptapEditor.js";
+export { ReactProseMirror } from "./extensions/ReactProseMirror.js";
