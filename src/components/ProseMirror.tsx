@@ -1,6 +1,7 @@
 import { NodeViewConstructor } from "prosemirror-view";
 import React, { ComponentType, ReactNode, useMemo, useState } from "react";
 
+import { ChildDescriptorsContext } from "../contexts/ChildDescriptorsContext.js";
 import { EditorContext } from "../contexts/EditorContext.js";
 import { EditorStateContext } from "../contexts/EditorStateContext.js";
 import {
@@ -18,6 +19,13 @@ import { DocNodeViewContext } from "./ProseMirrorDoc.js";
 function getPos() {
   return -1;
 }
+
+const rootChildDescriptorsContextValue = {
+  parentRef: { current: undefined },
+  siblingsRef: {
+    current: [],
+  },
+};
 
 export type Props = Omit<UseEditorOptions, "nodeViews"> & {
   className?: string;
@@ -71,9 +79,13 @@ function ProseMirrorInner({
     <EditorContext.Provider value={editor}>
       <EditorStateContext.Provider value={state}>
         <NodeViewContext.Provider value={nodeViewContextValue}>
-          <DocNodeViewContext.Provider value={docNodeViewContextValue}>
-            {children}
-          </DocNodeViewContext.Provider>
+          <ChildDescriptorsContext.Provider
+            value={rootChildDescriptorsContextValue}
+          >
+            <DocNodeViewContext.Provider value={docNodeViewContextValue}>
+              {children}
+            </DocNodeViewContext.Provider>
+          </ChildDescriptorsContext.Provider>
         </NodeViewContext.Provider>
       </EditorStateContext.Provider>
     </EditorContext.Provider>
