@@ -3,6 +3,7 @@ export { TiptapEditorView } from "./TiptapEditorView.js";
 export { TiptapEditorContent } from "./TiptapEditorContent.js";
 export { useTiptapEditorEffect } from "./hooks/useTiptapEditorEffect.js";
 export { useTiptapEditorEventCallback } from "./hooks/useTiptapEditorEventCallback.js";
+export { TipTapEditor } from "./TipTapEditor.js";
 export {
   type UseTiptapEditorOptions,
   useTiptapEditor,
