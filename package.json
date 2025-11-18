@@ -19,6 +19,10 @@
     "LICENSE.txt",
     "dist"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/handlewithcarecollective/react-prosemirror.git"
+  },
   "scripts": {
     "build:cjs": "swc ./src --ignore **/__tests__/** -d ./dist/cjs/ --no-swcrc --config-file .swcrc-cjs",
     "build:esm": "swc ./src --ignore **/__tests__/** -d ./dist/esm/",
