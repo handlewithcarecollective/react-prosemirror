@@ -9,17 +9,6 @@
 
 [![Join the chat at https://gitter.im/nytimes/react-prosemirror](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/nytimes/react-prosemirror?utm_source=badge&utm_medium=badge&utm_content=badge)
 
-## What happened to `@nytimes/react-prosemirror`?
-
-On Jan. 17, 2025, the maintainers of the `@nytimes/react-prosemirror` library
-decided fork the v2 release into its own project. It had been developed entirely
-by one developer, @smoores-dev, who had not worked for NYT in years, and was
-struggling to move the project at the speed he desired.
-
-This project is that fork, and all future development on the React-based
-ProseMirror renderer will happen in this repository, published as
-`@handlewithcare/react-prosemirror` on NPM.
-
 ## Installation
 
 _Note_: React ProseMirror releases are coupled to specific prosemirror-view
@@ -88,8 +77,6 @@ import "prosemirror-view/style/prosemirror.css";
     - [`useEditorEventCallback`](#useeditoreventcallback)
     - [`useEditorEventListener`](#useeditoreventlistener)
   - [Building node views with React](#building-node-views-with-react)
-- [What's new in v2?](#whats-new-in-v2)
-  - [API changes](#api-changes)
 - [API](#api)
   - [`ProseMirror`](#prosemirror)
   - [`ProseMirrorDoc`](#prosemirrordoc)
@@ -105,6 +92,7 @@ import "prosemirror-view/style/prosemirror.css";
   - [`widget`](#widget)
   - [`reorderSiblings`](#reordersiblings)
     - [When should I use this?](#when-should-i-use-this)
+- [Migrations](#migrations)
 - [Looking for someone to collaborate with?](#looking-for-someone-to-collaborate-with)
 
 <!-- tocstop -->
@@ -466,64 +454,6 @@ function ProseMirrorEditor() {
 }
 ```
 
-## What's new in v2?
-
-The v2 release constitutes a significant re-write of the library.
-
-Previously, React ProseMirror relied on ProseMirror's EditorView to manage the
-DOM for the editor. To integrate it with React, we used React
-[portals](https://react.dev/reference/react-dom/createPortal) to render
-components into ProseMirror-managed DOM nodes, and a
-[useLayoutEffect](https://react.dev/reference/react/useLayoutEffect) to sync
-state updates with the EditorView instance.
-
-This approach provided some challenges. First, portals have to be rendered into
-existing, stable DOM nodes, so all React-based custom node views ended up
-wrapped in extra HTML elements. This made styling and producing valid DOM more
-challenging than it should be, and introduced corner cases in browser
-contenteditable implementations. Second, we induced a double render for every
-ProseMirror update, and during the first render, React-based custom node views
-will be rendered with the previous state. This is technically another form of
-the state tearing that this library was designed to prevent, as all _other_
-React components will be rendered with the new state!
-
-To overcome these challenges, the new release moves rendering responsibility
-entirely into React. We disabled the EditorView's DOM update cycle, and
-implemented the same update algorithm that prosemirror-view uses with React
-components. The result is a more idiomatic, React-based library, which doesn't
-have any of the issues of the original implementation.
-
-### API changes
-
-- The [`ProseMirror`](#prosemirror) component API has changed slightly:
-  - Instead of passing a `mount` prop with a ref to a child element, users must
-    render a [`ProseMirrorDoc`](#prosemirrordoc) component as a child of the
-    `ProseMirror` component.
-  - The `nodeViews` prop no longer matches the ProseMirror API. Instead,
-    `nodeViews` should be a map from node type name to React components, each of
-    which must take [`NodeViewComponentProps`](#nodeviewcomponentprops) as
-    props. This map should be memoized, or defined outside the React component
-    entirely.
-  - To pass standard ProseMirror node view constructors, use the
-    `customNodeViews` prop
-- The API that React-based node views must implement has changed:
-  - There is no longer any need to provide a ProseMirror node view constructor
-    function. React-based node views are now just React components that accept
-    `NodeViewComponentProps` as props.
-  - Props related to the ProseMirror node, such as the node itself, the `getPos`
-    function, and decorations, now live in the `nodeProps` property. All other
-    props _must_ be spread onto the root element of the node view component,
-    aside from `children`, which may be rendered anywhere in the component, as
-    appropriate.
-  - All node view components must forward their ref to the root element of the
-    component.
-  - To implement features that would normally live in the node view spec, there
-    are new hooks, such as [`useStopEvent`](#usestopevent) and
-    [`useSelectNode`](#useselectnode)
-- There is a new export, [`widget`](#widget), which behaves similarly to
-  `Decoration.widget` from `prosemirror-view`, but takes a React component
-  instead of a `toDOM` method.
-
 ## API
 
 ### `ProseMirror`
@@ -804,6 +734,10 @@ command provides additional metadata to React ProseMirror that allows it to
 properly track the new positions for the reordered nodes, allowing it to reuse
 the same keys. This prevents any issues that could be caused by unexpected
 component remounts.
+
+## Migrations
+
+- [Migrating from v1 to v2](migration-guides/v2.md)
 
 ## Looking for someone to collaborate with?
 
