@@ -103,6 +103,8 @@ import "prosemirror-view/style/prosemirror.css";
   - [`useSelectNode`](#useselectnode)
   - [`useIsNodeSelected`](#useisnodeselected)
   - [`widget`](#widget)
+  - [`reorderSiblings`](#reordersiblings)
+    - [When should I use this?](#when-should-i-use-this)
 - [Looking for someone to collaborate with?](#looking-for-someone-to-collaborate-with)
 
 <!-- tocstop -->
@@ -758,7 +760,7 @@ a NodeSelection is created whose node is this one.
 
 ### `widget`
 
-```tsx
+```ts
 type widget = (
   pos: number,
   component: ForwardRefExoticComponent<
@@ -770,6 +772,38 @@ type widget = (
 
 Like ProseMirror View's `Decoration.widget`, but with support for React
 components.
+
+### `reorderSiblings`
+
+A [command](https://prosemirror.net/docs/ref/#state.Command) creator that can be
+used to reorder adjacent nodes in a document. The command creator takes two
+argumnts:
+
+- `pos` - The `start` position of the parent of the nodes being reordered
+- `order` - The new order for the nodes, expressed as an array of indices. For
+  example, to swap the first two nodes in a set of three, `order` would be set
+  to `[1, 0, 2]`. To move the first node to the end, and keep the other two in
+  relative order, set `order` to `[1, 2, 0]`.
+
+```ts
+type reorderSiblings = (pos: number, order: number[]): Command
+```
+
+#### When should I use this?
+
+In order to maintain the React state across node view components, React
+ProseMirror uses the `reactKeys` plugin to track node positions across
+transactions and provide them with stable keys. During a reorder, for example
+when two nodes are swapped, ProseMirror is unable to track the positions across
+the resulting delete and insert steps, and so the `reactKeys` plugin will assign
+new keys to the nodes, causing their node view components to be remounted.
+
+Sometimes, such as when using a drag-and-drop library like `framer-motion`,
+remounting the component being dragged can cause issues. The `reorderSiblings`
+command provides additional metadata to React ProseMirror that allows it to
+properly track the new positions for the reordered nodes, allowing it to reuse
+the same keys. This prevents any issues that could be caused by unexpected
+component remounts.
 
 ## Looking for someone to collaborate with?
 

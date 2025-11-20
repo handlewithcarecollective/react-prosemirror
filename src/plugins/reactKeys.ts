@@ -12,6 +12,12 @@ export const reactKeysPluginKey = new PluginKey<{
   posToNode: Map<number, Node>;
 }>("@handlewithcare/react-prosemirror/reactKeys");
 
+export type ReactKeysPluginMeta =
+  | {
+      overrides: Record<number, number>;
+    }
+  | undefined;
+
 /**
  * Tracks a unique key for each (non-text) node in the
  * document, identified by its current position. Keys are
@@ -51,6 +57,10 @@ export function reactKeys() {
           return value;
         }
 
+        const overrides = (
+          tr.getMeta(reactKeysPluginKey) as ReactKeysPluginMeta
+        )?.overrides;
+
         const next = {
           posToKey: new Map<number, string>(),
           keyToPos: new Map<string, number>(),
@@ -59,7 +69,12 @@ export function reactKeys() {
           ([a], [b]) => a - b
         );
         for (const [pos, key] of posToKeyEntries) {
-          const { pos: newPos, deleted } = tr.mapping.mapResult(pos);
+          const override = overrides?.[pos];
+
+          const { pos: newPos, deleted } =
+            override === undefined
+              ? tr.mapping.mapResult(pos)
+              : { pos: override, deleted: false };
           if (deleted) continue;
 
           next.posToKey.set(newPos, key);
