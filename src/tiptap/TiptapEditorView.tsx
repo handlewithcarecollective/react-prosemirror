@@ -1,6 +1,7 @@
 import { Editor } from "@tiptap/core";
+import { EditorContext } from "@tiptap/react";
 import { Transaction } from "prosemirror-state";
-import React, { ComponentType, ReactNode, useCallback } from "react";
+import React, { ComponentType, ReactNode, useCallback, useMemo } from "react";
 
 import { NodeViewComponentProps } from "../components/NodeViewComponentProps.js";
 import { ProseMirror } from "../components/ProseMirror.js";
@@ -41,6 +42,8 @@ export function TiptapEditorView({ editor, nodeViews, children }: Props) {
     ? { nodeViews: undefined, markViews: undefined }
     : editor.view.props;
 
+  const contextValue = useMemo(() => ({ editor }), [editor]);
+
   return (
     <ProseMirror
       className="tiptap"
@@ -57,7 +60,9 @@ export function TiptapEditorView({ editor, nodeViews, children }: Props) {
       }
       dispatchTransaction={dispatchTransaction}
     >
-      {children}
+      <EditorContext.Provider value={contextValue}>
+        {children}
+      </EditorContext.Provider>
     </ProseMirror>
   );
 }
