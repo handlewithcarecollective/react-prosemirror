@@ -1,5 +1,4 @@
 import { useEditor } from "@tiptap/react";
-import { EditorState } from "prosemirror-state";
 import { DependencyList } from "react";
 
 import { StaticEditorView } from "../../StaticEditorView.js";
@@ -17,7 +16,8 @@ export function useTiptapEditor(
 
   // @ts-expect-error private property
   editor.editorView ??= new StaticEditorView({
-    state: EditorState.create({ schema: editor.extensionManager.schema }),
+    // @ts-expect-error private property
+    state: editor.editorState,
     ...editor.options.editorProps,
     attributes: {
       role: "textbox",
