@@ -1,10 +1,9 @@
 import { Editor, TiptapEditorHTMLElement } from "@tiptap/core";
-import { EditorContext, ReactRenderer } from "@tiptap/react";
+import { ReactRenderer } from "@tiptap/react";
 import React, {
   ForwardedRef,
   HTMLProps,
   ReactPortal,
-  useMemo,
   useSyncExternalStore,
 } from "react";
 import { createPortal } from "react-dom";
@@ -128,16 +127,12 @@ export function TiptapEditorContent({ editor: editorProp, ...props }: Props) {
     [editor]
   );
 
-  const contextValue = useMemo(() => ({ editor }), [editor]);
-
   return (
-    <EditorContext.Provider value={contextValue}>
-      <>
-        <ProseMirrorDoc {...props} />
-        {editor?.contentComponent && (
-          <Portals contentComponent={editor.contentComponent} />
-        )}
-      </>
-    </EditorContext.Provider>
+    <>
+      <ProseMirrorDoc {...props} />
+      {editor?.contentComponent && (
+        <Portals contentComponent={editor.contentComponent} />
+      )}
+    </>
   );
 }
