@@ -43,6 +43,7 @@ describe("useEditorEffect", () => {
             flushSyncRef,
             registerEventListener,
             unregisterEventListener,
+            isStatic: false,
           }}
         >
           <EditorStateContext.Provider value={editorState}>
@@ -72,6 +73,7 @@ describe("useEditorEffect", () => {
       flushSyncRef: { current: true },
       registerEventListener,
       unregisterEventListener,
+      isStatic: false,
     };
 
     const { rerender } = render(
@@ -116,6 +118,7 @@ describe("useEditorEffect", () => {
             flushSyncRef: { current: true },
             registerEventListener,
             unregisterEventListener,
+            isStatic: false,
           }}
         >
           <EditorStateContext.Provider value={editorState}>
@@ -134,6 +137,7 @@ describe("useEditorEffect", () => {
             unregisterEventListener,
             cursorWrapper: null,
             flushSyncRef: { current: true },
+            isStatic: false,
           }}
         >
           <EditorStateContext.Provider value={editorState}>

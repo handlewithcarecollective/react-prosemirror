@@ -11,6 +11,7 @@ export { useEditorState } from "./hooks/useEditorState.js";
 export { useStopEvent } from "./hooks/useStopEvent.js";
 export { useSelectNode } from "./hooks/useSelectNode.js";
 export { useIgnoreMutation } from "./hooks/useIgnoreMutation.js";
+export { useIsEditorStatic } from "./hooks/useIsEditorStatic.js";
 export { useIsNodeSelected } from "./hooks/useIsNodeSelected.js";
 export { reactKeys } from "./plugins/reactKeys.js";
 export { widget } from "./decorations/ReactWidgetType.js";
