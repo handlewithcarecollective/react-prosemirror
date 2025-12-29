@@ -85,9 +85,8 @@ export function tiptapNodeView({
       function TiptapNodeView({ children, nodeProps, ...props }, ref) {
         const { node, getPos, decorations, innerDecorations } = nodeProps;
 
-        const OuterTag = (
-          as ?? node.type.isInline ? "span" : "div"
-        ) as ElementType;
+        const OuterTag = (as ??
+          (node.type.isInline ? "span" : "div")) as ElementType;
         const { editor } = useCurrentEditor();
         const extensionManager = editor?.extensionManager ?? null;
         const extensions = extensionManager?.extensions ?? null;
