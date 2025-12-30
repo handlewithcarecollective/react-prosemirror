@@ -1,4 +1,5 @@
 import {
+  NodeView,
   getAttributesFromExtensions,
   getRenderedAttributes,
 } from "@tiptap/core";
@@ -93,28 +94,6 @@ export function tiptapNodeView({
 
         const selected = useIsNodeSelected();
 
-        useStopEvent((_, event) => {
-          if (stopEvent) {
-            return stopEvent.call(
-              { name: extension.name, editor, type: node.type },
-              { event }
-            );
-          }
-
-          return false;
-        });
-
-        useIgnoreMutation((_, mutation) => {
-          if (ignoreMutation) {
-            return ignoreMutation.call(
-              { name: extension.name, editor, type: node.type },
-              { mutation }
-            );
-          }
-
-          return false;
-        });
-
         // This is just a dummy ref to satisfy Tiptap's types
         const innerRef = useRef<HTMLElement>(null);
 
@@ -128,6 +107,44 @@ export function tiptapNodeView({
 
           return getRenderedAttributes(node, extensionAttributes);
         }, [extensions, node]);
+
+        const tiptapNodeViewRef = useRef<NodeView<
+          typeof WrappedComponent
+        > | null>(null);
+        if (!tiptapNodeViewRef.current && editor) {
+          tiptapNodeViewRef.current = new NodeView(WrappedComponent, {
+            extension,
+            decorations,
+            editor,
+            getPos,
+            HTMLAttributes: htmlAttributes,
+            innerDecorations,
+            node,
+            view: editor.view,
+          });
+        }
+
+        useStopEvent((_, event) => {
+          if (stopEvent) {
+            return stopEvent.call(
+              { name: extension.name, editor, type: node.type },
+              { event }
+            );
+          }
+
+          return tiptapNodeViewRef.current?.stopEvent(event) ?? false;
+        });
+
+        useIgnoreMutation((_, mutation) => {
+          if (ignoreMutation) {
+            return ignoreMutation.call(
+              { name: extension.name, editor, type: node.type },
+              { mutation }
+            );
+          }
+
+          return tiptapNodeViewRef.current?.ignoreMutation(mutation) ?? false;
+        });
 
         const { extraClassName, htmlProps } = useMemo(() => {
           if (!attrs) return {};
