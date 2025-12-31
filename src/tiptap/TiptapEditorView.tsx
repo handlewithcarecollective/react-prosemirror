@@ -11,12 +11,18 @@ interface Props {
   editor: Editor;
   nodeViews?: Record<string, ComponentType<NodeViewComponentProps>>;
   children?: ReactNode;
+  static?: boolean;
 }
 
 /**
  * Render a Tiptap-compatible React ProseMirror editor.
  */
-export function TiptapEditorView({ editor, nodeViews, children }: Props) {
+export function TiptapEditorView({
+  editor,
+  nodeViews,
+  children,
+  static: isStatic = false,
+}: Props) {
   const forceUpdate = useForceUpdate();
   const dispatchTransaction = useCallback(
     (tr: Transaction) => {
@@ -46,6 +52,7 @@ export function TiptapEditorView({ editor, nodeViews, children }: Props) {
 
   return (
     <ProseMirror
+      static={isStatic}
       className="tiptap"
       {...initialEditorProps}
       markViews={markViews}
