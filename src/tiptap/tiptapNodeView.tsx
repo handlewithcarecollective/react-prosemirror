@@ -163,6 +163,7 @@ export function tiptapNodeView({
         const finalClassName = cx(
           "react-renderer",
           `node-${node.type.name}`,
+          props.className,
           className,
           extraClassName as string | undefined,
           { "ProseMirror-selectednode": selected }
@@ -216,9 +217,9 @@ export function tiptapNodeView({
           <ReactNodeViewContentProvider content={nodeViewContent}>
             <OuterTag
               ref={ref}
-              className={finalClassName}
               {...props}
               {...htmlProps}
+              className={finalClassName}
             >
               <WrappedComponent
                 ref={innerRef}
