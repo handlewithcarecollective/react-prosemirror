@@ -1,5 +1,4 @@
 import {
-  NodeView,
   getAttributesFromExtensions,
   getRenderedAttributes,
 } from "@tiptap/core";
@@ -26,6 +25,9 @@ import { useIgnoreMutation } from "../hooks/useIgnoreMutation.js";
 import { useIsNodeSelected } from "../hooks/useIsNodeSelected.js";
 import { useStopEvent } from "../hooks/useStopEvent.js";
 import { htmlAttrsToReactProps } from "../props.js";
+import { ViewDesc } from "../viewdesc.js";
+
+import { ReactProseMirrorNodeView } from "./TiptapNodeView.js";
 
 export interface TiptapNodeViewProps {
   component: ComponentType<ReactNodeViewProps>;
@@ -108,23 +110,7 @@ export function tiptapNodeView({
           return getRenderedAttributes(node, extensionAttributes);
         }, [extensions, node]);
 
-        const tiptapNodeViewRef = useRef<NodeView<
-          typeof WrappedComponent
-        > | null>(null);
-        if (!tiptapNodeViewRef.current && editor) {
-          tiptapNodeViewRef.current = new NodeView(WrappedComponent, {
-            extension,
-            decorations,
-            editor,
-            getPos,
-            HTMLAttributes: htmlAttributes,
-            innerDecorations,
-            node,
-            view: editor.view,
-          });
-        }
-
-        useStopEvent((_, event) => {
+        useStopEvent(function (this: ViewDesc, _, event) {
           if (stopEvent) {
             return stopEvent.call(
               { name: extension.name, editor, type: node.type },
@@ -132,10 +118,28 @@ export function tiptapNodeView({
             );
           }
 
-          return tiptapNodeViewRef.current?.stopEvent(event) ?? false;
+          if (!editor || !(this.dom instanceof HTMLElement)) return false;
+
+          const nodeView = new ReactProseMirrorNodeView(
+            WrappedComponent,
+            {
+              extension,
+              decorations,
+              editor,
+              getPos,
+              HTMLAttributes: htmlAttributes,
+              innerDecorations,
+              node,
+              view: editor.view,
+            },
+            this.dom,
+            this.contentDOM
+          );
+
+          return nodeView.stopEvent(event) ?? false;
         });
 
-        useIgnoreMutation((_, mutation) => {
+        useIgnoreMutation(function (this: ViewDesc, _, mutation) {
           if (ignoreMutation) {
             return ignoreMutation.call(
               { name: extension.name, editor, type: node.type },
@@ -143,7 +147,25 @@ export function tiptapNodeView({
             );
           }
 
-          return tiptapNodeViewRef.current?.ignoreMutation(mutation) ?? false;
+          if (!editor || !(this.dom instanceof HTMLElement)) return false;
+
+          const nodeView = new ReactProseMirrorNodeView(
+            WrappedComponent,
+            {
+              extension,
+              decorations,
+              editor,
+              getPos,
+              HTMLAttributes: htmlAttributes,
+              innerDecorations,
+              node,
+              view: editor.view,
+            },
+            this.dom,
+            this.contentDOM
+          );
+
+          return nodeView.ignoreMutation(mutation) ?? false;
         });
 
         const { extraClassName, htmlProps } = useMemo(() => {
