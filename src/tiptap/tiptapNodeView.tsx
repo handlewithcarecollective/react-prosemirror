@@ -27,7 +27,7 @@ import { useStopEvent } from "../hooks/useStopEvent.js";
 import { htmlAttrsToReactProps } from "../props.js";
 import { ViewDesc } from "../viewdesc.js";
 
-import { ReactProseMirrorNodeView } from "./TiptapNodeView.js";
+import { ReactProseMirrorNodeView } from "./ReactProseMirrorNodeView.js";
 
 export interface TiptapNodeViewProps {
   component: ComponentType<ReactNodeViewProps>;
