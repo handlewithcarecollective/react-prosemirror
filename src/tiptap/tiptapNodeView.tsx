@@ -1,4 +1,5 @@
 import {
+  DecorationWithType,
   getAttributesFromExtensions,
   getRenderedAttributes,
 } from "@tiptap/core";
@@ -249,7 +250,7 @@ export function tiptapNodeView({
                 getPos={getPos}
                 view={editor.view}
                 editor={editor}
-                decorations={decorations}
+                decorations={decorations as DecorationWithType[]}
                 innerDecorations={innerDecorations}
                 extension={extension}
                 HTMLAttributes={htmlAttributes}

@@ -110,7 +110,7 @@ export const ReactNodeView = memo(function ReactNodeView({
         selectNode() {
           const selectNode = selectNodeRef.current;
           if (selectNode) {
-            selectNode();
+            selectNode.call(this);
           }
 
           setSelected(true);
@@ -118,7 +118,7 @@ export const ReactNodeView = memo(function ReactNodeView({
         deselectNode() {
           const deselectNode = deselectNodeRef.current;
           if (deselectNode) {
-            deselectNode();
+            deselectNode.call(this);
           }
 
           setSelected(false);
@@ -126,7 +126,7 @@ export const ReactNodeView = memo(function ReactNodeView({
         stopEvent(event) {
           const stopEvent = stopEventRef.current;
           if (stopEvent) {
-            return stopEvent(event);
+            return stopEvent.call(this, event);
           }
 
           return false;
@@ -134,7 +134,7 @@ export const ReactNodeView = memo(function ReactNodeView({
         ignoreMutation(mutation) {
           const ignoreMutation = ignoreMutationRef.current;
           if (ignoreMutation) {
-            return ignoreMutation(mutation);
+            return ignoreMutation.call(this, mutation);
           }
 
           return false;
