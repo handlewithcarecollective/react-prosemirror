@@ -18,7 +18,7 @@ export class TiptapEditor extends Editor {
         ...this.options.editorProps,
         attributes: {
           role: "textbox",
-          ...this.extensionManager.attributes,
+          ...this.options.editorProps.attributes,
         },
       })
     );
