@@ -21,7 +21,7 @@ export function useTiptapEditor(
     ...editor.options.editorProps,
     attributes: {
       role: "textbox",
-      ...editor.extensionManager.attributes,
+      ...editor.options.editorProps.attributes,
     },
   });
 
