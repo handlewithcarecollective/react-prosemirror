@@ -22,7 +22,13 @@ function insertText(
   const from = options.from ?? view.state.selection.from;
   const to = options.to ?? view.state.selection.to;
 
-  if (view.someProp("handleTextInput", (f) => f(view, from, to, eventData))) {
+  if (
+    view.someProp("handleTextInput", (f) =>
+      f(view, from, to, eventData, () =>
+        view.state.tr.insertText(eventData, from, to)
+      )
+    )
+  ) {
     return true;
   }
 

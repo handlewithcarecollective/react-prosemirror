@@ -656,6 +656,10 @@ export class ViewDesc {
   get ignoreForCoords() {
     return false;
   }
+
+  get ignoreForSelection() {
+    return false;
+  }
 }
 
 // A widget desc represents a widget decoration, which is a DOM node
@@ -693,6 +697,10 @@ export class WidgetViewDesc extends ViewDesc {
 
   get domAtom() {
     return true;
+  }
+
+  get ignoreForSelection() {
+    return !!(this.widget as any).type.spec.relaxedSide;
   }
 
   get side() {
