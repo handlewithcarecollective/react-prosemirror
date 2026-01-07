@@ -32,8 +32,8 @@ function assertIsReactEditorView(
  * as a child of the TiptapEditorView component, including
  * React node view components.
  */
-export function useEditorEventCallback<T extends unknown[], R>(
-  callback: (view: EditorView, ...args: T) => R
+export function useEditorEventCallback<This, T extends unknown[], R>(
+  callback: (this: This, view: EditorView, ...args: T) => R
 ) {
   const ref = useRef(callback);
   const { view } = useContext(EditorContext);
@@ -43,9 +43,9 @@ export function useEditorEventCallback<T extends unknown[], R>(
   }, [callback]);
 
   return useCallback(
-    (...args: T) => {
+    function (this: This, ...args: T) {
       assertIsReactEditorView(view);
-      return ref.current(view, ...args);
+      return ref.current.call(this, view, ...args);
     },
     [view]
   );
