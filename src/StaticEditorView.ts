@@ -24,6 +24,10 @@ export class StaticEditorView implements AbstractEditorView {
     return this.props.state;
   }
 
+  get isDestroyed() {
+    return false;
+  }
+
   setProps(props: Partial<DirectEditorProps>) {
     return this.update({ ...this.props, ...props });
   }

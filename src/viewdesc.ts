@@ -1092,11 +1092,13 @@ class CustomNodeViewDesc extends NodeViewDesc {
   }
 
   selectNode() {
-    this.spec.selectNode ? this.spec.selectNode() : super.selectNode();
+    this.spec.selectNode ? this.spec.selectNode.call(this) : super.selectNode();
   }
 
   deselectNode() {
-    this.spec.deselectNode ? this.spec.deselectNode() : super.deselectNode();
+    this.spec.deselectNode
+      ? this.spec.deselectNode.call(this)
+      : super.deselectNode();
   }
 
   setSelection(
@@ -1106,7 +1108,7 @@ class CustomNodeViewDesc extends NodeViewDesc {
     force: boolean
   ) {
     this.spec.setSelection
-      ? this.spec.setSelection(anchor, head, view.root)
+      ? this.spec.setSelection.call(this, anchor, head, view.root)
       : super.setSelection(anchor, head, view, force);
   }
 
@@ -1116,12 +1118,12 @@ class CustomNodeViewDesc extends NodeViewDesc {
   }
 
   stopEvent(event: Event) {
-    return this.spec.stopEvent ? this.spec.stopEvent(event) : false;
+    return this.spec.stopEvent ? this.spec.stopEvent.call(this, event) : false;
   }
 
   ignoreMutation(mutation: ViewMutationRecord) {
     return this.spec.ignoreMutation
-      ? this.spec.ignoreMutation(mutation)
+      ? this.spec.ignoreMutation.call(this, mutation)
       : super.ignoreMutation(mutation);
   }
 }
