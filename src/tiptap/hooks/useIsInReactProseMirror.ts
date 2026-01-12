@@ -1,7 +1,7 @@
 import { useContext } from "react";
 
-import { NodeViewContext } from "../../contexts/NodeViewContext.js";
+import { EditorContext } from "../../contexts/EditorContext.js";
 
 export function useIsInReactProseMirror() {
-  return useContext(NodeViewContext) !== null;
+  return useContext(EditorContext) !== null;
 }
