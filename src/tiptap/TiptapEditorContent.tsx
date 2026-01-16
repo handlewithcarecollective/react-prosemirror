@@ -9,10 +9,10 @@ import React, {
 } from "react";
 import { createPortal } from "react-dom";
 
-import { ReactEditorView } from "../ReactEditorView.js";
 import { ProseMirrorDoc } from "../components/ProseMirrorDoc.js";
-import { EditorContext } from "../contexts/EditorContext.js";
-import { useClientLayoutEffect } from "../hooks/useClientLayoutEffect.js";
+import { useEditorEffect } from "../hooks/useEditorEffect.js";
+
+import { TiptapEditorContext } from "./contexts/TiptapEditorContext.js";
 
 export type ContentComponent = {
   setRenderer(id: string, renderer: ReactRenderer): void;
@@ -94,39 +94,44 @@ export function TiptapEditorContent({ editor: editorProp, ...props }: Props) {
   const editor = editorProp as Editor & {
     contentComponent: ContentComponent | null;
   };
-  const { view } = useContext(EditorContext);
+  const { onEditorInitialize, onEditorDeinitialize } =
+    useContext(TiptapEditorContext);
 
-  useClientLayoutEffect(() => {
-    if (!(view instanceof ReactEditorView) || editor.view === view) {
-      return;
-    }
-
-    // @ts-expect-error private property
-    editor.editorView = view;
-
-    editor.contentComponent = getInstance();
-
-    // @ts-expect-error private method
-    editor.injectCSS();
-
-    const dom = view.dom as TiptapEditorHTMLElement;
-    dom.editor = editor;
-
-    setTimeout(() => {
-      if (editor.isDestroyed) {
+  useEditorEffect(
+    (view) => {
+      if (editor.view === view) {
         return;
       }
 
-      editor.commands.focus(editor.options.autofocus);
-      editor.emit("create", { editor });
-      editor.isInitialized = true;
-    });
+      // @ts-expect-error private property
+      editor.editorView = view;
+      editor.contentComponent = getInstance();
 
-    return () => {
-      editor.isInitialized = false;
-      editor.contentComponent = null;
-    };
-  }, [editor, view]);
+      // @ts-expect-error private method
+      editor.injectCSS();
+
+      const dom = view.dom as TiptapEditorHTMLElement;
+      dom.editor = editor;
+
+      setTimeout(() => {
+        if (editor.isDestroyed) {
+          return;
+        }
+
+        editor.commands.focus(editor.options.autofocus);
+        editor.emit("create", { editor });
+        editor.isInitialized = true;
+        onEditorInitialize();
+      });
+
+      return () => {
+        editor.isInitialized = false;
+        editor.contentComponent = null;
+        onEditorDeinitialize();
+      };
+    },
+    [editor, onEditorDeinitialize, onEditorInitialize]
+  );
 
   return (
     <>
