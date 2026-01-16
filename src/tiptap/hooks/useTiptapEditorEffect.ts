@@ -5,6 +5,7 @@ import { DependencyList, useContext } from "react";
 import { ReactEditorView } from "../../ReactEditorView.js";
 import { EditorContext } from "../../contexts/EditorContext.js";
 import { useEditorEffect } from "../../hooks/useEditorEffect.js";
+import { TiptapEditorContext } from "../contexts/TiptapEditorContext.js";
 
 /**
  * Registers a layout effect to run after the EditorView has
@@ -30,11 +31,13 @@ export function useTiptapEditorEffect(
 ) {
   const { view } = useContext(EditorContext);
   const { editor } = useCurrentEditor();
+  const { isEditorInitialized } = useContext(TiptapEditorContext);
 
   useEditorEffect(() => {
     if (
       editor?.view instanceof ReactEditorView &&
-      view instanceof ReactEditorView
+      view instanceof ReactEditorView &&
+      isEditorInitialized
     ) {
       return effect(editor);
     }
@@ -42,5 +45,5 @@ export function useTiptapEditorEffect(
     // verify the dependencies for the effect, but this will
     // have already happened at the call-site.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, dependencies && [editor, view, ...dependencies]);
+  }, dependencies && [editor, view, isEditorInitialized, ...dependencies]);
 }
