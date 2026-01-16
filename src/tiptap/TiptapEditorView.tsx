@@ -1,11 +1,19 @@
 import { Editor } from "@tiptap/core";
 import { EditorContext } from "@tiptap/react";
 import { Transaction } from "prosemirror-state";
-import React, { ComponentType, ReactNode, useCallback, useMemo } from "react";
+import React, {
+  ComponentType,
+  ReactNode,
+  useCallback,
+  useMemo,
+  useState,
+} from "react";
 
 import { NodeViewComponentProps } from "../components/NodeViewComponentProps.js";
 import { ProseMirror } from "../components/ProseMirror.js";
 import { useForceUpdate } from "../hooks/useForceUpdate.js";
+
+import { TiptapEditorContext } from "./contexts/TiptapEditorContext.js";
 
 interface Props {
   editor: Editor;
@@ -23,6 +31,10 @@ export function TiptapEditorView({
   children,
   static: isStatic = false,
 }: Props) {
+  const [isEditorInitialized, setIsEditorInitialized] = useState(
+    editor.isInitialized
+  );
+
   const forceUpdate = useForceUpdate();
   const dispatchTransaction = useCallback(
     (tr: Transaction) => {
@@ -50,6 +62,19 @@ export function TiptapEditorView({
 
   const contextValue = useMemo(() => ({ editor }), [editor]);
 
+  const onEditorInitialize = useCallback(() => {
+    setIsEditorInitialized(true);
+  }, []);
+
+  const onEditorDeinitialize = useCallback(() => {
+    setIsEditorInitialized(false);
+  }, []);
+
+  const tiptapEditorContextValue = useMemo(
+    () => ({ isEditorInitialized, onEditorInitialize, onEditorDeinitialize }),
+    [isEditorInitialized, onEditorDeinitialize, onEditorInitialize]
+  );
+
   return (
     <ProseMirror
       static={isStatic}
@@ -68,7 +93,9 @@ export function TiptapEditorView({
       dispatchTransaction={dispatchTransaction}
     >
       <EditorContext.Provider value={contextValue}>
-        {children}
+        <TiptapEditorContext.Provider value={tiptapEditorContextValue}>
+          {children}
+        </TiptapEditorContext.Provider>
       </EditorContext.Provider>
     </ProseMirror>
   );
