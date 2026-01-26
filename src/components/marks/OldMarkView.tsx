@@ -9,11 +9,10 @@ import React, {
   useRef,
 } from "react";
 
-import { ChildDescriptorsContext } from "../contexts/ChildDescriptorsContext.js";
-import { useClientLayoutEffect } from "../hooks/useClientLayoutEffect.js";
-import { MarkViewDesc, ViewDesc, sortViewDescs } from "../viewdesc.js";
-
-import { OutputSpec } from "./OutputSpec.js";
+import { ChildDescriptorsContext } from "../../contexts/ChildDescriptorsContext.js";
+import { useClientLayoutEffect } from "../../hooks/useClientLayoutEffect.js";
+import { MarkViewDesc, ViewDesc, sortViewDescs } from "../../viewdesc.js";
+import { OutputSpec } from "../OutputSpec.js";
 
 type Props = {
   mark: Mark;

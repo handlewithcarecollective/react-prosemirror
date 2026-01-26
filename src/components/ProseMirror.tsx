@@ -1,4 +1,4 @@
-import { NodeViewConstructor } from "prosemirror-view";
+import { MarkViewConstructor, NodeViewConstructor } from "prosemirror-view";
 import React, { ComponentType, ReactNode, useMemo, useState } from "react";
 
 import { ChildDescriptorsContext } from "../contexts/ChildDescriptorsContext.js";
@@ -13,8 +13,9 @@ import { viewDecorations } from "../decorations/viewDecorations.js";
 import { UseEditorOptions, useEditor } from "../hooks/useEditor.js";
 
 import { LayoutGroup } from "./LayoutGroup.js";
-import { NodeViewComponentProps } from "./NodeViewComponentProps.js";
 import { DocNodeViewContext } from "./ProseMirrorDoc.js";
+import { MarkViewComponentProps } from "./marks/MarkViewComponentProps.js";
+import { NodeViewComponentProps } from "./nodes/NodeViewComponentProps.js";
 
 function getPos() {
   return -1;
@@ -27,7 +28,7 @@ const rootChildDescriptorsContextValue = {
   },
 };
 
-export type Props = Omit<UseEditorOptions, "nodeViews"> & {
+export type Props = Omit<UseEditorOptions, "nodeViews" | "markViews"> & {
   className?: string;
   children?: ReactNode;
   nodeViews?: {
@@ -36,6 +37,12 @@ export type Props = Omit<UseEditorOptions, "nodeViews"> & {
   customNodeViews?: {
     [nodeType: string]: NodeViewConstructor;
   };
+  markViews?: {
+    [markType: string]: ComponentType<MarkViewComponentProps>;
+  };
+  customMarkViews?: {
+    [markType: string]: MarkViewConstructor;
+  };
 };
 
 function ProseMirrorInner({
@@ -43,6 +50,8 @@ function ProseMirrorInner({
   children,
   nodeViews,
   customNodeViews,
+  markViews,
+  customMarkViews,
   ...props
 }: Props) {
   const [mount, setMount] = useState<HTMLElement | null>(null);
@@ -50,15 +59,16 @@ function ProseMirrorInner({
   const { editor, state } = useEditor(mount, {
     ...props,
     nodeViews: customNodeViews,
+    markViews: customMarkViews,
   });
 
   const nodeViewConstructors = editor.view.nodeViews;
   const nodeViewContextValue = useMemo<NodeViewContextValue>(() => {
     return {
-      components: { ...nodeViews },
+      components: { ...nodeViews, ...markViews },
       constructors: nodeViewConstructors,
     };
-  }, [nodeViewConstructors, nodeViews]);
+  }, [markViews, nodeViewConstructors, nodeViews]);
 
   const node = state.doc;
   const decorations = computeDocDeco(editor.view);

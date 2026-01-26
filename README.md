@@ -471,6 +471,14 @@ type ProseMirror = (
       customNodeViews?: {
         [nodeType: string]: NodeViewConstructor;
       };
+      markViews?: {
+        [markType: string]: ForwardRefExoticComponent<
+          MarkViewComponentProps & RefAttributes<any>
+        >;
+      };
+      customMarkViews?: {
+        [markType: string]: MarkViewConstructor;
+      };
     }
 ) => JSX.Element;
 ```

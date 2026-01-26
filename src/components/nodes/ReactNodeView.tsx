@@ -10,22 +10,24 @@ import React, {
   useState,
 } from "react";
 
-import { ChildDescriptorsContext } from "../contexts/ChildDescriptorsContext.js";
+import { ChildDescriptorsContext } from "../../contexts/ChildDescriptorsContext.js";
 import {
   IgnoreMutation,
   IgnoreMutationContext,
-} from "../contexts/IgnoreMutationContext.js";
+} from "../../contexts/IgnoreMutationContext.js";
 import {
   DeselectNode,
   SelectNode,
   SelectNodeContext,
-} from "../contexts/SelectNodeContext.js";
-import { StopEvent, StopEventContext } from "../contexts/StopEventContext.js";
-import { DOMNode } from "../dom.js";
-import { useNodeViewDescriptor } from "../hooks/useNodeViewDescriptor.js";
-
-import { ChildNodeViews, wrapInDeco } from "./ChildNodeViews.js";
-import { NodeViewComponentProps } from "./NodeViewComponentProps.js";
+} from "../../contexts/SelectNodeContext.js";
+import {
+  StopEvent,
+  StopEventContext,
+} from "../../contexts/StopEventContext.js";
+import { DOMNode } from "../../dom.js";
+import { useNodeViewDescriptor } from "../../hooks/useNodeViewDescriptor.js";
+import { ChildNodeViews, wrapInDeco } from "../ChildNodeViews.js";
+import { NodeViewComponentProps } from "../nodes/NodeViewComponentProps.js";
 
 type Props = {
   component: ComponentType<NodeViewComponentProps>;
