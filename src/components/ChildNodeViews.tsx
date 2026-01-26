@@ -19,13 +19,13 @@ import { iterDeco } from "../decorations/iterDeco.js";
 import { useReactKeys } from "../hooks/useReactKeys.js";
 import { htmlAttrsToReactProps, mergeReactProps } from "../props.js";
 
-import { MarkView } from "./MarkView.js";
 import { NativeWidgetView } from "./NativeWidgetView.js";
-import { NodeView } from "./NodeView.js";
 import { SeparatorHackView } from "./SeparatorHackView.js";
 import { TextNodeView } from "./TextNodeView.js";
 import { TrailingHackView } from "./TrailingHackView.js";
 import { WidgetView } from "./WidgetView.js";
+import { MarkView } from "./marks/MarkView.js";
+import { NodeView } from "./nodes/NodeView.js";
 
 export function wrapInDeco(reactNode: JSX.Element | string, deco: Decoration) {
   const {
@@ -365,7 +365,7 @@ const ChildElement = memo(
     if (child.type === "node") {
       return child.marks.reduce(
         (element, mark) => (
-          <MarkView mark={mark} getPos={getPos}>
+          <MarkView mark={mark} getPos={getPos} inline={false}>
             {element}
           </MarkView>
         ),

@@ -4,12 +4,13 @@ import {
   DecorationSource,
   NodeViewConstructor,
 } from "prosemirror-view";
-import React, { memo, useContext, useMemo } from "react";
+import React, { ComponentType, memo, useContext, useMemo } from "react";
 
-import { NodeViewContext } from "../contexts/NodeViewContext.js";
+import { NodeViewContext } from "../../contexts/NodeViewContext.js";
 
 import { CustomNodeView } from "./CustomNodeView.js";
 import { DefaultNodeView } from "./DefaultNodeView.js";
+import { NodeViewComponentProps } from "./NodeViewComponentProps.js";
 import { ReactNodeView } from "./ReactNodeView.js";
 
 type Props = {
@@ -22,7 +23,8 @@ type Props = {
 export const NodeView = memo(function NodeView(props: Props) {
   const { components, constructors } = useContext(NodeViewContext);
 
-  const component = components[props.node.type.name] ?? DefaultNodeView;
+  const component = (components[props.node.type.name] ??
+    DefaultNodeView) as ComponentType<NodeViewComponentProps>;
   const constructor = constructors[props.node.type.name] as
     | NodeViewConstructor
     | undefined;

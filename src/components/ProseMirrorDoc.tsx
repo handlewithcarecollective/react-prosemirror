@@ -8,7 +8,7 @@ import React, {
   useContext,
 } from "react";
 
-import { DocNodeView } from "./DocNodeView.js";
+import { DocNodeView } from "./nodes/DocNodeView.js";
 
 interface DocNodeViewContextValue {
   node: Node;

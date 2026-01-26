@@ -12,10 +12,9 @@ import React, {
   useRef,
 } from "react";
 
-import { ChildDescriptorsContext } from "../contexts/ChildDescriptorsContext.js";
-import { useNodeViewDescriptor } from "../hooks/useNodeViewDescriptor.js";
-
-import { ChildNodeViews, wrapInDeco } from "./ChildNodeViews.js";
+import { ChildDescriptorsContext } from "../../contexts/ChildDescriptorsContext.js";
+import { useNodeViewDescriptor } from "../../hooks/useNodeViewDescriptor.js";
+import { ChildNodeViews, wrapInDeco } from "../ChildNodeViews.js";
 
 export interface DocNodeViewProps extends Omit<HTMLProps<HTMLElement>, "as"> {
   as?: ReactElement;

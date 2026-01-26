@@ -15,7 +15,7 @@ import {
 import React, { forwardRef } from "react";
 
 import { tempEditor } from "../../testing/editorViewTestHelpers.js";
-import { NodeViewComponentProps } from "../NodeViewComponentProps.js";
+import { NodeViewComponentProps } from "../nodes/NodeViewComponentProps.js";
 
 describe("EditorView draw", () => {
   it("updates the DOM", async () => {

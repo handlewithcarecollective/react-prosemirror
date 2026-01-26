@@ -20,9 +20,9 @@ import { useEditorEffect } from "../../hooks/useEditorEffect.js";
 import { useStopEvent } from "../../hooks/useStopEvent.js";
 import { reactKeys } from "../../plugins/reactKeys.js";
 import { tempEditor } from "../../testing/editorViewTestHelpers.js";
-import { NodeViewComponentProps } from "../NodeViewComponentProps.js";
 import { ProseMirror } from "../ProseMirror.js";
 import { ProseMirrorDoc } from "../ProseMirrorDoc.js";
+import { NodeViewComponentProps } from "../nodes/NodeViewComponentProps.js";
 
 describe("ProseMirror", () => {
   it("renders a contenteditable", async () => {

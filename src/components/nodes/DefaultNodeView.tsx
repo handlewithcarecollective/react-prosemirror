@@ -1,7 +1,7 @@
 import React, { forwardRef, useMemo } from "react";
 
-import { NodeViewComponentProps } from "./NodeViewComponentProps.js";
-import { OutputSpec } from "./OutputSpec.js";
+import { OutputSpec } from "../OutputSpec.js";
+import { NodeViewComponentProps } from "../nodes/NodeViewComponentProps.js";
 
 export const DefaultNodeView = forwardRef<HTMLElement, NodeViewComponentProps>(
   function DefaultNodeView({ nodeProps: { node }, children, ...props }, ref) {

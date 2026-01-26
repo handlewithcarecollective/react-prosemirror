@@ -7,11 +7,10 @@ import {
 import React, { cloneElement, memo, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 
-import { ChildDescriptorsContext } from "../contexts/ChildDescriptorsContext.js";
-import { DOMNode } from "../dom.js";
-import { useNodeViewDescriptor } from "../hooks/useNodeViewDescriptor.js";
-
-import { ChildNodeViews, wrapInDeco } from "./ChildNodeViews.js";
+import { ChildDescriptorsContext } from "../../contexts/ChildDescriptorsContext.js";
+import { DOMNode } from "../../dom.js";
+import { useNodeViewDescriptor } from "../../hooks/useNodeViewDescriptor.js";
+import { ChildNodeViews, wrapInDeco } from "../ChildNodeViews.js";
 
 interface Props {
   constructor: NodeViewConstructor;

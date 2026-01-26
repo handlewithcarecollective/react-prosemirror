@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { screen } from "@testing-library/react";
 import { Plugin } from "prosemirror-state";
-import { blockquote, br, doc, p } from "prosemirror-test-builder";
+import { blockquote, br, doc, p, strong } from "prosemirror-test-builder";
 import {
   Decoration,
   DecorationSet,
@@ -13,7 +13,8 @@ import React, { forwardRef, useEffect } from "react";
 import { useEditorState } from "../../hooks/useEditorState.js";
 import { useStopEvent } from "../../hooks/useStopEvent.js";
 import { tempEditor } from "../../testing/editorViewTestHelpers.js";
-import { NodeViewComponentProps } from "../NodeViewComponentProps.js";
+import { MarkViewComponentProps } from "../marks/MarkViewComponentProps.js";
+import { NodeViewComponentProps } from "../nodes/NodeViewComponentProps.js";
 
 describe("nodeViews prop", () => {
   it("can replace a node's representation", async () => {
@@ -292,6 +293,91 @@ describe("nodeViews prop", () => {
     await browser.keys("z");
 
     expect(await $(input).getValue()).toBe("input valuez");
+  });
+});
+
+describe("markViews prop", () => {
+  it("can replace a mark's representation", async () => {
+    const { view } = tempEditor({
+      doc: doc(p(strong("foo"), br())),
+      markViews: {
+        strong: forwardRef<HTMLElement, MarkViewComponentProps>(function Var(
+          props,
+          ref
+        ) {
+          return <var ref={ref}>{props.children}</var>;
+        }),
+      },
+    });
+    expect(view.dom.querySelector("var")).not.toBeNull();
+    expect(view.dom.querySelector("var")?.textContent).toBe("foo");
+  });
+
+  it("provide a contentDOM property", async () => {
+    const { view } = tempEditor({
+      doc: doc(p(strong("foo"))),
+      markViews: {
+        strong: forwardRef<HTMLElement, MarkViewComponentProps>(function Strong(
+          props,
+          ref
+        ) {
+          return (
+            // ContentDOM is inferred from where props.children is rendered
+            <strong ref={ref}>{props.children}</strong>
+          );
+        }),
+      },
+    });
+    const para = view.dom.querySelector("p")!;
+    view.dispatch(view.state.tr.insertText("a"));
+    expect(view.dom.querySelector("p")).toBe(para);
+    expect(para.textContent).toBe("afoo");
+  });
+
+  it("has its destroy method called", async () => {
+    let destroyed = 0;
+    const { view } = tempEditor({
+      doc: doc(p("a", strong("foo"), "b")),
+      markViews: {
+        strong: forwardRef<HTMLElement, MarkViewComponentProps>(function Strong(
+          props,
+          ref
+        ) {
+          // React implements "destroy methods" with effect
+          // hooks
+          useEffect(() => {
+            return () => {
+              destroyed++;
+            };
+          }, []);
+          return <strong ref={ref}>{props.children}</strong>;
+        }),
+      },
+    });
+    view.dispatch(view.state.tr.delete(2, 6));
+    expect(destroyed).toBe(1);
+  });
+
+  it("can query its own position", async () => {
+    let pos: number | undefined;
+    const { view } = tempEditor({
+      doc: doc(blockquote(p("abc"), p(strong("foo"), br()))),
+      markViews: {
+        strong: forwardRef<HTMLElement, MarkViewComponentProps>(function Strong(
+          { markProps, children, ...props },
+          ref
+        ) {
+          // trigger a re-render on every update, otherwise we won't
+          // re-render when an updated doesn't directly affect us
+          useEditorState();
+          pos = markProps.getPos();
+          return <strong {...props} ref={ref} />;
+        }),
+      },
+    });
+    expect(pos).toBe(7);
+    view.dispatch(view.state.tr.insertText("a"));
+    expect(pos).toBe(8);
   });
 });
 

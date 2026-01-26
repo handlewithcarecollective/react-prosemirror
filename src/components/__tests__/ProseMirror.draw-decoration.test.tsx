@@ -33,8 +33,8 @@ import React, { forwardRef, useEffect } from "react";
 import { widget } from "../../decorations/ReactWidgetType.js";
 import { useEditorEffect } from "../../hooks/useEditorEffect.js";
 import { tempEditor } from "../../testing/editorViewTestHelpers.js";
-import { NodeViewComponentProps } from "../NodeViewComponentProps.js";
 import { WidgetViewComponentProps } from "../WidgetViewComponentProps.js";
+import { NodeViewComponentProps } from "../nodes/NodeViewComponentProps.js";
 
 const Widget = forwardRef<HTMLButtonElement, WidgetViewComponentProps>(
   function Widget({ widget, getPos, ...props }, ref) {
