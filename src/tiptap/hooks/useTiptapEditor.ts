@@ -25,5 +25,26 @@ export function useTiptapEditor(
     },
   });
 
+  // @ts-expect-error private property
+  const stateHasPlugins = !!editor.editorState.plugins.length;
+  const managerHasPlugins = !!editor.extensionManager.plugins.length;
+
+  const stateNeedsReconfigure =
+    !stateHasPlugins && managerHasPlugins && !editor.isDestroyed;
+
+  // @ts-expect-error private property
+  editor.editorState = stateNeedsReconfigure
+    ? // @ts-expect-error private property
+      editor.editorState.reconfigure({
+        plugins: editor.extensionManager.plugins,
+      })
+    : // @ts-expect-error private property
+      editor.editorState;
+
+  if (stateNeedsReconfigure) {
+    // @ts-expect-error private property
+    editor.editorView.updateState(editor.editorState);
+  }
+
   return editor;
 }
