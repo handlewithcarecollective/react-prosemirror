@@ -83,13 +83,7 @@ export function TiptapEditorView({
       markViews={markViews}
       nodeViews={nodeViews}
       customNodeViews={customNodeViews}
-      state={
-        editor.isDestroyed || editor.state.plugins.length
-          ? editor.state
-          : editor.state.reconfigure({
-              plugins: editor.extensionManager.plugins,
-            })
-      }
+      state={editor.state}
       dispatchTransaction={dispatchTransaction}
     >
       <EditorContext.Provider value={contextValue}>
