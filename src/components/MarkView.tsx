@@ -19,10 +19,14 @@ type Props = {
   mark: Mark;
   getPos: () => number;
   children: ReactNode;
+  inline?: boolean;
 };
 
 export const MarkView = memo(
-  forwardRef(function MarkView({ mark, getPos, children }: Props, ref) {
+  forwardRef(function MarkView(
+    { mark, getPos, children, inline = false }: Props,
+    ref
+  ) {
     const { siblingsRef, parentRef } = useContext(ChildDescriptorsContext);
     const viewDescRef = useRef<MarkViewDesc | undefined>(undefined);
 
@@ -38,8 +42,8 @@ export const MarkView = memo(
     );
 
     const outputSpec = useMemo(
-      () => mark.type.spec.toDOM?.(mark, true),
-      [mark]
+      () => mark.type.spec.toDOM?.(mark, inline),
+      [inline, mark]
     );
     if (!outputSpec)
       throw new Error(`Mark spec for ${mark.type.name} is missing toDOM`);

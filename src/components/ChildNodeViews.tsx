@@ -199,7 +199,7 @@ const InlinePartition = memo(function InlinePartition({
   }
 
   return (
-    <MarkView key={firstChild.key} mark={firstMark} getPos={getPos}>
+    <MarkView key={firstChild.key} mark={firstMark} getPos={getPos} inline>
       <InlineView
         key={firstChild.key}
         getInnerPos={getInnerPos}
