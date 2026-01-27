@@ -4,7 +4,6 @@ import {
   getRenderedAttributes,
 } from "@tiptap/core";
 import {
-  ReactNodeViewContentProvider,
   ReactNodeViewContext,
   type ReactNodeViewProps,
   useCurrentEditor,
@@ -30,6 +29,7 @@ import { htmlAttrsToReactProps } from "../props.js";
 import { ViewDesc } from "../viewdesc.js";
 
 import { ReactProseMirrorNodeView } from "./ReactProseMirrorNodeView.js";
+import { useTiptapEditorEventCallback } from "./hooks/useTiptapEditorEventCallback.js";
 
 export interface TiptapNodeViewProps {
   component: ComponentType<ReactNodeViewProps>;
@@ -235,76 +235,70 @@ export function tiptapNodeView({
           [children, node.type.name]
         );
 
+        const onDragStart = useTiptapEditorEventCallback(
+          (editor, event: DragEvent) => {
+            // TODO: We should probably just merge this with our own
+            // ref, I'm being lazy since we are providing this
+            // ref in the first place (in ReactNodeView), so we know
+            // it's an object
+            const dom = typeof ref === "object" ? ref?.current : null;
+            if (!dom) return;
+            const viewDesc = dom.pmViewDesc;
+            if (!viewDesc) return;
+
+            const nodeView = new ReactProseMirrorNodeView(
+              WrappedComponent,
+              {
+                extension,
+                decorations,
+                editor,
+                getPos,
+                HTMLAttributes: htmlAttributes,
+                innerDecorations,
+                node,
+                view: editor.view,
+              },
+              viewDesc.dom as HTMLElement,
+              viewDesc.contentDOM
+            );
+
+            return nodeView.onDragStart(event);
+          }
+        );
+
         const nodeViewContext = useMemo(
           () => ({
-            onDragStart: (event: DragEvent) => {
-              if (!editor) return;
-              // TODO: We should probably just merge this with our own
-              // ref, I'm being lazy since we are providing this
-              // ref in the first place (in ReactNodeView), so we know
-              // it's an object
-              const dom = typeof ref === "object" ? ref?.current : null;
-              if (!dom) return;
-              const viewDesc = dom.pmViewDesc;
-              if (!viewDesc) return;
-
-              const nodeView = new ReactProseMirrorNodeView(
-                WrappedComponent,
-                {
-                  extension,
-                  decorations,
-                  editor,
-                  getPos,
-                  HTMLAttributes: htmlAttributes,
-                  innerDecorations,
-                  node,
-                  view: editor.view,
-                },
-                viewDesc.dom as HTMLElement,
-                viewDesc.contentDOM
-              );
-
-              return nodeView.onDragStart(event);
-            },
+            nodeViewContentChildren: nodeViewContent,
+            onDragStart,
           }),
-          [
-            decorations,
-            editor,
-            getPos,
-            htmlAttributes,
-            innerDecorations,
-            node,
-            ref,
-          ]
+          [nodeViewContent, onDragStart]
         );
 
         if (!editor) return null;
 
         return (
           <ReactNodeViewContext.Provider value={nodeViewContext}>
-            <ReactNodeViewContentProvider content={nodeViewContent}>
-              <OuterTag
-                ref={ref}
-                {...props}
-                {...htmlProps}
-                className={finalClassName}
-              >
-                <WrappedComponent
-                  ref={innerRef}
-                  node={node}
-                  getPos={getPos}
-                  view={editor.view}
-                  editor={editor}
-                  decorations={decorations as DecorationWithType[]}
-                  innerDecorations={innerDecorations}
-                  extension={extension}
-                  HTMLAttributes={htmlAttributes}
-                  selected={selected}
-                  updateAttributes={updateAttributes}
-                  deleteNode={deleteNode}
-                />
-              </OuterTag>
-            </ReactNodeViewContentProvider>
+            <OuterTag
+              ref={ref}
+              {...props}
+              {...htmlProps}
+              className={finalClassName}
+            >
+              <WrappedComponent
+                ref={innerRef}
+                node={node}
+                getPos={getPos}
+                view={editor.view}
+                editor={editor}
+                decorations={decorations as DecorationWithType[]}
+                innerDecorations={innerDecorations}
+                extension={extension}
+                HTMLAttributes={htmlAttributes}
+                selected={selected}
+                updateAttributes={updateAttributes}
+                deleteNode={deleteNode}
+              />
+            </OuterTag>
           </ReactNodeViewContext.Provider>
         );
       }
