@@ -9,8 +9,9 @@ import React, {
   useState,
 } from "react";
 
-import { NodeViewComponentProps } from "../components/NodeViewComponentProps.js";
 import { ProseMirror } from "../components/ProseMirror.js";
+import { MarkViewComponentProps } from "../components/marks/MarkViewComponentProps.js";
+import { NodeViewComponentProps } from "../components/nodes/NodeViewComponentProps.js";
 import { useForceUpdate } from "../hooks/useForceUpdate.js";
 
 import { TiptapEditorContext } from "./contexts/TiptapEditorContext.js";
@@ -18,6 +19,7 @@ import { TiptapEditorContext } from "./contexts/TiptapEditorContext.js";
 interface Props {
   editor: Editor;
   nodeViews?: Record<string, ComponentType<NodeViewComponentProps>>;
+  markViews?: Record<string, ComponentType<MarkViewComponentProps>>;
   children?: ReactNode;
   static?: boolean;
 }
@@ -28,6 +30,7 @@ interface Props {
 export function TiptapEditorView({
   editor,
   nodeViews,
+  markViews,
   children,
   static: isStatic = false,
 }: Props) {
@@ -56,9 +59,10 @@ export function TiptapEditorView({
     },
   };
 
-  const { nodeViews: customNodeViews, markViews } = editor.isDestroyed
-    ? { nodeViews: undefined, markViews: undefined }
-    : editor.view.props;
+  const { nodeViews: customNodeViews, markViews: customMarkViews } =
+    editor.isDestroyed
+      ? { nodeViews: undefined, markViews: undefined }
+      : editor.view.props;
 
   const contextValue = useMemo(() => ({ editor }), [editor]);
 
@@ -81,6 +85,7 @@ export function TiptapEditorView({
       className="tiptap"
       {...initialEditorProps}
       markViews={markViews}
+      customMarkViews={customMarkViews}
       nodeViews={nodeViews}
       customNodeViews={customNodeViews}
       state={editor.state}
