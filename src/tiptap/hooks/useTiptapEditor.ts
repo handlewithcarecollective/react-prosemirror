@@ -27,23 +27,18 @@ export function useTiptapEditor(
 
   // @ts-expect-error private property
   const stateHasPlugins = !!editor.editorState.plugins.length;
-  const managerHasPlugins = !!editor.extensionManager.plugins.length;
-
-  const stateNeedsReconfigure =
-    !stateHasPlugins && managerHasPlugins && !editor.isDestroyed;
-
-  // @ts-expect-error private property
-  editor.editorState = stateNeedsReconfigure
-    ? // @ts-expect-error private property
-      editor.editorState.reconfigure({
-        plugins: editor.extensionManager.plugins,
-      })
-    : // @ts-expect-error private property
-      editor.editorState;
+  const stateNeedsReconfigure = !stateHasPlugins && !editor.isDestroyed;
 
   if (stateNeedsReconfigure) {
-    // @ts-expect-error private property
-    editor.editorView.updateState(editor.editorState);
+    const managerPlugins = editor.extensionManager.plugins;
+    if (managerPlugins.length) {
+      // @ts-expect-error private property
+      editor.editorState = editor.editorState.reconfigure({
+        plugins: editor.extensionManager.plugins,
+      });
+      // @ts-expect-error private property
+      editor.editorView.updateState(editor.editorState);
+    }
   }
 
   return editor;
