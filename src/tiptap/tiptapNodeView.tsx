@@ -14,10 +14,10 @@ import { ViewMutationRecord } from "prosemirror-view";
 import React, {
   type ComponentType,
   ElementType,
+  Ref,
   forwardRef,
   memo,
   useMemo,
-  useRef,
 } from "react";
 
 import { NodeViewComponentProps } from "../components/nodes/NodeViewComponentProps.js";
@@ -32,7 +32,9 @@ import { ReactProseMirrorNodeView } from "./ReactProseMirrorNodeView.js";
 import { useTiptapEditorEventCallback } from "./hooks/useTiptapEditorEventCallback.js";
 
 export interface TiptapNodeViewProps {
-  component: ComponentType<ReactNodeViewProps>;
+  component: ComponentType<
+    Omit<ReactNodeViewProps, "ref"> & { ref?: Ref<HTMLElement | null> }
+  >;
   extension: ReactNodeViewProps["extension"];
   className?: string | undefined;
   attrs?:
@@ -97,9 +99,6 @@ export function tiptapNodeView({
         const extensions = extensionManager?.extensions ?? null;
 
         const selected = useIsNodeSelected();
-
-        // This is just a dummy ref to satisfy Tiptap's types
-        const innerRef = useRef<HTMLElement>(null);
 
         const htmlAttributes = useMemo(() => {
           if (!extensions) return {};
@@ -285,7 +284,6 @@ export function tiptapNodeView({
               className={finalClassName}
             >
               <WrappedComponent
-                ref={innerRef}
                 node={node}
                 getPos={getPos}
                 view={editor.view}
