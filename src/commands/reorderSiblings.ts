@@ -1,4 +1,6 @@
-import { Command } from "prosemirror-state";
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+import { Command, EditorState, Transaction } from "prosemirror-state";
+import { EditorView } from "prosemirror-view";
 
 import {
   ReactKeysPluginMeta,
@@ -17,50 +19,65 @@ import {
  */
 export function reorderSiblings(pos: number, order: number[]): Command {
   return function reorderSiblingsCommand(state, dispatch) {
-    const $pos = state.doc.resolve(pos);
-    if ($pos.start() !== pos) {
-      return false;
-    }
-
-    if (!dispatch) return true;
-
-    const nodes = $pos.parent.children;
-
-    const reordered = nodes
-      .map((node, i) => [node, i] as const)
-      .sort(([, a], [, b]) => order[a]! - order[b]!)
-      .map(([node]) => node);
-
     const tr = state.tr;
-    tr.replaceWith(pos, $pos.parent.content.size + pos, reordered);
-
-    const meta: ReactKeysPluginMeta = { overrides: {} };
-
-    const oldPositions: number[] = [];
-    let start = pos;
-    for (const node of nodes) {
-      oldPositions.push(start);
-      start += node.nodeSize;
-    }
-
-    start = pos;
-    const newPositions: number[] = [];
-    for (let i = 0; i < reordered.length; i++) {
-      const node = reordered[i]!;
-      newPositions[order[i]!] = start;
-      start += node.nodeSize;
-    }
-
-    for (let i = 0; i < oldPositions.length; i++) {
-      const oldPosition = oldPositions[i]!;
-      const newPosition = newPositions[i]!;
-      meta.overrides[oldPosition] = newPosition;
-    }
-
-    tr.setMeta(reactKeysPluginKey, meta);
-
-    dispatch(tr);
-
-    return true;
+    return reorderSiblingsOnTransaction(pos, order, tr, state, dispatch);
   };
+}
+
+export function reorderSiblingsOnTransaction(
+  pos: number,
+  order: number[],
+  tr: Transaction,
+  state: EditorState,
+  dispatch?: EditorView["dispatch"]
+) {
+  const orderLookup = order.reduce((acc, oldIndex, newIndex) => {
+    acc[oldIndex] = newIndex;
+    return acc;
+  }, [] as number[]);
+
+  const $pos = state.doc.resolve(pos);
+  if ($pos.start() !== pos) {
+    return false;
+  }
+
+  if (!dispatch) return true;
+
+  const nodes = $pos.parent.children;
+
+  const reordered = nodes
+    .map((node, i) => [node, i] as const)
+    .sort(([, a], [, b]) => orderLookup[a]! - orderLookup[b]!)
+    .map(([node]) => node);
+
+  tr.replaceWith(pos, $pos.parent.content.size + pos, reordered);
+
+  const meta: ReactKeysPluginMeta = { overrides: {} };
+
+  const oldPositions: number[] = [];
+  let start = pos;
+  for (const node of nodes) {
+    oldPositions.push(start);
+    start += node.nodeSize;
+  }
+
+  start = pos;
+  const newPositions: number[] = [];
+  for (let i = 0; i < reordered.length; i++) {
+    const node = reordered[i]!;
+    newPositions[order[i]!] = start;
+    start += node.nodeSize;
+  }
+
+  for (let i = 0; i < oldPositions.length; i++) {
+    const oldPosition = oldPositions[i]!;
+    const newPosition = newPositions[i]!;
+    meta.overrides[oldPosition] = newPosition;
+  }
+
+  tr.setMeta(reactKeysPluginKey, meta);
+
+  dispatch(tr);
+
+  return true;
 }
