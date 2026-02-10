@@ -92,6 +92,7 @@ export const CustomNodeView = memo(function CustomNodeView({
         ignoreMutation: nodeView.ignoreMutation?.bind(nodeView),
       };
     },
+    (source) => source?.contentDOM ?? null,
     nodeProps
   );
 

@@ -17,18 +17,15 @@ import {
 import { useClientLayoutEffect } from "./useClientLayoutEffect.js";
 import { useEffectEvent } from "./useEffectEvent.js";
 
-function findContentDOM(
-  source: { contentDOM?: HTMLElement | null } | null,
-  children: ViewDesc[]
-) {
-  return source?.contentDOM ?? children[0]?.dom?.parentElement ?? null;
-}
-
 type Props = NodeViewComponentProps["nodeProps"];
 
 export function useNodeViewDescriptor(
   ref: { readonly current: DOMNode | null },
   constructor: NodeViewConstructor,
+  findContentDOM: (
+    source: { contentDOM?: HTMLElement | null } | null,
+    children: ViewDesc[]
+  ) => HTMLElement | null,
   props: Props
 ) {
   const { view } = useContext(EditorContext);
