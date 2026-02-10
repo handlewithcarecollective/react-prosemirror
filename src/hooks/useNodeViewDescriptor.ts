@@ -1,4 +1,4 @@
-import { NodeViewConstructor } from "prosemirror-view";
+import { EditorView, NodeViewConstructor } from "prosemirror-view";
 import { useContext, useMemo, useRef, useState } from "react";
 
 import { ReactEditorView } from "../ReactEditorView.js";
@@ -18,10 +18,15 @@ import { useClientLayoutEffect } from "./useClientLayoutEffect.js";
 import { useEffectEvent } from "./useEffectEvent.js";
 
 function findContentDOM(
+  view: EditorView,
   source: { contentDOM?: HTMLElement | null } | null,
   children: ViewDesc[]
 ) {
-  return source?.contentDOM ?? children[0]?.dom?.parentElement ?? null;
+  // When a composition is happening, we want to essentially freeze everything,
+  // so we maintain the current contentDOM.
+  return view.composing
+    ? source?.contentDOM ?? null
+    : children[0]?.dom?.parentElement ?? null;
 }
 
 type Props = NodeViewComponentProps["nodeProps"];
@@ -66,7 +71,7 @@ export function useNodeViewDescriptor(
     const parent = parentRef.current;
     const children = childrenRef.current;
 
-    const contentDOM = findContentDOM(nodeView, children);
+    const contentDOM = findContentDOM(view, nodeView, children);
     const nodeDOM = nodeView.dom;
 
     const viewDesc = new ReactNodeViewDesc(
@@ -104,7 +109,7 @@ export function useNodeViewDescriptor(
       return false;
     }
 
-    const contentDOM = findContentDOM(viewDesc, viewDesc.children);
+    const contentDOM = findContentDOM(view, viewDesc, viewDesc.children);
     if (contentDOM !== viewDesc.contentDOM) {
       return false;
     }
