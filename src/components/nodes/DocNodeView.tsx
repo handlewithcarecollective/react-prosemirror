@@ -64,6 +64,7 @@ export const DocNodeView = memo(
           },
         };
       },
+      () => innerRef.current,
       nodeProps
     );
 
