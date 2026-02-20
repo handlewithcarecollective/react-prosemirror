@@ -66,8 +66,8 @@ jobs:
         run: |
           PACKAGE_VERSION=$(node -p -e "require('./package.json').version")
           ./scripts/if-version-change.sh git tag v${PACKAGE_VERSION}
-          git push origin tag v${PACKAGE_VERSION}
-          gh workflow run release --ref v${PACKAGE_VERSION}
+          ./scripts/if-version-change.sh git push origin tag v${PACKAGE_VERSION}
+          ./scripts/if-version-change.sh gh workflow run release --ref v${PACKAGE_VERSION}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
