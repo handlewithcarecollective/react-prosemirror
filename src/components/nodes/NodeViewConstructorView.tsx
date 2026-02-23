@@ -20,7 +20,7 @@ interface Props {
   outerDeco: readonly Decoration[];
 }
 
-export const CustomNodeView = memo(function CustomNodeView({
+export const NodeViewConstructorView = memo(function NodeViewConstructorView({
   constructor,
   node,
   getPos,
