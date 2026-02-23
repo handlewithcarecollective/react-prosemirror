@@ -28,7 +28,6 @@ const rootChildDescriptorsContextValue = {
 };
 
 export type Props = UseEditorOptions & {
-  className?: string;
   children?: ReactNode;
   nodeViewComponents?: {
     [nodeType: string]: ComponentType<NodeViewComponentProps>;
@@ -39,7 +38,6 @@ export type Props = UseEditorOptions & {
 };
 
 function ProseMirrorInner({
-  className,
   children,
   nodeViewComponents,
   markViewComponents,
@@ -62,14 +60,13 @@ function ProseMirrorInner({
   const innerDecorations = viewDecorations(editor.view, editor.cursorWrapper);
   const docNodeViewContextValue = useMemo(
     () => ({
-      className,
       setMount,
       node,
       getPos,
       decorations,
       innerDecorations,
     }),
-    [className, node, decorations, innerDecorations]
+    [node, decorations, innerDecorations]
   );
 
   return (
