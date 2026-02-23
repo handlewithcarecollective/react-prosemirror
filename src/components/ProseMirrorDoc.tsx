@@ -1,8 +1,8 @@
 import { Node } from "prosemirror-model";
 import { Decoration, DecorationSource } from "prosemirror-view";
 import React, {
+  ElementType,
   HTMLProps,
-  ReactElement,
   createContext,
   forwardRef,
   useContext,
@@ -23,7 +23,7 @@ export const DocNodeViewContext = createContext<DocNodeViewContextValue>(
 );
 
 interface Props extends Omit<HTMLProps<HTMLElement>, "as"> {
-  as?: ReactElement;
+  as?: ElementType;
 }
 
 export const ProseMirrorDoc = forwardRef<HTMLElement, Props>(
