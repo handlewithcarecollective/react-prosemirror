@@ -1,4 +1,3 @@
-import { MarkViewConstructor, NodeViewConstructor } from "prosemirror-view";
 import React, { ComponentType, ReactNode, useMemo, useState } from "react";
 
 import { ChildDescriptorsContext } from "../contexts/ChildDescriptorsContext.js";
@@ -28,47 +27,35 @@ const rootChildDescriptorsContextValue = {
   },
 };
 
-export type Props = Omit<UseEditorOptions, "nodeViews" | "markViews"> & {
+export type Props = UseEditorOptions & {
   className?: string;
   children?: ReactNode;
-  nodeViews?: {
+  nodeViewComponents?: {
     [nodeType: string]: ComponentType<NodeViewComponentProps>;
   };
-  customNodeViews?: {
-    [nodeType: string]: NodeViewConstructor;
-  };
-  markViews?: {
+  markViewComponents?: {
     [markType: string]: ComponentType<MarkViewComponentProps>;
-  };
-  customMarkViews?: {
-    [markType: string]: MarkViewConstructor;
   };
 };
 
 function ProseMirrorInner({
   className,
   children,
-  nodeViews,
-  customNodeViews,
-  markViews,
-  customMarkViews,
+  nodeViewComponents,
+  markViewComponents,
   ...props
 }: Props) {
   const [mount, setMount] = useState<HTMLElement | null>(null);
 
-  const { editor, state } = useEditor(mount, {
-    ...props,
-    nodeViews: customNodeViews,
-    markViews: customMarkViews,
-  });
+  const { editor, state } = useEditor(mount, props);
 
   const nodeViewConstructors = editor.view.nodeViews;
   const nodeViewContextValue = useMemo<NodeViewContextValue>(() => {
     return {
-      components: { ...nodeViews, ...markViews },
+      components: { ...nodeViewComponents, ...markViewComponents },
       constructors: nodeViewConstructors,
     };
-  }, [markViews, nodeViewConstructors, nodeViews]);
+  }, [markViewComponents, nodeViewComponents, nodeViewConstructors]);
 
   const node = state.doc;
   const decorations = computeDocDeco(editor.view);

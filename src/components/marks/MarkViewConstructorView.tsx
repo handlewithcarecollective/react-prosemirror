@@ -15,7 +15,7 @@ interface Props {
   children: ReactNode;
 }
 
-export const CustomMarkView = memo(function CustomMarkView({
+export const MarkViewConstructorView = memo(function MarkViewConstructorView({
   constructor,
   mark,
   inline,
