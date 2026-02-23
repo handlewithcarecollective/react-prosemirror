@@ -67,7 +67,7 @@ function DemoEditor() {
         className="ProseMirror"
         state={state}
         dispatchTransaction={dispatchTransaction}
-        nodeViews={nodeViews}
+        nodeViewComponents={nodeViews}
         plugins={plugins}
       >
         <Menu />

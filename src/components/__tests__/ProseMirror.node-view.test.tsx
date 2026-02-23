@@ -20,7 +20,7 @@ describe("nodeViews prop", () => {
   it("can replace a node's representation", async () => {
     const { view } = tempEditor({
       doc: doc(p("foo", br())),
-      nodeViews: {
+      nodeViewComponents: {
         hard_break: forwardRef<HTMLElement, NodeViewComponentProps>(
           function Var(props, ref) {
             return <var ref={ref}>{props.children}</var>;
@@ -34,7 +34,7 @@ describe("nodeViews prop", () => {
   it("can override drawing of a node's content", async () => {
     const { view } = tempEditor({
       doc: doc(p("foo")),
-      nodeViews: {
+      nodeViewComponents: {
         paragraph: forwardRef<HTMLParagraphElement, NodeViewComponentProps>(
           function Paragraph(props, ref) {
             return (
@@ -56,7 +56,7 @@ describe("nodeViews prop", () => {
   it.skip("can register its own update method", async () => {
     const { view } = tempEditor({
       doc: doc(p("foo")),
-      nodeViews: {
+      nodeViewComponents: {
         paragraph: forwardRef<HTMLParagraphElement, NodeViewComponentProps>(
           function Paragraph(props, ref) {
             return (
@@ -75,7 +75,7 @@ describe("nodeViews prop", () => {
   it("allows decoration updates for node views with an update method", async () => {
     const { view, rerender } = tempEditor({
       doc: doc(p("foo")),
-      nodeViews: {
+      nodeViewComponents: {
         paragraph: forwardRef<HTMLParagraphElement, NodeViewComponentProps>(
           function Paragraph({ children, nodeProps, ...props }, ref) {
             return (
@@ -104,7 +104,7 @@ describe("nodeViews prop", () => {
   it("can provide a contentDOM property", async () => {
     const { view } = tempEditor({
       doc: doc(p("foo")),
-      nodeViews: {
+      nodeViewComponents: {
         paragraph: forwardRef<HTMLParagraphElement, NodeViewComponentProps>(
           function Paragraph(props, ref) {
             return (
@@ -125,7 +125,7 @@ describe("nodeViews prop", () => {
     let destroyed = 0;
     const { view } = tempEditor({
       doc: doc(p("foo", br())),
-      nodeViews: {
+      nodeViewComponents: {
         hard_break: forwardRef<HTMLBRElement, NodeViewComponentProps>(
           function BR(_props, ref) {
             // React implements "destroy methods" with effect
@@ -148,7 +148,7 @@ describe("nodeViews prop", () => {
     let pos: number | undefined;
     const { view } = tempEditor({
       doc: doc(blockquote(p("abc"), p("foo", br()))),
-      nodeViews: {
+      nodeViewComponents: {
         hard_break: forwardRef<HTMLBRElement, NodeViewComponentProps>(
           function BR({ nodeProps, children, ...props }, ref) {
             // trigger a re-render on every update, otherwise we won't
@@ -192,7 +192,7 @@ describe("nodeViews prop", () => {
     const { view } = tempEditor({
       doc: doc(p("foo", br())),
       plugins: [plugin],
-      nodeViews: {
+      nodeViewComponents: {
         hard_break: forwardRef<HTMLElement, NodeViewComponentProps>(
           function Var(props, ref) {
             return (
@@ -216,7 +216,7 @@ describe("nodeViews prop", () => {
   it("provides access to inner decorations in the constructor", async () => {
     tempEditor({
       doc: doc(p("foo")),
-      nodeViews: {
+      nodeViewComponents: {
         paragraph: forwardRef<HTMLParagraphElement, NodeViewComponentProps>(
           function Paragraph(props, ref) {
             expect(
@@ -242,7 +242,7 @@ describe("nodeViews prop", () => {
     let innerDecos: string[] = [];
     const { rerender } = tempEditor({
       doc: doc(p("foo")),
-      nodeViews: {
+      nodeViewComponents: {
         paragraph: forwardRef<HTMLParagraphElement, NodeViewComponentProps>(
           function Paragraph(props, ref) {
             innerDecos = (props.nodeProps.innerDecorations as DecorationSet)
@@ -269,7 +269,7 @@ describe("nodeViews prop", () => {
   it("can provide a stopEvent hook", async () => {
     tempEditor({
       doc: doc(p("input value")),
-      nodeViews: {
+      nodeViewComponents: {
         paragraph: forwardRef<HTMLInputElement, NodeViewComponentProps>(
           function ParagraphInput({ nodeProps, children, ...props }, ref) {
             useStopEvent(() => {
@@ -300,7 +300,7 @@ describe("markViews prop", () => {
   it("can replace a mark's representation", async () => {
     const { view } = tempEditor({
       doc: doc(p(strong("foo"), br())),
-      markViews: {
+      markViewComponents: {
         strong: forwardRef<HTMLElement, MarkViewComponentProps>(function Var(
           props,
           ref
@@ -316,7 +316,7 @@ describe("markViews prop", () => {
   it("provide a contentDOM property", async () => {
     const { view } = tempEditor({
       doc: doc(p(strong("foo"))),
-      markViews: {
+      markViewComponents: {
         strong: forwardRef<HTMLElement, MarkViewComponentProps>(function Strong(
           props,
           ref
@@ -338,7 +338,7 @@ describe("markViews prop", () => {
     let destroyed = 0;
     const { view } = tempEditor({
       doc: doc(p("a", strong("foo"), "b")),
-      markViews: {
+      markViewComponents: {
         strong: forwardRef<HTMLElement, MarkViewComponentProps>(function Strong(
           props,
           ref
@@ -362,7 +362,7 @@ describe("markViews prop", () => {
     let pos: number | undefined;
     const { view } = tempEditor({
       doc: doc(blockquote(p("abc"), p(strong("foo"), br()))),
-      markViews: {
+      markViewComponents: {
         strong: forwardRef<HTMLElement, MarkViewComponentProps>(function Strong(
           { markProps, children, ...props },
           ref
@@ -385,7 +385,7 @@ describe("customNodeViews prop", () => {
   it("can replace a node's representation", async () => {
     const { view } = tempEditor({
       doc: doc(p("foo", br())),
-      customNodeViews: {
+      nodeViews: {
         hard_break() {
           return {
             dom: document.createElement("var"),
@@ -399,7 +399,7 @@ describe("customNodeViews prop", () => {
   it("can override drawing of a node's content", async () => {
     const { view } = tempEditor({
       doc: doc(p("foo")),
-      customNodeViews: {
+      nodeViews: {
         paragraph(node) {
           const dom = document.createElement("p");
           dom.appendChild(
@@ -417,7 +417,7 @@ describe("customNodeViews prop", () => {
   it("can register its own update method", async () => {
     const { view } = tempEditor({
       doc: doc(p("foo")),
-      customNodeViews: {
+      nodeViews: {
         paragraph(node) {
           const dom = document.createElement("p");
           dom.textContent = node.textContent.toUpperCase();
@@ -440,7 +440,7 @@ describe("customNodeViews prop", () => {
   it("allows decoration updates for node views with an update method", async () => {
     const { view, rerender } = tempEditor({
       doc: doc(p("foo")),
-      customNodeViews: {
+      nodeViews: {
         paragraph(node) {
           const dom = document.createElement("p");
           return {
@@ -470,7 +470,7 @@ describe("customNodeViews prop", () => {
   it("can provide a contentDOM property", async () => {
     const { view } = tempEditor({
       doc: doc(p("foo")),
-      customNodeViews: {
+      nodeViews: {
         paragraph() {
           const dom = document.createElement("p");
           return { dom, contentDOM: dom };
@@ -492,7 +492,7 @@ describe("customNodeViews prop", () => {
     let mutation: ViewMutationRecord | undefined;
     const { view } = tempEditor({
       doc: doc(p("foo")),
-      customNodeViews: {
+      nodeViews: {
         paragraph() {
           const dom = document.createElement("div");
           const contentDOM = document.createElement("p");
@@ -519,7 +519,7 @@ describe("customNodeViews prop", () => {
     let destroyed = 0;
     const { view } = tempEditor({
       doc: doc(p("foo", br())),
-      customNodeViews: {
+      nodeViews: {
         hard_break() {
           return {
             dom: document.createElement("br"),
@@ -536,7 +536,7 @@ describe("customNodeViews prop", () => {
     let get: () => number | undefined;
     const { view } = tempEditor({
       doc: doc(blockquote(p("abc"), p("foo", br()))),
-      customNodeViews: {
+      nodeViews: {
         hard_break(_n, _v, getPos) {
           expect(getPos()).toBe(10);
           get = getPos;
@@ -576,7 +576,7 @@ describe("customNodeViews prop", () => {
     const { view } = tempEditor({
       doc: doc(p("foo", br())),
       plugins: [plugin],
-      customNodeViews: {
+      nodeViews: {
         hard_break(_n, _v, _p, deco) {
           const dom = document.createElement("var");
           function update(deco: readonly Decoration[]) {
@@ -603,7 +603,7 @@ describe("customNodeViews prop", () => {
   it("provides access to inner decorations in the constructor", async () => {
     tempEditor({
       doc: doc(p("foo")),
-      customNodeViews: {
+      nodeViews: {
         paragraph(_node, _v, _pos, _outer, innerDeco) {
           const dom = document.createElement("p");
           expect(
@@ -628,7 +628,7 @@ describe("customNodeViews prop", () => {
     let innerDecos: string[] = [];
     const { rerender } = tempEditor({
       doc: doc(p("foo")),
-      customNodeViews: {
+      nodeViews: {
         paragraph(node) {
           const dom = document.createElement("p");
           return {
@@ -660,7 +660,7 @@ describe("customNodeViews prop", () => {
   it("can provide a stopEvent hook", async () => {
     tempEditor({
       doc: doc(p("input value")),
-      customNodeViews: {
+      nodeViews: {
         paragraph(node) {
           const dom = document.createElement("input");
           dom.value = node.textContent;

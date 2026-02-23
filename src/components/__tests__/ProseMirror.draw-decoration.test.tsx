@@ -559,7 +559,7 @@ describe("Decoration drawing", () => {
     const { view } = tempEditor({
       doc: doc(p("foo"), hr()),
       plugins: [decoPlugin([])],
-      nodeViews: {
+      nodeViewComponents: {
         horizontal_rule: forwardRef<HTMLHRElement, NodeViewComponentProps>(
           function HR({ nodeProps, children, ...props }, ref) {
             current = nodeProps.decorations.map((d) => d.spec.name).join();
@@ -657,7 +657,7 @@ describe("Decoration drawing", () => {
   it("draws decorations inside node views", async () => {
     const { view } = tempEditor({
       doc: doc(p("foo")),
-      nodeViews: {
+      nodeViewComponents: {
         paragraph: forwardRef<HTMLParagraphElement, NodeViewComponentProps>(
           function Paragraph({ nodeProps, children, ...props }, ref) {
             return (
@@ -842,7 +842,7 @@ describe("Decoration drawing", () => {
         decoPlugin([Decoration.inline(2, 13, { class: "foo" })]),
         decoPlugin([Decoration.inline(2, 13, { class: "bar" })]),
       ],
-      nodeViews: {
+      nodeViewComponents: {
         paragraph: forwardRef<HTMLParagraphElement, NodeViewComponentProps>(
           function Paragraph({ nodeProps, children, ...props }, ref) {
             decosFromFirstEditor = nodeProps.innerDecorations;
