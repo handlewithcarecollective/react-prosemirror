@@ -1,6 +1,6 @@
 import React, { ComponentType, ReactNode, useMemo, useState } from "react";
 
-import { ChildDescriptorsContext } from "../contexts/ChildDescriptorsContext.js";
+import { ChildDescriptionsContext } from "../contexts/ChildDescriptionsContext.js";
 import { EditorContext } from "../contexts/EditorContext.js";
 import { EditorStateContext } from "../contexts/EditorStateContext.js";
 import {
@@ -20,7 +20,7 @@ function getPos() {
   return -1;
 }
 
-const rootChildDescriptorsContextValue = {
+const rootChildDescriptionsContextValue = {
   parentRef: { current: undefined },
   siblingsRef: {
     current: [],
@@ -73,13 +73,13 @@ function ProseMirrorInner({
     <EditorContext.Provider value={editor}>
       <EditorStateContext.Provider value={state}>
         <NodeViewContext.Provider value={nodeViewContextValue}>
-          <ChildDescriptorsContext.Provider
-            value={rootChildDescriptorsContextValue}
+          <ChildDescriptionsContext.Provider
+            value={rootChildDescriptionsContextValue}
           >
             <DocNodeViewContext.Provider value={docNodeViewContextValue}>
               {children}
             </DocNodeViewContext.Provider>
-          </ChildDescriptorsContext.Provider>
+          </ChildDescriptionsContext.Provider>
         </NodeViewContext.Provider>
       </EditorStateContext.Provider>
     </EditorContext.Provider>

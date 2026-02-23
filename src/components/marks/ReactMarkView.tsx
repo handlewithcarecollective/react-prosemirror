@@ -8,7 +8,7 @@ import React, {
   useRef,
 } from "react";
 
-import { ChildDescriptorsContext } from "../../contexts/ChildDescriptorsContext.js";
+import { ChildDescriptionsContext } from "../../contexts/ChildDescriptionsContext.js";
 import {
   IgnoreMutation,
   IgnoreMutationContext,
@@ -79,9 +79,9 @@ export const ReactMarkView = memo(function ReactMarkView({
 
   return (
     <IgnoreMutationContext.Provider value={setIgnoreMutation}>
-      <ChildDescriptorsContext.Provider value={childContextValue}>
+      <ChildDescriptionsContext.Provider value={childContextValue}>
         <Component {...props}>{children}</Component>
-      </ChildDescriptorsContext.Provider>
+      </ChildDescriptionsContext.Provider>
     </IgnoreMutationContext.Provider>
   );
 });

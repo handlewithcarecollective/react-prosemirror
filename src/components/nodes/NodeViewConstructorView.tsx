@@ -7,9 +7,9 @@ import {
 import React, { cloneElement, memo, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 
-import { ChildDescriptorsContext } from "../../contexts/ChildDescriptorsContext.js";
+import { ChildDescriptionsContext } from "../../contexts/ChildDescriptionsContext.js";
 import { DOMNode } from "../../dom.js";
-import { useNodeViewDescriptor } from "../../hooks/useNodeViewDescriptor.js";
+import { useNodeViewDescription } from "../../hooks/useNodeViewDescription.js";
 import { ChildNodeViews, wrapInDeco } from "../ChildNodeViews.js";
 
 interface Props {
@@ -55,7 +55,7 @@ export const NodeViewConstructorView = memo(function NodeViewConstructorView({
     return nodeView;
   };
 
-  const { childContextValue, contentDOM } = useNodeViewDescriptor(
+  const { childContextValue, contentDOM } = useNodeViewDescription(
     ref,
     (...args) => {
       const nodeView = createNodeView(...args);
@@ -106,13 +106,13 @@ export const NodeViewConstructorView = memo(function NodeViewConstructorView({
   const children =
     !node.isLeaf && contentDOM
       ? createPortal(
-          <ChildDescriptorsContext.Provider value={childContextValue}>
+          <ChildDescriptionsContext.Provider value={childContextValue}>
             <ChildNodeViews
               getPos={getPos}
               node={node}
               innerDecorations={innerDeco}
             />
-          </ChildDescriptorsContext.Provider>,
+          </ChildDescriptionsContext.Provider>,
           contentDOM
         )
       : null;
