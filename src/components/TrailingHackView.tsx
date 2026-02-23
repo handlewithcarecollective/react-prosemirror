@@ -1,6 +1,6 @@
 import React, { useContext, useRef } from "react";
 
-import { ChildDescriptorsContext } from "../contexts/ChildDescriptorsContext.js";
+import { ChildDescriptionsContext } from "../contexts/ChildDescriptionsContext.js";
 import { useClientLayoutEffect } from "../hooks/useClientLayoutEffect.js";
 import { TrailingHackViewDesc, sortViewDescs } from "../viewdesc.js";
 
@@ -9,7 +9,7 @@ type Props = {
 };
 
 export function TrailingHackView({ getPos }: Props) {
-  const { siblingsRef, parentRef } = useContext(ChildDescriptorsContext);
+  const { siblingsRef, parentRef } = useContext(ChildDescriptionsContext);
   const viewDescRef = useRef<TrailingHackViewDesc | null>(null);
 
   const ref = useRef<(HTMLBRElement & HTMLImageElement) | null>(null);

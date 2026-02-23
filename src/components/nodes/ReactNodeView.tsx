@@ -11,7 +11,7 @@ import React, {
   useState,
 } from "react";
 
-import { ChildDescriptorsContext } from "../../contexts/ChildDescriptorsContext.js";
+import { ChildDescriptionsContext } from "../../contexts/ChildDescriptionsContext.js";
 import { EditorContext } from "../../contexts/EditorContext.js";
 import {
   IgnoreMutation,
@@ -27,7 +27,7 @@ import {
   StopEventContext,
 } from "../../contexts/StopEventContext.js";
 import { DOMNode } from "../../dom.js";
-import { useNodeViewDescriptor } from "../../hooks/useNodeViewDescriptor.js";
+import { useNodeViewDescription } from "../../hooks/useNodeViewDescription.js";
 import { ChildNodeViews, wrapInDeco } from "../ChildNodeViews.js";
 import { NodeViewComponentProps } from "../nodes/NodeViewComponentProps.js";
 
@@ -99,7 +99,7 @@ export const ReactNodeView = memo(function ReactNodeView({
     [getPos, innerDeco, node, outerDeco]
   );
 
-  const { childContextValue, contentDOM, nodeDOM } = useNodeViewDescriptor(
+  const { childContextValue, contentDOM, nodeDOM } = useNodeViewDescription(
     ref,
     () => {
       setSelected(false);
@@ -181,9 +181,9 @@ export const ReactNodeView = memo(function ReactNodeView({
     <SelectNodeContext.Provider value={setSelectNode}>
       <StopEventContext.Provider value={setStopEvent}>
         <IgnoreMutationContext.Provider value={setIgnoreMutation}>
-          <ChildDescriptorsContext.Provider value={childContextValue}>
+          <ChildDescriptionsContext.Provider value={childContextValue}>
             {element}
-          </ChildDescriptorsContext.Provider>
+          </ChildDescriptionsContext.Provider>
         </IgnoreMutationContext.Provider>
       </StopEventContext.Provider>
     </SelectNodeContext.Provider>

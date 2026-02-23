@@ -3,7 +3,7 @@ import { useContext, useMemo, useRef, useState } from "react";
 
 import { ReactEditorView } from "../ReactEditorView.js";
 import { NodeViewComponentProps } from "../components/nodes/NodeViewComponentProps.js";
-import { ChildDescriptorsContext } from "../contexts/ChildDescriptorsContext.js";
+import { ChildDescriptionsContext } from "../contexts/ChildDescriptionsContext.js";
 import { EditorContext } from "../contexts/EditorContext.js";
 import { DOMNode } from "../dom.js";
 import {
@@ -19,7 +19,7 @@ import { useEffectEvent } from "./useEffectEvent.js";
 
 type Props = NodeViewComponentProps["nodeProps"];
 
-export function useNodeViewDescriptor(
+export function useNodeViewDescription(
   ref: { readonly current: DOMNode | null },
   constructor: NodeViewConstructor,
   findContentDOM: (
@@ -29,7 +29,7 @@ export function useNodeViewDescriptor(
   props: Props
 ) {
   const { view } = useContext(EditorContext);
-  const { parentRef, siblingsRef } = useContext(ChildDescriptorsContext);
+  const { parentRef, siblingsRef } = useContext(ChildDescriptionsContext);
 
   const [dom, setDOM] = useState<DOMNode | null>(null);
   const [nodeDOM, setNodeDOM] = useState<DOMNode | null>(null);

@@ -3,7 +3,7 @@ import { useContext, useMemo, useRef, useState } from "react";
 
 import { ReactEditorView } from "../ReactEditorView.js";
 import { MarkViewComponentProps } from "../components/marks/MarkViewComponentProps.js";
-import { ChildDescriptorsContext } from "../contexts/ChildDescriptorsContext.js";
+import { ChildDescriptionsContext } from "../contexts/ChildDescriptionsContext.js";
 import { EditorContext } from "../contexts/EditorContext.js";
 import { DOMNode } from "../dom.js";
 import {
@@ -36,7 +36,7 @@ export function useMarkViewDescription(
   props: Props
 ) {
   const { view } = useContext(EditorContext);
-  const { parentRef, siblingsRef } = useContext(ChildDescriptorsContext);
+  const { parentRef, siblingsRef } = useContext(ChildDescriptionsContext);
 
   const [dom, setDOM] = useState<DOMNode | null>(null);
   const [contentDOM, setContentDOM] = useState<HTMLElement | null>(null);
