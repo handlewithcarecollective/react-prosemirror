@@ -185,7 +185,7 @@ describe("EditorView draw", () => {
     const { view, rerender } = tempEditor({ doc: doc(p("foo"), hr()) });
     expect(view.dom.querySelector("hr")).toBeTruthy();
     rerender({
-      nodeViews: {
+      nodeViewComponents: {
         horizontal_rule: forwardRef<HTMLElement, NodeViewComponentProps>(
           function HorizontalRule({ nodeProps, ...props }, ref) {
             return <var {...props} ref={ref} />;

@@ -138,7 +138,10 @@ describe("ProseMirror", () => {
 
     function TestEditor() {
       return (
-        <ProseMirror defaultState={editorState} nodeViews={reactNodeViews}>
+        <ProseMirror
+          defaultState={editorState}
+          nodeViewComponents={reactNodeViews}
+        >
           <ProseMirrorDoc data-testid="editor" />
         </ProseMirror>
       );
@@ -276,7 +279,7 @@ describe("ProseMirror", () => {
   it("supports focusing interactive controls", async () => {
     tempEditor({
       doc: doc(hr()),
-      nodeViews: {
+      nodeViewComponents: {
         horizontal_rule: forwardRef<HTMLButtonElement, NodeViewComponentProps>(
           function Button({ nodeProps, ...props }, ref) {
             useStopEvent(() => {
