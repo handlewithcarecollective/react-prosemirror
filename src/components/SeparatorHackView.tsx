@@ -1,7 +1,7 @@
 import React, { useContext, useRef, useState } from "react";
 
 import { browser } from "../browser.js";
-import { ChildDescriptorsContext } from "../contexts/ChildDescriptorsContext.js";
+import { ChildDescriptionsContext } from "../contexts/ChildDescriptionsContext.js";
 import { useClientLayoutEffect } from "../hooks/useClientLayoutEffect.js";
 import { TrailingHackViewDesc, sortViewDescs } from "../viewdesc.js";
 
@@ -10,7 +10,7 @@ type Props = {
 };
 
 export function SeparatorHackView({ getPos }: Props) {
-  const { siblingsRef, parentRef } = useContext(ChildDescriptorsContext);
+  const { siblingsRef, parentRef } = useContext(ChildDescriptionsContext);
   const viewDescRef = useRef<TrailingHackViewDesc | null>(null);
   const ref = useRef<HTMLImageElement | null>(null);
   const [shouldRender, setShouldRender] = useState(false);

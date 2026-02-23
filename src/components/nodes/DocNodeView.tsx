@@ -11,8 +11,8 @@ import React, {
   useRef,
 } from "react";
 
-import { ChildDescriptorsContext } from "../../contexts/ChildDescriptorsContext.js";
-import { useNodeViewDescriptor } from "../../hooks/useNodeViewDescriptor.js";
+import { ChildDescriptionsContext } from "../../contexts/ChildDescriptionsContext.js";
+import { useNodeViewDescription } from "../../hooks/useNodeViewDescription.js";
 import { ChildNodeViews, wrapInDeco } from "../ChildNodeViews.js";
 
 export interface DocNodeViewProps extends Omit<HTMLProps<HTMLElement>, "as"> {
@@ -51,7 +51,7 @@ export const DocNodeView = memo(
       [node, getPos, decorations, innerDecorations]
     );
 
-    const { childContextValue } = useNodeViewDescriptor(
+    const { childContextValue } = useNodeViewDescription(
       innerRef,
       () => {
         const dom = innerRef.current as HTMLElement;
@@ -68,13 +68,13 @@ export const DocNodeView = memo(
     );
 
     const children = (
-      <ChildDescriptorsContext.Provider value={childContextValue}>
+      <ChildDescriptionsContext.Provider value={childContextValue}>
         <ChildNodeViews
           getPos={getPos}
           node={node}
           innerDecorations={innerDecorations}
         />
-      </ChildDescriptorsContext.Provider>
+      </ChildDescriptionsContext.Provider>
     );
 
     const props = {

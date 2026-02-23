@@ -11,7 +11,7 @@ import React, {
   useRef,
 } from "react";
 
-import { ChildDescriptorsContext } from "../contexts/ChildDescriptorsContext.js";
+import { ChildDescriptionsContext } from "../contexts/ChildDescriptionsContext.js";
 import { EditorContext } from "../contexts/EditorContext.js";
 import { ReactWidgetDecoration } from "../decorations/ReactWidgetType.js";
 import { InternalDecorationSource } from "../decorations/internalTypes.js";
@@ -143,7 +143,7 @@ const ChildView = memo(function ChildView({
   ) : child.type === "hack" ? (
     <child.component key={child.key} getPos={getPos} />
   ) : child.node.isText ? (
-    <ChildDescriptorsContext.Consumer key={child.key}>
+    <ChildDescriptionsContext.Consumer key={child.key}>
       {({ siblingsRef, parentRef }) => (
         <TextNodeView
           view={view}
@@ -154,7 +154,7 @@ const ChildView = memo(function ChildView({
           decorations={child.outerDeco}
         />
       )}
-    </ChildDescriptorsContext.Consumer>
+    </ChildDescriptionsContext.Consumer>
   ) : (
     <NodeView
       key={child.key}
