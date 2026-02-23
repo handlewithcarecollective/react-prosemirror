@@ -1,9 +1,8 @@
 import { Node } from "prosemirror-model";
 import { Decoration, DecorationSource } from "prosemirror-view";
 import React, {
+  ElementType,
   HTMLProps,
-  ReactElement,
-  cloneElement,
   createElement,
   forwardRef,
   memo,
@@ -17,7 +16,7 @@ import { useNodeViewDescriptor } from "../../hooks/useNodeViewDescriptor.js";
 import { ChildNodeViews, wrapInDeco } from "../ChildNodeViews.js";
 
 export interface DocNodeViewProps extends Omit<HTMLProps<HTMLElement>, "as"> {
-  as?: ReactElement;
+  as?: ElementType;
   node: Node;
   getPos: () => number;
   decorations: readonly Decoration[];
@@ -85,7 +84,7 @@ export const DocNodeView = memo(
     } satisfies HTMLProps<HTMLElement>;
 
     const element = as
-      ? cloneElement(as, props, children)
+      ? createElement(as, props, children)
       : createElement("div", props, children);
 
     return nodeProps.decorations.reduce(wrapInDeco, element);
