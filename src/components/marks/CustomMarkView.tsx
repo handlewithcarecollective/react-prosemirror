@@ -3,7 +3,7 @@ import { MarkViewConstructor } from "prosemirror-view";
 import React, { ReactNode, memo, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 
-import { ChildDescriptorsContext } from "../../contexts/ChildDescriptorsContext.js";
+import { ChildDescriptionsContext } from "../../contexts/ChildDescriptionsContext.js";
 import { DOMNode } from "../../dom.js";
 import { useMarkViewDescription } from "../../hooks/useMarkViewDescription.js";
 
@@ -76,9 +76,9 @@ export const CustomMarkView = memo(function CustomMarkView({
     <Component {...props}>
       {contentDOM
         ? createPortal(
-            <ChildDescriptorsContext.Provider value={childContextValue}>
+            <ChildDescriptionsContext.Provider value={childContextValue}>
               {children}
-            </ChildDescriptorsContext.Provider>,
+            </ChildDescriptionsContext.Provider>,
             contentDOM
           )
         : null}
