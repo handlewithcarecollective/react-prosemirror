@@ -4,7 +4,13 @@ import {
   DecorationSource,
   NodeViewConstructor,
 } from "prosemirror-view";
-import React, { ComponentType, memo, useContext, useMemo } from "react";
+import React, {
+  ComponentType,
+  createContext,
+  memo,
+  useContext,
+  useMemo,
+} from "react";
 
 import { NodeViewContext } from "../../contexts/NodeViewContext.js";
 
@@ -45,5 +51,13 @@ export const NodeView = memo(function NodeView(props: Props) {
     }
   }, [constructor, component]);
 
-  return <Component {...props} />;
+  return (
+    <GetPosContext.Provider value={props.getPos}>
+      <Component {...props} />
+    </GetPosContext.Provider>
+  );
 });
+
+export const GetPosContext = createContext<() => number>(
+  null as unknown as () => number
+);
