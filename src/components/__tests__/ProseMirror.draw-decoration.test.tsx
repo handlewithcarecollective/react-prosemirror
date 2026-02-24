@@ -32,6 +32,7 @@ import React, { forwardRef, useEffect } from "react";
 
 import { widget } from "../../decorations/ReactWidgetType.js";
 import { useEditorEffect } from "../../hooks/useEditorEffect.js";
+import { useMergedDOMRefs } from "../../refs.js";
 import { tempEditor } from "../../testing/editorViewTestHelpers.js";
 import { WidgetViewComponentProps } from "../WidgetViewComponentProps.js";
 import { NodeViewComponentProps } from "../nodes/NodeViewComponentProps.js";
@@ -661,7 +662,10 @@ describe("Decoration drawing", () => {
         paragraph: forwardRef<HTMLParagraphElement, NodeViewComponentProps>(
           function Paragraph({ nodeProps, children, ...props }, ref) {
             return (
-              <p {...props} ref={ref}>
+              <p
+                {...props}
+                ref={useMergedDOMRefs(ref, nodeProps.contentDOMRef)}
+              >
                 {children}
               </p>
             );
@@ -847,7 +851,10 @@ describe("Decoration drawing", () => {
           function Paragraph({ nodeProps, children, ...props }, ref) {
             decosFromFirstEditor = nodeProps.innerDecorations;
             return (
-              <p {...props} ref={ref}>
+              <p
+                {...props}
+                ref={useMergedDOMRefs(ref, nodeProps.contentDOMRef)}
+              >
                 {children}
               </p>
             );

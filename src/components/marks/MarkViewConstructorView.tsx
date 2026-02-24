@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 
 import { ChildDescriptionsContext } from "../../contexts/ChildDescriptionsContext.js";
 import { DOMNode } from "../../dom.js";
+import { useForceUpdate } from "../../hooks/useForceUpdate.js";
 import { useMarkViewDescription } from "../../hooks/useMarkViewDescription.js";
 
 interface Props {
@@ -24,12 +25,14 @@ export const MarkViewConstructorView = memo(function MarkViewConstructorView({
 }: Props) {
   const ref = useRef<HTMLElement | null>(null);
   const innerRef = useRef<(HTMLSpanElement & HTMLDivElement) | null>(null);
+  const forceUpdate = useForceUpdate();
 
   const markProps = useMemo(
     () => ({
       mark,
       inline,
       getPos,
+      contentDOMRef: { current: null },
     }),
     [mark, inline, getPos]
   );
@@ -49,11 +52,17 @@ export const MarkViewConstructorView = memo(function MarkViewConstructorView({
   };
 
   const { childContextValue, contentDOM } = useMarkViewDescription(
-    ref,
+    () => ref.current,
+    (markView) => markView?.contentDOM ?? null,
     (...args) => {
       const markView = createMarkView(...args);
       const dom = markView.dom;
       const wrapperDOM = (innerRef.current ?? ref.current) as DOMNode;
+      wrapperDOM.appendChild(dom);
+
+      // Force a re-render so that we properly create
+      // a portal into the contentDOM/dom
+      forceUpdate();
 
       return {
         ...markView,

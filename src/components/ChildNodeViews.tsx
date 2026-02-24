@@ -18,6 +18,7 @@ import { InternalDecorationSource } from "../decorations/internalTypes.js";
 import { iterDeco } from "../decorations/iterDeco.js";
 import { useReactKeys } from "../hooks/useReactKeys.js";
 import { htmlAttrsToReactProps, mergeReactProps } from "../props.js";
+import { sameOuterDeco } from "../viewdesc.js";
 
 import { NativeWidgetView } from "./NativeWidgetView.js";
 import { SeparatorHackView } from "./SeparatorHackView.js";
@@ -52,21 +53,11 @@ function areChildrenEqual(a: Child, b: Child) {
     a.marks.every((mark) => mark.isInSet(b.marks)) &&
     b.marks.every((mark) => mark.isInSet(a.marks)) &&
     a.key === b.key &&
-    (a.type === "node"
-      ? a.outerDeco?.length === (b as ChildNode).outerDeco?.length &&
-        a.outerDeco?.every((prevDeco) =>
-          (b as ChildNode).outerDeco?.some(
-            (nextDeco) =>
-              prevDeco.from === nextDeco.from &&
-              prevDeco.to &&
-              nextDeco.to &&
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              (prevDeco as any).type.eq((nextDeco as any).type)
-          )
-        ) &&
-        (a.innerDeco as InternalDecorationSource).eq((b as ChildNode).innerDeco)
-      : true) &&
-    (a as ChildNode).node === (b as ChildNode).node &&
+    (a.type !== "node" ||
+      b.type !== "node" ||
+      (a.node.eq(b.node) &&
+        sameOuterDeco(a.outerDeco, b.outerDeco) &&
+        (a.innerDeco as InternalDecorationSource).eq(b.innerDeco))) &&
     (a as ChildWidget).widget === (b as ChildWidget).widget
   );
 }
