@@ -11,6 +11,10 @@ import { computeDocDeco } from "../decorations/computeDocDeco.js";
 import { viewDecorations } from "../decorations/viewDecorations.js";
 import { UseEditorOptions, useEditor } from "../hooks/useEditor.js";
 
+import {
+  EditorStateSelectorsProvider,
+  EditorStateSelectorsRegistrar,
+} from "./EditorStateSelectorsProvider.js";
 import { LayoutGroup } from "./LayoutGroup.js";
 import { DocNodeViewContext } from "./ProseMirrorDoc.js";
 import { MarkViewComponentProps } from "./marks/MarkViewComponentProps.js";
@@ -72,15 +76,17 @@ function ProseMirrorInner({
   return (
     <EditorContext.Provider value={editor}>
       <EditorStateContext.Provider value={state}>
-        <NodeViewContext.Provider value={nodeViewContextValue}>
-          <ChildDescriptionsContext.Provider
-            value={rootChildDescriptionsContextValue}
-          >
-            <DocNodeViewContext.Provider value={docNodeViewContextValue}>
-              {children}
-            </DocNodeViewContext.Provider>
-          </ChildDescriptionsContext.Provider>
-        </NodeViewContext.Provider>
+        <EditorStateSelectorsProvider>
+          <NodeViewContext.Provider value={nodeViewContextValue}>
+            <ChildDescriptionsContext.Provider
+              value={rootChildDescriptionsContextValue}
+            >
+              <DocNodeViewContext.Provider value={docNodeViewContextValue}>
+                {children}
+              </DocNodeViewContext.Provider>
+            </ChildDescriptionsContext.Provider>
+          </NodeViewContext.Provider>
+        </EditorStateSelectorsProvider>
       </EditorStateContext.Provider>
     </EditorContext.Provider>
   );
@@ -89,7 +95,9 @@ function ProseMirrorInner({
 export function ProseMirror(props: Props) {
   return (
     <LayoutGroup>
-      <ProseMirrorInner {...props} />
+      <EditorStateSelectorsRegistrar>
+        <ProseMirrorInner {...props} />
+      </EditorStateSelectorsRegistrar>
     </LayoutGroup>
   );
 }
