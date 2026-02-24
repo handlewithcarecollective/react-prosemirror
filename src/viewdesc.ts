@@ -1151,7 +1151,10 @@ export class ReactNodeViewDesc extends CustomNodeViewDesc {
   }
 }
 
-function sameOuterDeco(a: readonly Decoration[], b: readonly Decoration[]) {
+export function sameOuterDeco(
+  a: readonly Decoration[],
+  b: readonly Decoration[]
+) {
   if (a.length != b.length) return false;
   // @ts-expect-error ...
   for (let i = 0; i < a.length; i++) if (!a[i].type.eq(b[i].type)) return false;
