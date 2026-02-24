@@ -9,6 +9,7 @@ import { createPortal } from "react-dom";
 
 import { ChildDescriptionsContext } from "../../contexts/ChildDescriptionsContext.js";
 import { DOMNode } from "../../dom.js";
+import { useForceUpdate } from "../../hooks/useForceUpdate.js";
 import { useNodeViewDescription } from "../../hooks/useNodeViewDescription.js";
 import { ChildNodeViews, wrapInDeco } from "../ChildNodeViews.js";
 
@@ -29,6 +30,7 @@ export const NodeViewConstructorView = memo(function NodeViewConstructorView({
 }: Props) {
   const ref = useRef<HTMLElement>(null);
   const innerRef = useRef<HTMLSpanElement & HTMLDivElement>(null);
+  const forceUpdate = useForceUpdate();
 
   const nodeProps = useMemo(
     () => ({
@@ -36,6 +38,7 @@ export const NodeViewConstructorView = memo(function NodeViewConstructorView({
       getPos,
       decorations: outerDeco,
       innerDecorations: innerDeco,
+      contentDOMRef: { current: null },
     }),
     [node, getPos, outerDeco, innerDeco]
   );
@@ -56,7 +59,8 @@ export const NodeViewConstructorView = memo(function NodeViewConstructorView({
   };
 
   const { childContextValue, contentDOM } = useNodeViewDescription(
-    ref,
+    () => ref.current,
+    (source) => source?.contentDOM ?? null,
     (...args) => {
       const nodeView = createNodeView(...args);
       const contentDOM = nodeView.contentDOM;
@@ -77,6 +81,12 @@ export const NodeViewConstructorView = memo(function NodeViewConstructorView({
         }
       }
 
+      if (contentDOM) {
+        // Force a re-render if we have a contentDOM,
+        // so that we properly create a portal into it
+        forceUpdate();
+      }
+
       return {
         ...nodeView,
         destroy() {
@@ -92,7 +102,6 @@ export const NodeViewConstructorView = memo(function NodeViewConstructorView({
         ignoreMutation: nodeView.ignoreMutation?.bind(nodeView),
       };
     },
-    (source) => source?.contentDOM ?? null,
     nodeProps
   );
 

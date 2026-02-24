@@ -47,12 +47,14 @@ export const DocNodeView = memo(
         getPos,
         decorations,
         innerDecorations,
+        contentDOMRef: innerRef,
       }),
       [node, getPos, decorations, innerDecorations]
     );
 
     const { childContextValue } = useNodeViewDescription(
-      innerRef,
+      () => innerRef.current,
+      () => innerRef.current,
       () => {
         const dom = innerRef.current as HTMLElement;
         return {
@@ -63,7 +65,6 @@ export const DocNodeView = memo(
           },
         };
       },
-      () => innerRef.current,
       nodeProps
     );
 

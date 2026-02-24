@@ -12,18 +12,23 @@ import React, { forwardRef, useEffect } from "react";
 
 import { useEditorState } from "../../hooks/useEditorState.js";
 import { useStopEvent } from "../../hooks/useStopEvent.js";
+import { useMergedDOMRefs } from "../../refs.js";
 import { tempEditor } from "../../testing/editorViewTestHelpers.js";
 import { MarkViewComponentProps } from "../marks/MarkViewComponentProps.js";
 import { NodeViewComponentProps } from "../nodes/NodeViewComponentProps.js";
 
-describe("nodeViews prop", () => {
+describe("nodeViewComponents prop", () => {
   it("can replace a node's representation", async () => {
     const { view } = tempEditor({
       doc: doc(p("foo", br())),
       nodeViewComponents: {
         hard_break: forwardRef<HTMLElement, NodeViewComponentProps>(
           function Var(props, ref) {
-            return <var ref={ref}>{props.children}</var>;
+            return (
+              <var ref={useMergedDOMRefs(props.nodeProps.contentDOMRef, ref)}>
+                {props.children}
+              </var>
+            );
           }
         ),
       },
@@ -60,7 +65,9 @@ describe("nodeViews prop", () => {
         paragraph: forwardRef<HTMLParagraphElement, NodeViewComponentProps>(
           function Paragraph(props, ref) {
             return (
-              <p ref={ref}>{props.nodeProps.node.textContent.toUpperCase()}</p>
+              <p ref={useMergedDOMRefs(ref, props.nodeProps.contentDOMRef)}>
+                {props.nodeProps.node.textContent.toUpperCase()}
+              </p>
             );
           }
         ),
@@ -79,7 +86,10 @@ describe("nodeViews prop", () => {
         paragraph: forwardRef<HTMLParagraphElement, NodeViewComponentProps>(
           function Paragraph({ children, nodeProps, ...props }, ref) {
             return (
-              <p {...props} ref={ref}>
+              <p
+                {...props}
+                ref={useMergedDOMRefs(ref, nodeProps.contentDOMRef)}
+              >
                 {children}
               </p>
             );
@@ -108,8 +118,9 @@ describe("nodeViews prop", () => {
         paragraph: forwardRef<HTMLParagraphElement, NodeViewComponentProps>(
           function Paragraph(props, ref) {
             return (
-              // ContentDOM is inferred from where props.children is rendered
-              <p ref={ref}>{props.children}</p>
+              <p ref={useMergedDOMRefs(ref, props.nodeProps.contentDOMRef)}>
+                {props.children}
+              </p>
             );
           }
         ),
@@ -225,7 +236,11 @@ describe("nodeViews prop", () => {
                 .map((d) => `${d.from}-${d.to}`)
                 .join()
             ).toBe("1-2");
-            return <p ref={ref}>{props.children}</p>;
+            return (
+              <p ref={useMergedDOMRefs(ref, props.nodeProps.contentDOMRef)}>
+                {props.children}
+              </p>
+            );
           }
         ),
       },
@@ -248,7 +263,11 @@ describe("nodeViews prop", () => {
             innerDecos = (props.nodeProps.innerDecorations as DecorationSet)
               .find()
               .map((d) => `${d.from}-${d.to}`);
-            return <p ref={ref}>{props.children}</p>;
+            return (
+              <p ref={useMergedDOMRefs(ref, props.nodeProps.contentDOMRef)}>
+                {props.children}
+              </p>
+            );
           }
         ),
       },
@@ -296,7 +315,7 @@ describe("nodeViews prop", () => {
   });
 });
 
-describe("markViews prop", () => {
+describe("markViewComponents prop", () => {
   it("can replace a mark's representation", async () => {
     const { view } = tempEditor({
       doc: doc(p(strong("foo"), br())),
@@ -322,8 +341,9 @@ describe("markViews prop", () => {
           ref
         ) {
           return (
-            // ContentDOM is inferred from where props.children is rendered
-            <strong ref={ref}>{props.children}</strong>
+            <strong ref={useMergedDOMRefs(ref, props.markProps.contentDOMRef)}>
+              {props.children}
+            </strong>
           );
         }),
       },
@@ -381,7 +401,7 @@ describe("markViews prop", () => {
   });
 });
 
-describe("customNodeViews prop", () => {
+describe("nodeViews prop", () => {
   it("can replace a node's representation", async () => {
     const { view } = tempEditor({
       doc: doc(p("foo", br())),

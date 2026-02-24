@@ -34,6 +34,7 @@ export const ReactMarkView = memo(function ReactMarkView({
   children,
 }: Props) {
   const ref = useRef<HTMLElement | null>(null);
+  const contentDOMRef = useRef<HTMLElement | null>(null);
 
   const ignoreMutationRef = useRef<IgnoreMutation | null>(null);
 
@@ -47,7 +48,7 @@ export const ReactMarkView = memo(function ReactMarkView({
     };
   }, []);
 
-  const markProps = useMemo(
+  const markViewDescProps = useMemo(
     () => ({
       mark,
       getPos,
@@ -56,8 +57,9 @@ export const ReactMarkView = memo(function ReactMarkView({
     [getPos, inline, mark]
   );
 
-  const { childContextValue } = useMarkViewDescription(
-    ref,
+  const { childContextValue, refUpdated } = useMarkViewDescription(
+    () => ref.current,
+    () => contentDOMRef.current ?? ref.current,
     () => ({
       dom: ref.current as DOMNode,
       ignoreMutation(mutation) {
@@ -69,12 +71,36 @@ export const ReactMarkView = memo(function ReactMarkView({
         return false;
       },
     }),
-    markProps
+    markViewDescProps
+  );
+
+  const setDOM = useCallback(
+    (el: HTMLElement | null) => {
+      ref.current = el;
+      refUpdated();
+    },
+    [refUpdated]
+  );
+
+  const setContentDOM = useCallback(
+    (el: HTMLElement | null) => {
+      contentDOMRef.current = el;
+      refUpdated();
+    },
+    [refUpdated]
+  );
+
+  const markProps = useMemo(
+    () => ({
+      ...markViewDescProps,
+      contentDOMRef: setContentDOM,
+    }),
+    [markViewDescProps, setContentDOM]
   );
 
   const props = {
     markProps,
-    ref,
+    ref: setDOM,
   } satisfies MarkViewComponentProps;
 
   return (
