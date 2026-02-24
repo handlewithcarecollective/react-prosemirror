@@ -5,14 +5,12 @@ import React, {
   cloneElement,
   memo,
   useCallback,
-  useContext,
   useMemo,
   useRef,
   useState,
 } from "react";
 
 import { ChildDescriptionsContext } from "../../contexts/ChildDescriptionsContext.js";
-import { EditorContext } from "../../contexts/EditorContext.js";
 import {
   IgnoreMutation,
   IgnoreMutationContext,
@@ -46,12 +44,12 @@ export const ReactNodeView = memo(function ReactNodeView({
   node,
   innerDeco,
 }: Props) {
-  const { view } = useContext(EditorContext);
   const [hasCustomSelectNode, setHasCustomSelectNode] = useState(false);
   const [selected, setSelected] = useState(false);
 
   const ref = useRef<HTMLElement>(null);
   const innerRef = useRef<HTMLElement>(null);
+  const contentDOMRef = useRef<HTMLElement | null>(null);
 
   const selectNodeRef = useRef<SelectNode | null>(null);
   const deselectNodeRef = useRef<DeselectNode | null>(null);
@@ -95,6 +93,7 @@ export const ReactNodeView = memo(function ReactNodeView({
       getPos: getPos,
       decorations: outerDeco,
       innerDecorations: innerDeco,
+      contentDOMRef,
     }),
     [getPos, innerDeco, node, outerDeco]
   );
@@ -144,10 +143,7 @@ export const ReactNodeView = memo(function ReactNodeView({
         },
       };
     },
-    (source, children) =>
-      view.composing
-        ? source?.contentDOM ?? null
-        : children[0]?.dom.parentElement ?? null,
+    () => contentDOMRef.current,
     nodeProps
   );
 

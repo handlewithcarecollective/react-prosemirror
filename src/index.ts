@@ -15,6 +15,7 @@ export { useIsEditorStatic } from "./hooks/useIsEditorStatic.js";
 export { useIsNodeSelected } from "./hooks/useIsNodeSelected.js";
 export { reactKeys } from "./plugins/reactKeys.js";
 export { widget } from "./decorations/ReactWidgetType.js";
+export { mergeDomRefs } from "./refs.js";
 
 export type { NodeViewComponentProps } from "./components/nodes/NodeViewComponentProps.js";
 export type { MarkViewComponentProps } from "./components/marks/MarkViewComponentProps.js";

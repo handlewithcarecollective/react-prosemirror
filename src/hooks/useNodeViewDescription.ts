@@ -22,9 +22,8 @@ type Props = NodeViewComponentProps["nodeProps"];
 export function useNodeViewDescription(
   ref: { readonly current: DOMNode | null },
   constructor: NodeViewConstructor,
-  findContentDOM: (
-    source: { contentDOM?: HTMLElement | null } | null,
-    children: ViewDesc[]
+  getContentDOM: (
+    nodeView: { contentDOM?: HTMLElement | null } | null
   ) => HTMLElement | null,
   props: Props
 ) {
@@ -63,7 +62,7 @@ export function useNodeViewDescription(
     const parent = parentRef.current;
     const children = childrenRef.current;
 
-    const contentDOM = findContentDOM(nodeView, children);
+    const contentDOM = getContentDOM(nodeView);
     const nodeDOM = nodeView.dom;
 
     const viewDesc = new ReactNodeViewDesc(
@@ -101,7 +100,7 @@ export function useNodeViewDescription(
       return false;
     }
 
-    const contentDOM = findContentDOM(viewDesc, viewDesc.children);
+    const contentDOM = getContentDOM(viewDesc);
     if (contentDOM !== viewDesc.contentDOM) {
       return false;
     }

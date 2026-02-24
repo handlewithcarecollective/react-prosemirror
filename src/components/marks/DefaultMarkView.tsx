@@ -6,7 +6,7 @@ import { MarkViewComponentProps } from "./MarkViewComponentProps.js";
 
 export const DefaultMarkView = forwardRef<HTMLElement, MarkViewComponentProps>(
   function DefaultMarkView(
-    { markProps: { mark, inline }, children, ...props },
+    { markProps: { mark, inline, contentDOMRef }, children, ...props },
     ref
   ) {
     const spec = useMemo(
@@ -18,7 +18,13 @@ export const DefaultMarkView = forwardRef<HTMLElement, MarkViewComponentProps>(
     }
 
     return (
-      <OutputSpec {...props} outputSpec={spec} ref={ref} isMark>
+      <OutputSpec
+        {...props}
+        outputSpec={spec}
+        contentDOMRef={contentDOMRef}
+        ref={ref}
+        isMark
+      >
         {children}
       </OutputSpec>
     );

@@ -30,6 +30,7 @@ export const CustomMarkView = memo(function CustomMarkView({
       mark,
       inline,
       getPos,
+      contentDOMRef: { current: null },
     }),
     [mark, inline, getPos]
   );
@@ -65,6 +66,7 @@ export const CustomMarkView = memo(function CustomMarkView({
         ignoreMutation: markView.ignoreMutation,
       };
     },
+    (markView) => markView?.contentDOM ?? null,
     markProps
   );
 

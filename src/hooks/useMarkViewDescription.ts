@@ -11,23 +11,14 @@ import { MarkViewDesc, ViewDesc, sortViewDescs } from "../viewdesc.js";
 import { useClientLayoutEffect } from "./useClientLayoutEffect.js";
 import { useEffectEvent } from "./useEffectEvent.js";
 
-function findContentDOM(
-  source: { contentDOM?: HTMLElement | null } | null,
-  children: ViewDesc[],
-  dom: DOMNode
-) {
-  return (
-    source?.contentDOM ??
-    children[0]?.dom?.parentElement ??
-    (dom as HTMLElement)
-  );
-}
-
 type Props = MarkViewComponentProps["markProps"];
 
 export function useMarkViewDescription(
   ref: { readonly current: DOMNode | null },
   constructor: MarkViewConstructor,
+  getContentDOM: (
+    markView: { contentDOM?: HTMLElement | null } | null
+  ) => HTMLElement | null,
   props: Props
 ) {
   const { view } = useContext(EditorContext);
@@ -59,7 +50,7 @@ export function useMarkViewDescription(
     const parent = parentRef.current;
     const children = childrenRef.current;
 
-    const contentDOM = findContentDOM(markView, children, ref.current);
+    const contentDOM = getContentDOM(markView);
 
     const viewDesc = new MarkViewDesc(
       parent,
@@ -67,7 +58,7 @@ export function useMarkViewDescription(
       getPos,
       mark,
       dom,
-      contentDOM,
+      contentDOM ?? (dom as HTMLElement),
       markView
     );
 
@@ -92,8 +83,8 @@ export function useMarkViewDescription(
       return false;
     }
 
-    const contentDOM = findContentDOM(viewDesc, viewDesc.children, dom);
-    if (contentDOM !== viewDesc.contentDOM) {
+    const contentDOM = getContentDOM(viewDesc);
+    if (contentDOM !== (viewDesc.contentDOM ?? dom)) {
       return false;
     }
 

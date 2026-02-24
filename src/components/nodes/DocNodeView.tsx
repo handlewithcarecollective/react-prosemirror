@@ -47,6 +47,7 @@ export const DocNodeView = memo(
         getPos,
         decorations,
         innerDecorations,
+        contentDOMRef: innerRef,
       }),
       [node, getPos, decorations, innerDecorations]
     );

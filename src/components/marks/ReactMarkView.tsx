@@ -34,6 +34,7 @@ export const ReactMarkView = memo(function ReactMarkView({
   children,
 }: Props) {
   const ref = useRef<HTMLElement | null>(null);
+  const contentDOMRef = useRef<HTMLElement | null>(null);
 
   const ignoreMutationRef = useRef<IgnoreMutation | null>(null);
 
@@ -52,6 +53,7 @@ export const ReactMarkView = memo(function ReactMarkView({
       mark,
       getPos,
       inline,
+      contentDOMRef,
     }),
     [getPos, inline, mark]
   );
@@ -69,6 +71,7 @@ export const ReactMarkView = memo(function ReactMarkView({
         return false;
       },
     }),
+    () => contentDOMRef.current ?? ref.current,
     markProps
   );
 

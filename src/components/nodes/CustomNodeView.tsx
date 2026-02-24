@@ -36,6 +36,7 @@ export const CustomNodeView = memo(function CustomNodeView({
       getPos,
       decorations: outerDeco,
       innerDecorations: innerDeco,
+      contentDOMRef: { current: null },
     }),
     [node, getPos, outerDeco, innerDeco]
   );
