@@ -1,54 +1,20 @@
 import { EditorState } from "prosemirror-state";
-import {
-  Context,
-  createContext,
-  useCallback,
-  useContext,
-  useLayoutEffect,
-  useRef,
-} from "react";
+import { useContext, useRef, useSyncExternalStore } from "react";
 
-import { EditorContext } from "../contexts/EditorContext.js";
-import {
-  EditorStateSelector,
-  EditorStateSelectorsContext,
-} from "../contexts/EditorStateSelectorsContext.js";
-
-import { useEditorEffect } from "./useEditorEffect.js";
-
-const UNINITIALIZED = Symbol.for(
-  "@handlewithcare/react-prosemirror:useEditorStateSelector/uninitialized"
-);
+import { EditorStateStoreContext } from "../contexts/EditorStateStoreContext.js";
 
 export function useEditorStateSelector<Result>(
-  selector: EditorStateSelector<Result>
+  selector: (state: EditorState) => Result
 ): Result {
-  const { view } = useContext(EditorContext);
-  const { register } = useContext(EditorStateSelectorsContext);
-  const select = useStableCallback((state: EditorState) => selector(state));
-  const context = useRef<Context<Result> | null>(null);
-  if (!context.current) {
-    context.current = createContext<Result>(UNINITIALIZED as unknown as Result);
-  }
-  const value = useContext(context.current);
+  const store = useContext(EditorStateStoreContext);
 
-  useLayoutEffect(() => {
-    return register(context.current as Context<unknown>, select);
-  }, [register, select]);
+  // Keep a ref to always call the latest selector. Updating a ref during
+  // render is safe: it's idempotent and not observable by React.
+  const selectorRef = useRef(selector);
+  selectorRef.current = selector;
 
-  return value === UNINITIALIZED ? selector(view.state) : value;
-}
-
-function useStableCallback<T extends unknown[], R>(
-  callback: (...args: T) => R
-) {
-  const ref = useRef(callback);
-
-  useEditorEffect(() => {
-    ref.current = callback;
-  }, [callback]);
-
-  return useCallback((...args: T) => {
-    return ref.current(...args);
-  }, []);
+  return useSyncExternalStore(
+    store.subscribe,
+    () => selectorRef.current(store.getState())
+  );
 }

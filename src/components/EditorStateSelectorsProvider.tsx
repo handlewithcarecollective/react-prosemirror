@@ -1,16 +1,10 @@
-import React, {
-  ReactNode,
-  useCallback,
-  useContext,
-  useMemo,
-  useState,
-} from "react";
+import React, { ReactNode, useContext, useLayoutEffect, useMemo } from "react";
 
 import {
-  EditorStateSelectorContexts,
-  EditorStateSelectorsContext,
-  RegisterEditorStateSelector,
-} from "../contexts/EditorStateSelectorsContext.js";
+  EditorStateStore,
+  EditorStateStoreContext,
+  createEditorStateStore,
+} from "../contexts/EditorStateStoreContext.js";
 import { useEditorState } from "../hooks/useEditorState.js";
 
 interface RegistrarProps {
@@ -18,35 +12,12 @@ interface RegistrarProps {
 }
 
 export function EditorStateSelectorsRegistrar({ children }: RegistrarProps) {
-  const [contexts, setContexts] = useState<EditorStateSelectorContexts>(
-    new Map()
-  );
-
-  const register = useCallback<RegisterEditorStateSelector>(
-    (context, selector) => {
-      setContexts((prev) => new Map(prev).set(context, selector));
-      return () => {
-        setContexts((prev) => {
-          new Map(prev).delete(context);
-          return prev;
-        });
-      };
-    },
-    []
-  );
-
-  const value = useMemo(
-    () => ({
-      contexts,
-      register,
-    }),
-    [contexts, register]
-  );
+  const store = useMemo<EditorStateStore>(() => createEditorStateStore(), []);
 
   return (
-    <EditorStateSelectorsContext.Provider value={value}>
+    <EditorStateStoreContext.Provider value={store}>
       {children}
-    </EditorStateSelectorsContext.Provider>
+    </EditorStateStoreContext.Provider>
   );
 }
 
@@ -56,16 +27,17 @@ interface ProviderProps {
 
 export function EditorStateSelectorsProvider({ children }: ProviderProps) {
   const editorState = useEditorState();
-  const { contexts: contextMap } = useContext(EditorStateSelectorsContext);
-  const contexts = useMemo(() => Array.from(contextMap.keys()), [contextMap]);
+  const store = useContext(EditorStateStoreContext);
 
-  return contexts.reduce(
-    (acc, Context) => (
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      <Context.Provider value={contextMap.get(Context)!(editorState)}>
-        {acc}
-      </Context.Provider>
-    ),
-    children
-  );
+  // Seems potentially unsafe, in an Async React context, but
+  // not actually any different from view.updateState(state) in useEditor?
+  store.setState(editorState);
+
+  // This means that we get a double-render whenever the selectors update,
+  // but everything is still consistent
+  useLayoutEffect(() => {
+    store.notifyListeners();
+  }, [editorState, store]);
+
+  return children;
 }
