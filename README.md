@@ -16,7 +16,7 @@ releases, and are not guaranteed to work with other versions of
 prosemirror-view. Ensure that your version of prosemirror-view matches the
 version in React ProseMirror's peer dependencies!
 
-_Note_: React ProseMirror does not require a specific verson of React, React
+_Note_: React ProseMirror does not require a specific version of React, React
 DOM, or React Reconciler. **However**, you must ensure that your React
 Reconciler version matches your React/React DOM versions.
 
@@ -85,6 +85,7 @@ import "prosemirror-view/style/prosemirror.css";
   - [`useEditorEventListener`](#useeditoreventlistener-1)
   - [`useEditorEffect`](#useeditoreffect-1)
   - [`NodeViewComponentProps`](#nodeviewcomponentprops)
+  - [`useNodePos`](#usenodepos)
   - [`useStopEvent`](#usestopevent)
   - [`useIgnoreMutation`](#useignoremutation)
   - [`useSelectNode`](#useselectnode)
@@ -115,7 +116,7 @@ differences between the rendering approaches taken by each framework. The first
 phase of a React update should be free of side effects, which requires that
 updates to the ProseMirror View happen in the second phase. This means that
 during the first phase, React components actually have access to a different
-(newer) version of the EditorState than the one in the Editorview. As a result
+(newer) version of the EditorState than the one in the EditorView. As a result
 code that dispatches transactions may dispatch transactions based on incorrect
 state. Code that invokes methods of the ProseMirror view may make bad
 assumptions about its state that cause incorrect behavior or errors.
@@ -212,7 +213,7 @@ export function ProseMirrorEditor() {
 
 The `EditorView` interface exposes several useful methods that provide access to
 the DOM or data derived from its layout, such as `coordsFromPos`. These methods
-should only be accessed outside of the render cycle, to ensure that the DOM has
+should only be accessed outside the render cycle, to ensure that the DOM has
 been updated to match the latest state. React ProseMirror provides two hooks to
 enable this access pattern: `useEditorEffect` and `useEditorEventCallback`. Both
 of these hooks can be used from any children of the ProseMirror component.
@@ -290,14 +291,14 @@ export function ProseMirrorEditor() {
 #### `useEditorEventCallback`
 
 It's also often necessary to dispatch transactions or execute side effects in
-response to user actions, like mouse clicks and keyboard events. Note: if you
-need to respond to keyboard events from _within_ the `contenteditable` element,
-you should instead use [`useEditorEventListener`](#useEditorEventListener).
+response to user actions, like mouse clicks and keyboard events.
 
-However, if you need to dispatch a transaction in response to some event
-dispatched from a React component, like a tooltip or a toolbar button, you can
-use `useEditorEventCallback` to create a stable function reference that can
-safely access the latest value of the `EditorView`.
+You can use `useEditorEventCallback` to create a stable function reference that
+can safely access the latest value of the `EditorView`.
+
+_Note_: if you need to respond to keyboard events from _within_ the
+`contenteditable` element, you should instead use
+[`useEditorEventListener`](#useEditorEventListener).
 
 ```tsx
 // BoldButton.tsx
@@ -365,40 +366,38 @@ semantics for ProseMirror's `handleDOMEvents` prop:
   want to prevent the default contenteditable behavior, you must call
   `event.preventDefault`.
 
-You can use this hook to implement custom behavior in your NodeViews:
+You can use this hook to implement custom behavior in your node views:
 
 ```tsx
-import { forwardRef, Ref } from "react";
 import {
   useEditorEventListener,
   NodeViewComponentProps,
+  useMergedDOMRefs,
 } from "@handlewithcare/react-prosemirror";
 
-const Paragraph = forwardRef<HTMLParagraphElement, NodeViewComponentProps>(
-  function Paragraph({ children, nodeProps, ...props }, ref) {
-    useEditorEventListener("keydown", (view, event) => {
-      const { pos, node } = nodeProps;
+function Paragraph({ children, nodeProps, ref, ...props }) {
+  useEditorEventListener("keydown", (view, event) => {
+    const { pos, node } = nodeProps;
 
-      if (event.code !== "ArrowDown") {
-        return false;
-      }
-      const nodeEnd = pos + node.nodeSize;
-      const { selection } = view.state;
-      if (selection.anchor < pos || selection.anchor > nodeEnd) {
-        return false;
-      }
-      event.preventDefault();
-      alert("No down keys allowed!");
-      return true;
-    });
+    if (event.code !== "ArrowDown") {
+      return false;
+    }
+    const nodeEnd = pos + node.nodeSize;
+    const { selection } = view.state;
+    if (selection.anchor < pos || selection.anchor > nodeEnd) {
+      return false;
+    }
+    event.preventDefault();
+    alert("No down keys allowed!");
+    return true;
+  });
 
-    return (
-      <p {...props} ref={ref}>
-        {children}
-      </p>
-    );
-  }
-);
+  return (
+    <p {...props} ref={useMergedDOMRefs(ref, nodeProps.contentDOMRef)}>
+      {children}
+    </p>
+  );
+}
 ```
 
 ### Building node views with React
@@ -410,46 +409,87 @@ special other than fulfill the
 [`NodeViewComponentProps`](#nodeviewcomponentprops) interface.
 
 ```tsx
-import { forwardRef, Ref } from "react";
 import {
   ProseMirror,
   ProseMirrorDoc,
   useEditorEventCallback,
   NodeViewComponentProps,
+  useMergedDOMRefs,
   reactKeys,
 } from "@handlewithcare/react-prosemirror";
 import { EditorState } from "prosemirror-state";
 import { schema } from "prosemirror-schema-basic";
 
 // Paragraph is more or less a normal React component, taking and rendering
-// its children. All node view components _must_ forward refs to their top-level
-// DOM elements. All node view components _should_ spread all of the props that they
-// receive onto their top-level DOM elements; this is required for node Decorations
-// that apply attributes rather than wrapping nodes in an additional element.
-const Paragraph = forwardRef<HTMLParagraphElement, NodeViewComponentProps>(
-  function Paragraph({ children, nodeProps, ...props }, ref) {
-    const onClick = useEditorEventCallback((view) =>
-      view.dispatch(view.state.tr.deleteSelection())
-    );
+// its children. Some guidelines:
+//
+//   - All node view components _must_ pass refs to their top-level
+//     DOM elements.
+//   - All node view components that render children _must_ pass nodeProps.contentDOMRef
+//     to the parent element of `children`. If this is also the top-level DOM
+//     element, use `useMergedDOMRefs` to apply both refs
+//   - All node view components _should_ spread all of the props that they
+//     receive onto their top-level DOM elements; this is required for node Decorations
+//     that apply attributes rather than wrapping nodes in an additional element.
+//
+// Note: we are accessing `ref` as a prop here, which has been available since React 19.
+// If you are using React <=18, you will need to use forwardRef to access `ref`.
+function Paragraph({ children, nodeProps, ref, ...props }) {
+  const onClick = useEditorEventCallback((view) =>
+    view.dispatch(view.state.tr.deleteSelection())
+  );
 
-    return (
-      <p {...props} ref={ref} onClick={onClick}>
-        {children}
-      </p>
-    );
-  }
-);
+  return (
+    <p
+      {...props}
+      ref={useMergedDOMRefs(ref, nodeProps.contentDOMRef)}
+      onClick={onClick}
+    >
+      {children}
+    </p>
+  );
+}
+
+// **IMPORTANT**: Define nodeViewComponents _outside_ of your editor
+// component. It should be a stable reference.
+//
+// If you need to define it within a React component for some reason,
+// ensure that it is properly memoized with `useMemo` or the React Compiler.
+const nodeViewComponents = {
+  paragraph: Paragraph,
+};
 
 function ProseMirrorEditor() {
   return (
     <ProseMirror
       defaultState={EditorState.create({ schema, plugins: [reactKeys()] })}
-      nodeViews={{
-        paragraph: Paragraph,
-      }}
+      nodeViewComponents={nodeViewComponents}
     >
       <ProseMirrorDoc />
     </ProseMirror>
+  );
+}
+```
+
+If your node view component is more complex, and the top level DOM element does
+not directly render `children`, use `ref` and `nodeProps.contentDOMRef`
+separately:
+
+```tsx
+function FancyParagraph({ children, nodeProps, ref, ...props }) {
+  const onClick = useEditorEventCallback((view) =>
+    view.dispatch(view.state.tr.deleteSelection())
+  );
+
+  return (
+    <div
+      {...props}
+      className={cx(props.className, "fancy-paragraph")}
+      ref={ref}
+      onClick={onClick}
+    >
+      <p ref={nodeProps.contentDOMRef}>{children}</p>
+    </div>
   );
 }
 ```
@@ -463,20 +503,16 @@ type ProseMirror = (
   props: DirectEditorProps &
     ({ defaultState: EditorState } | { state: EditorState }) & {
       children: ReactNode;
-      nodeViews?: {
-        [nodeType: string]: ForwardRefExoticComponent<
-          NodeViewComponentProps & RefAttributes<any>
-        >;
+      nodeViewComponents?: {
+        [nodeType: string]: ComponentType<NodeViewComponentProps>;
       };
-      customNodeViews?: {
+      nodeViews?: {
         [nodeType: string]: NodeViewConstructor;
       };
-      markViews?: {
-        [markType: string]: ForwardRefExoticComponent<
-          MarkViewComponentProps & RefAttributes<any>
-        >;
+      markViewComponents?: {
+        [markType: string]: ComponentType<MarkViewComponentProps>;
       };
-      customMarkViews?: {
+      markViews?: {
         [markType: string]: MarkViewConstructor;
       };
     }
@@ -516,7 +552,7 @@ Renders the actual editable ProseMirror document.
 
 This **must** be passed as a child to the `ProseMirror` component. It may be
 wrapped in any other components, and other children may be passed before or
-after
+after.
 
 Example usage:
 
@@ -535,7 +571,7 @@ export function ProseMirrorEditor() {
     >
       <ToolBar />
       <SomeWrapper>
-        <ProseMirrorDoc as={<article />} />
+        <ProseMirrorDoc as="article" />
       </SomeWrapper>
       <Footnotes />
     </ProseMirror>
@@ -639,7 +675,9 @@ interface NodeViewComponentProps extends AllHTMLAttributes<HTMLElement> = {
     innerDecorations: DecorationSource;
     node: Node;
     getPos: () => number;
+    contentDOMRef: Exclude<Ref<any>, null>;
   };
+  ref: LegacyRef<any>;
 };
 ```
 
@@ -650,10 +688,36 @@ by the default ProseMirror EditorView implementation.
 
 Node view components may also be passed _any_ other valid HTML attribute props,
 and should pass them through to their top-level DOM element.
+
+In addition to accepting these props, all node view components _must_ pass their
+ref to their top-level DOM element. All node view components that render their
+`children` _must_ pass `nodeProps.contentDOMRef` to the parent element of
+`children`.
+
 [See the above example](#building-node-views-with-react) for more details.
 
-In addition to accepting these props, all node view components _must_ forward
-their ref to their top-level DOM element.
+### `useNodePos`
+
+```ts
+type useNodePos = () => number;
+```
+
+Like prosemirror-view’s `NodeViewConstructor` API, React ProseMirror passes a
+`getPos` function to all node view components. This function will return the
+current position of the node in the document.
+
+`getPos` is guaranteed to always return the correct value for the current node,
+but it will not subscribe a node view component to updates to its position. This
+means that _it is only safe to use `getPos` in a callback or effect_. It is
+_not_ safe to use in a render function, because changes to the node's position
+will not trigger a re-render of the node view component.
+
+It’s best to avoid relying on the node’s position in the render function,
+because that will require that your node view component re-render on every
+update to the document. But if you have an infrequently used node, or small
+enough documents that you don't have to worry about this, you can use the
+`useNodePos` function to get an up-to-date node position after every document
+update.
 
 ### `useStopEvent`
 
@@ -715,10 +779,10 @@ components.
 
 A [command](https://prosemirror.net/docs/ref/#state.Command) creator that can be
 used to reorder adjacent nodes in a document. The command creator takes two
-argumnts:
+arguments:
 
-- `pos` - The `start` position of the parent of the nodes being reordered
-- `order` - The new order for the nodes, expressed as an array of indices. For
+- `pos` — The `start` position of the parent of the nodes being reordered
+- `order` — The new order for the nodes, expressed as an array of indices. For
   example, to swap the first two nodes in a set of three, `order` would be set
   to `[1, 0, 2]`. To move the first node to the end, and keep the other two in
   relative order, set `order` to `[1, 2, 0]`.
@@ -746,6 +810,7 @@ component remounts.
 ## Migrations
 
 - [Migrating from v1 to v2](migration-guides/v2.md)
+- [Migrating from v2 to v3](migration-guides/v3.md)
 
 ## Looking for someone to collaborate with?
 
