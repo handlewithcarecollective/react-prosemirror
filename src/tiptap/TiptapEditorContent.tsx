@@ -127,6 +127,7 @@ export function TiptapEditorContent({ editor: editorProp, ...props }: Props) {
       return () => {
         editor.isInitialized = false;
         editor.contentComponent = null;
+        editor.destroy();
         onEditorDeinitialize();
       };
     },
