@@ -90,7 +90,8 @@ export function tiptapNodeView({
   const TiptapNodeView = memo(
     forwardRef<HTMLElement | null, NodeViewComponentProps>(
       function TiptapNodeView({ children, nodeProps, ...props }, ref) {
-        const { node, getPos, decorations, innerDecorations } = nodeProps;
+        const { node, getPos, decorations, innerDecorations, contentDOMRef } =
+          nodeProps;
 
         const OuterTag = (as ??
           (node.type.isInline ? "span" : "div")) as ElementType;
@@ -225,13 +226,14 @@ export function tiptapNodeView({
         const nodeViewContent = useMemo(
           () => (
             <InnerTag
+              ref={contentDOMRef}
               data-node-view-content-inner={node.type.name}
               style={{ whitespace: "inherit" }}
             >
               {children}
             </InnerTag>
           ),
-          [children, node.type.name]
+          [children, contentDOMRef, node.type.name]
         );
 
         const onDragStart = useTiptapEditorEventCallback(
@@ -309,5 +311,3 @@ export function tiptapNodeView({
 
   return TiptapNodeView;
 }
-
-// const defaultOnDragStart = NodeView.
