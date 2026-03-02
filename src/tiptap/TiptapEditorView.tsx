@@ -1,5 +1,6 @@
 import { Editor } from "@tiptap/core";
 import { EditorContext } from "@tiptap/react";
+import cx from "classnames";
 import { Transaction } from "prosemirror-state";
 import React, {
   ComponentType,
@@ -18,8 +19,8 @@ import { TiptapEditorContext } from "./contexts/TiptapEditorContext.js";
 
 interface Props {
   editor: Editor;
-  nodeViews?: Record<string, ComponentType<NodeViewComponentProps>>;
-  markViews?: Record<string, ComponentType<MarkViewComponentProps>>;
+  nodeViewComponents?: Record<string, ComponentType<NodeViewComponentProps>>;
+  markViewComponents?: Record<string, ComponentType<MarkViewComponentProps>>;
   children?: ReactNode;
   static?: boolean;
 }
@@ -29,8 +30,8 @@ interface Props {
  */
 export function TiptapEditorView({
   editor,
-  nodeViews,
-  markViews,
+  nodeViewComponents,
+  markViewComponents,
   children,
   static: isStatic = false,
 }: Props) {
@@ -38,31 +39,42 @@ export function TiptapEditorView({
     editor.isInitialized
   );
 
+  const attributesProp = editor.options.editorProps?.attributes;
+
+  const [attributes, setAttributes] = useState(
+    typeof attributesProp === "function"
+      ? attributesProp(editor.state)
+      : attributesProp
+  );
+
   const forceUpdate = useForceUpdate();
   const dispatchTransaction = useCallback(
     (tr: Transaction) => {
       // @ts-expect-error calling private method
       editor.dispatchTransaction(tr);
+      if (typeof attributesProp === "function") {
+        setAttributes(attributesProp(editor.state));
+      }
       // Tiptap's dispatchTransaction doesn't trigger
       // a re-render, so we need to manually force
       // one to ensure that React stays in sync.
       forceUpdate();
     },
-    [editor, forceUpdate]
+    [attributesProp, editor, forceUpdate]
   );
 
-  const initialEditorProps = {
+  const editorProps = {
     ...editor.options.editorProps,
     attributes: {
       role: "textbox",
-      ...editor.options.editorProps?.attributes,
+      ...attributes,
+      class: cx(attributes?.class, "tiptap"),
     },
   };
 
-  const { nodeViews: customNodeViews, markViews: customMarkViews } =
-    editor.isDestroyed
-      ? { nodeViews: undefined, markViews: undefined }
-      : editor.view.props;
+  const { nodeViews, markViews } = editor.isDestroyed
+    ? { nodeViews: undefined, markViews: undefined }
+    : editor.view.props;
 
   const contextValue = useMemo(() => ({ editor }), [editor]);
 
@@ -82,12 +94,11 @@ export function TiptapEditorView({
   return (
     <ProseMirror
       static={isStatic}
-      className="tiptap"
-      {...initialEditorProps}
+      {...editorProps}
+      markViewComponents={markViewComponents}
       markViews={markViews}
-      customMarkViews={customMarkViews}
+      nodeViewComponents={nodeViewComponents}
       nodeViews={nodeViews}
-      customNodeViews={customNodeViews}
       state={editor.state}
       dispatchTransaction={dispatchTransaction}
     >
