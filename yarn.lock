@@ -1489,6 +1489,7 @@ __metadata:
     prosemirror-transform: "npm:^1.8.0"
     prosemirror-view: "npm:1.41.4"
     react: "npm:^18.2.0"
+    react-best-merge-refs: "npm:^1.0.2"
     react-dom: "npm:^18.2.0"
     react-reconciler: "npm:^0.29.0"
     remark-parse: "npm:^11.0.0"
@@ -12534,6 +12535,15 @@ __metadata:
     defu: "npm:^6.1.4"
     destr: "npm:^2.0.3"
   checksum: 10/0694d2a80579983a5e4f0452092d9f6a06b785b104b32f48f3d6bb263f637e53d9ebd1fd77a41b157b84c1c7e8e4ecc87c3824907738653a296e6d2faf3d1844
+  languageName: node
+  linkType: hard
+
+"react-best-merge-refs@npm:^1.0.2":
+  version: 1.0.2
+  resolution: "react-best-merge-refs@npm:1.0.2"
+  peerDependencies:
+    react: ^19
+  checksum: 10/27757c70abae8ba979a9fe50b50df9061b44790159b567f5fcc3b3a2280d62a71b67221ed45993796fa08e22ed41114701b88499de84399a10926fa3a0444334
   languageName: node
   linkType: hard
 
