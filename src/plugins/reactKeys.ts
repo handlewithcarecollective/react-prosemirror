@@ -1,5 +1,6 @@
 import { Node } from "prosemirror-model";
 import { Plugin, PluginKey } from "prosemirror-state";
+import { ReplaceStep } from "prosemirror-transform";
 
 export function createNodeKey() {
   const key = Math.floor(Math.random() * 0xffffffffffff).toString(16);
@@ -52,14 +53,40 @@ export function reactKeys() {
        * and assign its key to that new position, dropping it if the
        * node was deleted.
        */
-      apply(tr, value, _, newState) {
+      apply(tr, value, oldState, newState) {
         if (!tr.docChanged || composing) {
           return value;
         }
 
-        const overrides = (
+        const metaOverrides = (
           tr.getMeta(reactKeysPluginKey) as ReactKeysPluginMeta
         )?.overrides;
+
+        const overrides: Record<number, number> = { ...metaOverrides };
+
+        // setNodeMarkup just does a replace for leaf nodes. To prevent the
+        // component from being remounted in this case, add an override if the
+        // transaction has exactly one step that replaces a leaf node with
+        // another node of the same type
+        if (tr.steps.length === 1) {
+          const step = tr.steps[0];
+          if (step instanceof ReplaceStep) {
+            const { from, to, slice } = step;
+            const oldNode = oldState.doc.nodeAt(from);
+            const newNode =
+              slice.content.childCount === 1 ? slice.content.child(0) : null;
+            if (
+              oldNode &&
+              newNode &&
+              oldNode.isLeaf &&
+              newNode.isLeaf &&
+              oldNode.type === newNode.type &&
+              to === from + oldNode.nodeSize
+            ) {
+              overrides[from] = from;
+            }
+          }
+        }
 
         const next = {
           posToKey: new Map<number, string>(),
@@ -69,7 +96,7 @@ export function reactKeys() {
           ([a], [b]) => a - b
         );
         for (const [pos, key] of posToKeyEntries) {
-          const override = overrides?.[pos];
+          const override = overrides[pos];
 
           const { pos: newPos, deleted } =
             override === undefined
