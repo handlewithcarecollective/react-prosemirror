@@ -2,6 +2,8 @@ import { useEditor } from "@tiptap/react";
 import { DependencyList } from "react";
 
 import { StaticEditorView } from "../../StaticEditorView.js";
+import { ReactProseMirror } from "../extensions/ReactProseMirror.js";
+import { ReactProseMirrorCommands } from "../extensions/ReactProseMirrorCommands.js";
 
 export type UseTiptapEditorOptions = Omit<
   Parameters<typeof useEditor>[0],
@@ -12,7 +14,27 @@ export function useTiptapEditor(
   options: UseTiptapEditorOptions,
   deps?: DependencyList
 ) {
-  const editor = useEditor({ ...options, element: null }, deps);
+  const extensions = [ReactProseMirror, ...(options.extensions ?? [])];
+  // If a consumer explicitly disables core extensions (or the Commands core extension)
+  // do not re-add our custom Commands
+  if (
+    options.enableCoreExtensions === false ||
+    (typeof options.enableCoreExtensions === "object" &&
+      options?.enableCoreExtensions?.commands === false)
+  ) {
+    // Do nothing
+  } else {
+    extensions.push(ReactProseMirrorCommands);
+  }
+
+  const editor = useEditor(
+    {
+      ...options,
+      extensions,
+      element: null,
+    },
+    deps
+  );
 
   // @ts-expect-error private property
   editor.editorView ??= new StaticEditorView({
