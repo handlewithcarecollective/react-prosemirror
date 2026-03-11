@@ -1,0 +1,11 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    allow:
+      - dependency-name: "prosemirror-view"
+        dependency-type: all
+      - dependency-name: classnames
+        dependency-type: all
