@@ -1126,6 +1126,14 @@ class CustomNodeViewDesc extends NodeViewDesc {
   }
 }
 
+export class ReactMarkViewDesc extends MarkViewDesc {
+  destroy() {
+    // React has already destroyed the children (if needed).
+    this.children = [];
+    super.destroy();
+  }
+}
+
 export class ReactNodeViewDesc extends CustomNodeViewDesc {
   updateChildren(_view: EditorView, _pos: number) {
     // React has already updated the children.

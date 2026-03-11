@@ -6,7 +6,12 @@ import { MarkViewComponentProps } from "../components/marks/MarkViewComponentPro
 import { ChildDescriptorsContext } from "../contexts/ChildDescriptorsContext.js";
 import { EditorContext } from "../contexts/EditorContext.js";
 import { DOMNode } from "../dom.js";
-import { MarkViewDesc, ViewDesc, sortViewDescs } from "../viewdesc.js";
+import {
+  MarkViewDesc,
+  ReactMarkViewDesc,
+  ViewDesc,
+  sortViewDescs,
+} from "../viewdesc.js";
 
 import { useClientLayoutEffect } from "./useClientLayoutEffect.js";
 import { useEffectEvent } from "./useEffectEvent.js";
@@ -61,7 +66,7 @@ export function useMarkViewDescription(
 
     const contentDOM = findContentDOM(markView, children, ref.current);
 
-    const viewDesc = new MarkViewDesc(
+    const viewDesc = new ReactMarkViewDesc(
       parent,
       children,
       getPos,
