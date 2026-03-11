@@ -2,7 +2,9 @@ import { Node } from "prosemirror-model";
 import { Decoration, DecorationSource } from "prosemirror-view";
 import { AllHTMLAttributes, LegacyRef } from "react";
 
-export interface NodeViewComponentProps extends AllHTMLAttributes<HTMLElement> {
+export type NodeViewComponentProps<
+  Attributes = AllHTMLAttributes<HTMLElement>
+> = Attributes & {
   nodeProps: {
     decorations: readonly Decoration[];
     innerDecorations: DecorationSource;
@@ -15,4 +17,4 @@ export interface NodeViewComponentProps extends AllHTMLAttributes<HTMLElement> {
   // here, instead of a more useful type like HTMLElement | null
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ref: LegacyRef<any>;
-}
+};
