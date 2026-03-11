@@ -24,6 +24,12 @@ export function useTiptapEditor(
   ) {
     // Do nothing
   } else {
+    options.enableCoreExtensions = {
+      ...(typeof options.enableCoreExtensions === "object"
+        ? options.enableCoreExtensions
+        : {}),
+      commands: false,
+    };
     extensions.push(ReactProseMirrorCommands);
   }
 
