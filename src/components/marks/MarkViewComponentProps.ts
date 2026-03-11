@@ -1,7 +1,9 @@
 import { Mark } from "prosemirror-model";
 import { AllHTMLAttributes, LegacyRef } from "react";
 
-export interface MarkViewComponentProps extends AllHTMLAttributes<HTMLElement> {
+export type MarkViewComponentProps<
+  Attributes = AllHTMLAttributes<HTMLElement>
+> = Attributes & {
   markProps: {
     mark: Mark;
     inline: boolean;
@@ -13,4 +15,4 @@ export interface MarkViewComponentProps extends AllHTMLAttributes<HTMLElement> {
   // here, instead of a more useful type like HTMLElement | null
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ref: LegacyRef<any>;
-}
+};
