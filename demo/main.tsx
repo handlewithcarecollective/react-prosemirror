@@ -64,10 +64,9 @@ function DemoEditor() {
     <main>
       <h1>React ProseMirror Demo</h1>
       <ProseMirror
-        className="ProseMirror"
         state={state}
         dispatchTransaction={dispatchTransaction}
-        nodeViews={nodeViews}
+        nodeViewComponents={nodeViews}
         plugins={plugins}
       >
         <Menu />

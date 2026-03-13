@@ -7,9 +7,10 @@ import {
 import React, { cloneElement, memo, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 
-import { ChildDescriptorsContext } from "../../contexts/ChildDescriptorsContext.js";
+import { ChildDescriptionsContext } from "../../contexts/ChildDescriptionsContext.js";
 import { DOMNode } from "../../dom.js";
-import { useNodeViewDescriptor } from "../../hooks/useNodeViewDescriptor.js";
+import { useForceUpdate } from "../../hooks/useForceUpdate.js";
+import { useNodeViewDescription } from "../../hooks/useNodeViewDescription.js";
 import { ChildNodeViews, wrapInDeco } from "../ChildNodeViews.js";
 
 interface Props {
@@ -20,7 +21,7 @@ interface Props {
   outerDeco: readonly Decoration[];
 }
 
-export const CustomNodeView = memo(function CustomNodeView({
+export const NodeViewConstructorView = memo(function NodeViewConstructorView({
   constructor,
   node,
   getPos,
@@ -29,6 +30,7 @@ export const CustomNodeView = memo(function CustomNodeView({
 }: Props) {
   const ref = useRef<HTMLElement>(null);
   const innerRef = useRef<HTMLSpanElement & HTMLDivElement>(null);
+  const forceUpdate = useForceUpdate();
 
   const nodeProps = useMemo(
     () => ({
@@ -36,6 +38,7 @@ export const CustomNodeView = memo(function CustomNodeView({
       getPos,
       decorations: outerDeco,
       innerDecorations: innerDeco,
+      contentDOMRef: { current: null },
     }),
     [node, getPos, outerDeco, innerDeco]
   );
@@ -55,8 +58,9 @@ export const CustomNodeView = memo(function CustomNodeView({
     return nodeView;
   };
 
-  const { childContextValue, contentDOM } = useNodeViewDescriptor(
-    ref,
+  const { childContextValue, contentDOM } = useNodeViewDescription(
+    () => ref.current,
+    (source) => source?.contentDOM ?? null,
     (...args) => {
       const nodeView = createNodeView(...args);
       const contentDOM = nodeView.contentDOM;
@@ -77,6 +81,12 @@ export const CustomNodeView = memo(function CustomNodeView({
         }
       }
 
+      if (contentDOM) {
+        // Force a re-render if we have a contentDOM,
+        // so that we properly create a portal into it
+        forceUpdate();
+      }
+
       return {
         ...nodeView,
         destroy() {
@@ -92,7 +102,6 @@ export const CustomNodeView = memo(function CustomNodeView({
         ignoreMutation: nodeView.ignoreMutation?.bind(nodeView),
       };
     },
-    (source) => source?.contentDOM ?? null,
     nodeProps
   );
 
@@ -103,13 +112,13 @@ export const CustomNodeView = memo(function CustomNodeView({
   const children =
     !node.isLeaf && contentDOM
       ? createPortal(
-          <ChildDescriptorsContext.Provider value={childContextValue}>
+          <ChildDescriptionsContext.Provider value={childContextValue}>
             <ChildNodeViews
               getPos={getPos}
               node={node}
               innerDecorations={innerDeco}
             />
-          </ChildDescriptorsContext.Provider>,
+          </ChildDescriptionsContext.Provider>,
           contentDOM
         )
       : null;

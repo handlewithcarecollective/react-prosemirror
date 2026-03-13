@@ -10,9 +10,9 @@ import React, {
 
 import { NodeViewContext } from "../../contexts/NodeViewContext.js";
 
-import { CustomMarkView } from "./CustomMarkView.js";
 import { DefaultMarkView } from "./DefaultMarkView.js";
 import { MarkViewComponentProps } from "./MarkViewComponentProps.js";
+import { MarkViewConstructorView } from "./MarkViewConstructorView.js";
 import { ReactMarkView } from "./ReactMarkView.js";
 
 type Props = {
@@ -38,7 +38,7 @@ export const MarkView = memo(function MarkView(props: Props) {
   const Component = useMemo(() => {
     if (constructor) {
       return function MarkView(props: Props) {
-        return <CustomMarkView constructor={constructor} {...props} />;
+        return <MarkViewConstructorView constructor={constructor} {...props} />;
       };
     }
     return function NodeView(props: Props) {

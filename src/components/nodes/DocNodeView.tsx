@@ -1,9 +1,8 @@
 import { Node } from "prosemirror-model";
 import { Decoration, DecorationSource } from "prosemirror-view";
 import React, {
+  ElementType,
   HTMLProps,
-  ReactElement,
-  cloneElement,
   createElement,
   forwardRef,
   memo,
@@ -12,12 +11,12 @@ import React, {
   useRef,
 } from "react";
 
-import { ChildDescriptorsContext } from "../../contexts/ChildDescriptorsContext.js";
-import { useNodeViewDescriptor } from "../../hooks/useNodeViewDescriptor.js";
+import { ChildDescriptionsContext } from "../../contexts/ChildDescriptionsContext.js";
+import { useNodeViewDescription } from "../../hooks/useNodeViewDescription.js";
 import { ChildNodeViews, wrapInDeco } from "../ChildNodeViews.js";
 
 export interface DocNodeViewProps extends Omit<HTMLProps<HTMLElement>, "as"> {
-  as?: ReactElement;
+  as?: ElementType;
   node: Node;
   getPos: () => number;
   decorations: readonly Decoration[];
@@ -48,12 +47,14 @@ export const DocNodeView = memo(
         getPos,
         decorations,
         innerDecorations,
+        contentDOMRef: innerRef,
       }),
       [node, getPos, decorations, innerDecorations]
     );
 
-    const { childContextValue } = useNodeViewDescriptor(
-      innerRef,
+    const { childContextValue } = useNodeViewDescription(
+      () => innerRef.current,
+      () => innerRef.current,
       () => {
         const dom = innerRef.current as HTMLElement;
         return {
@@ -64,18 +65,17 @@ export const DocNodeView = memo(
           },
         };
       },
-      () => innerRef.current,
       nodeProps
     );
 
     const children = (
-      <ChildDescriptorsContext.Provider value={childContextValue}>
+      <ChildDescriptionsContext.Provider value={childContextValue}>
         <ChildNodeViews
           getPos={getPos}
           node={node}
           innerDecorations={innerDecorations}
         />
-      </ChildDescriptorsContext.Provider>
+      </ChildDescriptionsContext.Provider>
     );
 
     const props = {
@@ -85,7 +85,7 @@ export const DocNodeView = memo(
     } satisfies HTMLProps<HTMLElement>;
 
     const element = as
-      ? cloneElement(as, props, children)
+      ? createElement(as, props, children)
       : createElement("div", props, children);
 
     return nodeProps.decorations.reduce(wrapInDeco, element);

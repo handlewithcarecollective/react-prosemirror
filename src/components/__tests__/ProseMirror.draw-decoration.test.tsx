@@ -32,6 +32,7 @@ import React, { forwardRef, useEffect } from "react";
 
 import { widget } from "../../decorations/ReactWidgetType.js";
 import { useEditorEffect } from "../../hooks/useEditorEffect.js";
+import { useMergedDOMRefs } from "../../refs.js";
 import { tempEditor } from "../../testing/editorViewTestHelpers.js";
 import { WidgetViewComponentProps } from "../WidgetViewComponentProps.js";
 import { NodeViewComponentProps } from "../nodes/NodeViewComponentProps.js";
@@ -559,7 +560,7 @@ describe("Decoration drawing", () => {
     const { view } = tempEditor({
       doc: doc(p("foo"), hr()),
       plugins: [decoPlugin([])],
-      nodeViews: {
+      nodeViewComponents: {
         horizontal_rule: forwardRef<HTMLHRElement, NodeViewComponentProps>(
           function HR({ nodeProps, children, ...props }, ref) {
             current = nodeProps.decorations.map((d) => d.spec.name).join();
@@ -657,11 +658,14 @@ describe("Decoration drawing", () => {
   it("draws decorations inside node views", async () => {
     const { view } = tempEditor({
       doc: doc(p("foo")),
-      nodeViews: {
+      nodeViewComponents: {
         paragraph: forwardRef<HTMLParagraphElement, NodeViewComponentProps>(
           function Paragraph({ nodeProps, children, ...props }, ref) {
             return (
-              <p {...props} ref={ref}>
+              <p
+                {...props}
+                ref={useMergedDOMRefs(ref, nodeProps.contentDOMRef)}
+              >
                 {children}
               </p>
             );
@@ -842,12 +846,15 @@ describe("Decoration drawing", () => {
         decoPlugin([Decoration.inline(2, 13, { class: "foo" })]),
         decoPlugin([Decoration.inline(2, 13, { class: "bar" })]),
       ],
-      nodeViews: {
+      nodeViewComponents: {
         paragraph: forwardRef<HTMLParagraphElement, NodeViewComponentProps>(
           function Paragraph({ nodeProps, children, ...props }, ref) {
             decosFromFirstEditor = nodeProps.innerDecorations;
             return (
-              <p {...props} ref={ref}>
+              <p
+                {...props}
+                ref={useMergedDOMRefs(ref, nodeProps.contentDOMRef)}
+              >
                 {children}
               </p>
             );

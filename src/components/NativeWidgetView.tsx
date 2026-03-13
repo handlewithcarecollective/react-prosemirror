@@ -1,7 +1,7 @@
 import { Decoration, EditorView } from "prosemirror-view";
 import React, { useContext, useRef } from "react";
 
-import { ChildDescriptorsContext } from "../contexts/ChildDescriptorsContext.js";
+import { ChildDescriptionsContext } from "../contexts/ChildDescriptionsContext.js";
 import { useClientLayoutEffect } from "../hooks/useClientLayoutEffect.js";
 import { useEditorEffect } from "../hooks/useEditorEffect.js";
 import { WidgetViewDesc, sortViewDescs } from "../viewdesc.js";
@@ -12,7 +12,7 @@ type Props = {
 };
 
 export function NativeWidgetView({ widget, getPos }: Props) {
-  const { siblingsRef, parentRef } = useContext(ChildDescriptorsContext);
+  const { siblingsRef, parentRef } = useContext(ChildDescriptionsContext);
   const viewDescRef = useRef<WidgetViewDesc | null>(null);
 
   const rootDomRef = useRef<HTMLDivElement | null>(null);

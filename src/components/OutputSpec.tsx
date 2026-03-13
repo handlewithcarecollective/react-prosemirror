@@ -2,12 +2,14 @@ import { DOMOutputSpec } from "prosemirror-model";
 import React, {
   HTMLProps,
   ReactNode,
+  Ref,
   createElement,
   forwardRef,
   memo,
 } from "react";
 
 import { htmlAttrsToReactProps, mergeReactProps } from "../props.js";
+import { useMergedDOMRefs } from "../refs.js";
 
 /**
  * Whether an output spec contains a hole
@@ -45,13 +47,16 @@ type Props = HTMLProps<HTMLElement> & {
   outputSpec: DOMOutputSpec;
   isMark?: boolean;
   children?: ReactNode;
+  contentDOMRef: Ref<HTMLElement | null>;
 };
 
 const ForwardedOutputSpec = memo(
   forwardRef<HTMLElement, Props>(function OutputSpec(
-    { outputSpec, isMark, children, ...propOverrides }: Props,
+    { outputSpec, isMark, contentDOMRef, children, ...propOverrides }: Props,
     ref
   ) {
+    const mergedRef = useMergedDOMRefs(ref, contentDOMRef);
+
     if (typeof outputSpec === "string") {
       return <>{outputSpec}</>;
     }
@@ -90,10 +95,19 @@ const ForwardedOutputSpec = memo(
             "Content hole must be the only child of its parent node"
           );
         }
-        return createElement(tagName, props, children);
+        return createElement(
+          tagName,
+          {
+            ...props,
+            ref: ref ? mergedRef : contentDOMRef,
+          },
+          children
+        );
       }
       content.push(
-        <ForwardedOutputSpec outputSpec={child}>{children}</ForwardedOutputSpec>
+        <ForwardedOutputSpec outputSpec={child} contentDOMRef={contentDOMRef}>
+          {children}
+        </ForwardedOutputSpec>
       );
     }
 
@@ -102,6 +116,7 @@ const ForwardedOutputSpec = memo(
     // marked content is placed. Otherwise, it is appended to the top node.
     if (isMark && !hasHole(outputSpec)) {
       content.push(children);
+      props.ref = mergedRef;
     }
     return createElement(tagName, props, ...content);
   })
