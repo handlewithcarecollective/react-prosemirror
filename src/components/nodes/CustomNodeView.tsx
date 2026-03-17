@@ -78,7 +78,6 @@ export const CustomNodeView = memo(function CustomNodeView({
       }
 
       return {
-        ...nodeView,
         destroy() {
           if (nodeView.destroy) {
             nodeView.destroy();
@@ -86,6 +85,10 @@ export const CustomNodeView = memo(function CustomNodeView({
 
           wrapperDOM.removeChild(nodeDOM);
         },
+        dom: nodeView.dom,
+        contentDOM: nodeView.contentDOM,
+        multiType: nodeView.multiType,
+        update: nodeView.update?.bind(nodeView),
         selectNode: nodeView.selectNode?.bind(nodeView),
         deselectNode: nodeView.deselectNode?.bind(nodeView),
         stopEvent: nodeView.stopEvent?.bind(nodeView),
