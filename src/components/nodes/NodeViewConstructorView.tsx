@@ -88,7 +88,6 @@ export const NodeViewConstructorView = memo(function NodeViewConstructorView({
       }
 
       return {
-        ...nodeView,
         destroy() {
           if (nodeView.destroy) {
             nodeView.destroy();
@@ -96,6 +95,10 @@ export const NodeViewConstructorView = memo(function NodeViewConstructorView({
 
           wrapperDOM.removeChild(nodeDOM);
         },
+        dom: nodeView.dom,
+        contentDOM: nodeView.contentDOM,
+        multiType: nodeView.multiType,
+        update: nodeView.update?.bind(nodeView),
         selectNode: nodeView.selectNode?.bind(nodeView),
         deselectNode: nodeView.deselectNode?.bind(nodeView),
         stopEvent: nodeView.stopEvent?.bind(nodeView),
