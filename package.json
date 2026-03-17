@@ -1,6 +1,6 @@
 {
   "name": "@handlewithcare/react-prosemirror",
-  "version": "3.1.0-tiptap.33",
+  "version": "3.1.0-tiptap.34",
   "license": "Apache-2.0",
   "type": "module",
   "main": "dist/cjs/index.js",
