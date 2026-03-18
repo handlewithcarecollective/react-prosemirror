@@ -1487,7 +1487,7 @@ __metadata:
     prosemirror-tables: "npm:^1.3.7"
     prosemirror-test-builder: "npm:^1.1.1"
     prosemirror-transform: "npm:^1.8.0"
-    prosemirror-view: "npm:1.41.4"
+    prosemirror-view: "npm:1.41.7"
     react: "npm:^18.2.0"
     react-dom: "npm:^18.2.0"
     react-reconciler: "npm:^0.29.0"
@@ -1502,7 +1502,7 @@ __metadata:
   peerDependencies:
     prosemirror-model: ^1.0.0
     prosemirror-state: ^1.0.0
-    prosemirror-view: 1.41.4
+    prosemirror-view: 1.41.7
     react: ">=17 <20"
     react-dom: ">=17 <20"
     react-reconciler: ">=0.26.1 <=0.33.0"
@@ -12400,7 +12400,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"prosemirror-view@npm:1.41.4, prosemirror-view@npm:^1.0.0, prosemirror-view@npm:^1.13.3, prosemirror-view@npm:^1.27.0, prosemirror-view@npm:^1.31.0":
+"prosemirror-view@npm:1.41.7":
+  version: 1.41.7
+  resolution: "prosemirror-view@npm:1.41.7"
+  dependencies:
+    prosemirror-model: "npm:^1.20.0"
+    prosemirror-state: "npm:^1.0.0"
+    prosemirror-transform: "npm:^1.1.0"
+  checksum: 10/457cb83cdd677b9ccc8e579e53c9f2fc10316b6627952bffc415c843ccd20069efab15da0ee651541191930ce7e31e790c08f6ddbacfda47dc280aa47dca42db
+  languageName: node
+  linkType: hard
+
+"prosemirror-view@npm:^1.0.0, prosemirror-view@npm:^1.13.3, prosemirror-view@npm:^1.27.0, prosemirror-view@npm:^1.31.0":
   version: 1.41.4
   resolution: "prosemirror-view@npm:1.41.4"
   dependencies:
