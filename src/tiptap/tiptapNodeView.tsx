@@ -18,6 +18,7 @@ import React, {
   forwardRef,
   memo,
   useMemo,
+  useRef,
 } from "react";
 
 import { NodeViewComponentProps } from "../components/nodes/NodeViewComponentProps.js";
@@ -101,6 +102,8 @@ export function tiptapNodeView({
 
         const selected = useIsNodeSelected();
 
+        const isDraggingRef = useRef(false);
+
         const htmlAttributes = useMemo(() => {
           if (!extensions) return {};
 
@@ -138,7 +141,10 @@ export function tiptapNodeView({
             this.contentDOM
           );
 
-          return nodeView.stopEvent(event) ?? false;
+          nodeView.isDragging = isDraggingRef.current;
+          const result = nodeView.stopEvent(event) ?? false;
+          isDraggingRef.current = nodeView.isDragging;
+          return result;
         });
 
         useIgnoreMutation(function (this: ViewDesc, _, mutation) {
