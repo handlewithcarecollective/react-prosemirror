@@ -27,6 +27,7 @@ import { useIgnoreMutation } from "../hooks/useIgnoreMutation.js";
 import { useIsNodeSelected } from "../hooks/useIsNodeSelected.js";
 import { useStopEvent } from "../hooks/useStopEvent.js";
 import { htmlAttrsToReactProps } from "../props.js";
+import { useMergedDOMRefs } from "../refs.js";
 import { ViewDesc } from "../viewdesc.js";
 
 import { ReactProseMirrorNodeView } from "./ReactProseMirrorNodeView.js";
@@ -242,13 +243,13 @@ export function tiptapNodeView({
           [children, contentDOMRef, node.type.name]
         );
 
+        const innerRef = useRef<HTMLElement | null>(null);
+
+        const finalRef = useMergedDOMRefs(ref, innerRef);
+
         const onDragStart = useTiptapEditorEventCallback(
           (editor, event: DragEvent) => {
-            // TODO: We should probably just merge this with our own
-            // ref, I'm being lazy since we are providing this
-            // ref in the first place (in ReactNodeView), so we know
-            // it's an object
-            const dom = typeof ref === "object" ? ref?.current : null;
+            const dom = innerRef.current;
             if (!dom) return;
             const viewDesc = dom.pmViewDesc;
             if (!viewDesc) return;
@@ -286,7 +287,7 @@ export function tiptapNodeView({
         return (
           <ReactNodeViewContext.Provider value={nodeViewContext}>
             <OuterTag
-              ref={ref}
+              ref={finalRef}
               {...props}
               {...htmlProps}
               className={finalClassName}
