@@ -1,7 +1,6 @@
-import { MarkViewConstructor, NodeViewConstructor } from "prosemirror-view";
 import React, { ComponentType, ReactNode, useMemo, useState } from "react";
 
-import { ChildDescriptorsContext } from "../contexts/ChildDescriptorsContext.js";
+import { ChildDescriptionsContext } from "../contexts/ChildDescriptionsContext.js";
 import { EditorContext } from "../contexts/EditorContext.js";
 import { EditorStateContext } from "../contexts/EditorStateContext.js";
 import {
@@ -21,81 +20,66 @@ function getPos() {
   return -1;
 }
 
-const rootChildDescriptorsContextValue = {
+const rootChildDescriptionsContextValue = {
   parentRef: { current: undefined },
   siblingsRef: {
     current: [],
   },
 };
 
-export type Props = Omit<UseEditorOptions, "nodeViews" | "markViews"> & {
-  className?: string;
+export type Props = UseEditorOptions & {
   children?: ReactNode;
-  nodeViews?: {
+  nodeViewComponents?: {
     [nodeType: string]: ComponentType<NodeViewComponentProps>;
   };
-  customNodeViews?: {
-    [nodeType: string]: NodeViewConstructor;
-  };
-  markViews?: {
+  markViewComponents?: {
     [markType: string]: ComponentType<MarkViewComponentProps>;
-  };
-  customMarkViews?: {
-    [markType: string]: MarkViewConstructor;
   };
 };
 
 function ProseMirrorInner({
-  className,
   children,
-  nodeViews,
-  customNodeViews,
-  markViews,
-  customMarkViews,
+  nodeViewComponents,
+  markViewComponents,
   ...props
 }: Props) {
   const [mount, setMount] = useState<HTMLElement | null>(null);
 
-  const { editor, state } = useEditor(mount, {
-    ...props,
-    nodeViews: customNodeViews,
-    markViews: customMarkViews,
-  });
+  const { editor, state } = useEditor(mount, props);
 
   const nodeViewConstructors = editor.view.nodeViews;
   const nodeViewContextValue = useMemo<NodeViewContextValue>(() => {
     return {
-      components: { ...nodeViews, ...markViews },
+      components: { ...nodeViewComponents, ...markViewComponents },
       constructors: nodeViewConstructors,
     };
-  }, [markViews, nodeViewConstructors, nodeViews]);
+  }, [markViewComponents, nodeViewComponents, nodeViewConstructors]);
 
   const node = state.doc;
   const decorations = computeDocDeco(editor.view);
   const innerDecorations = viewDecorations(editor.view, editor.cursorWrapper);
   const docNodeViewContextValue = useMemo(
     () => ({
-      className,
       setMount,
       node,
       getPos,
       decorations,
       innerDecorations,
     }),
-    [className, node, decorations, innerDecorations]
+    [node, decorations, innerDecorations]
   );
 
   return (
     <EditorContext.Provider value={editor}>
       <EditorStateContext.Provider value={state}>
         <NodeViewContext.Provider value={nodeViewContextValue}>
-          <ChildDescriptorsContext.Provider
-            value={rootChildDescriptorsContextValue}
+          <ChildDescriptionsContext.Provider
+            value={rootChildDescriptionsContextValue}
           >
             <DocNodeViewContext.Provider value={docNodeViewContextValue}>
               {children}
             </DocNodeViewContext.Provider>
-          </ChildDescriptorsContext.Provider>
+          </ChildDescriptionsContext.Provider>
         </NodeViewContext.Provider>
       </EditorStateContext.Provider>
     </EditorContext.Provider>

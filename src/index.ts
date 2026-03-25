@@ -8,6 +8,7 @@ export { useEditorEffect } from "./hooks/useEditorEffect.js";
 export { useEditorEventCallback } from "./hooks/useEditorEventCallback.js";
 export { useEditorEventListener } from "./hooks/useEditorEventListener.js";
 export { useEditorState } from "./hooks/useEditorState.js";
+export { useNodePos } from "./hooks/useNodePos.js";
 export { useStopEvent } from "./hooks/useStopEvent.js";
 export { useSelectNode } from "./hooks/useSelectNode.js";
 export { useIgnoreMutation } from "./hooks/useIgnoreMutation.js";
@@ -15,6 +16,7 @@ export { useIsEditorStatic } from "./hooks/useIsEditorStatic.js";
 export { useIsNodeSelected } from "./hooks/useIsNodeSelected.js";
 export { reactKeys } from "./plugins/reactKeys.js";
 export { widget } from "./decorations/ReactWidgetType.js";
+export { useMergedDOMRefs } from "./refs.js";
 
 export type { NodeViewComponentProps } from "./components/nodes/NodeViewComponentProps.js";
 export type { MarkViewComponentProps } from "./components/marks/MarkViewComponentProps.js";

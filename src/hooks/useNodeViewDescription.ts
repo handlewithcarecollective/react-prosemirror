@@ -1,9 +1,9 @@
 import { NodeViewConstructor } from "prosemirror-view";
-import { useContext, useMemo, useRef, useState } from "react";
+import { useCallback, useContext, useMemo, useRef } from "react";
 
 import { ReactEditorView } from "../ReactEditorView.js";
 import { NodeViewComponentProps } from "../components/nodes/NodeViewComponentProps.js";
-import { ChildDescriptorsContext } from "../contexts/ChildDescriptorsContext.js";
+import { ChildDescriptionsContext } from "../contexts/ChildDescriptionsContext.js";
 import { EditorContext } from "../contexts/EditorContext.js";
 import { DOMNode } from "../dom.js";
 import {
@@ -17,23 +17,19 @@ import {
 import { useClientLayoutEffect } from "./useClientLayoutEffect.js";
 import { useEffectEvent } from "./useEffectEvent.js";
 
-type Props = NodeViewComponentProps["nodeProps"];
+type Props = Omit<NodeViewComponentProps["nodeProps"], "contentDOMRef">;
 
-export function useNodeViewDescriptor(
-  ref: { readonly current: DOMNode | null },
-  constructor: NodeViewConstructor,
-  findContentDOM: (
-    source: { contentDOM?: HTMLElement | null } | null,
-    children: ViewDesc[]
+export function useNodeViewDescription(
+  getDOM: () => DOMNode | null,
+  getContentDOM: (
+    nodeView: { contentDOM?: HTMLElement | null } | null
   ) => HTMLElement | null,
+  constructor: NodeViewConstructor,
   props: Props
 ) {
   const { view } = useContext(EditorContext);
-  const { parentRef, siblingsRef } = useContext(ChildDescriptorsContext);
-
-  const [dom, setDOM] = useState<DOMNode | null>(null);
-  const [nodeDOM, setNodeDOM] = useState<DOMNode | null>(null);
-  const [contentDOM, setContentDOM] = useState<HTMLElement | null>(null);
+  const { parentRef, siblingsRef } = useContext(ChildDescriptionsContext);
+  const contentDOMRef = useRef<HTMLElement | null>(null);
 
   const viewDescRef = useRef<NodeViewDesc | undefined>();
   const childrenRef = useRef<ViewDesc[]>([]);
@@ -43,7 +39,7 @@ export function useNodeViewDescriptor(
       return;
     }
 
-    const dom = ref.current;
+    const dom = getDOM();
     if (!dom) {
       return;
     }
@@ -63,7 +59,7 @@ export function useNodeViewDescriptor(
     const parent = parentRef.current;
     const children = childrenRef.current;
 
-    const contentDOM = findContentDOM(nodeView, children);
+    const contentDOM = getContentDOM(nodeView);
     const nodeDOM = nodeView.dom;
 
     const viewDesc = new ReactNodeViewDesc(
@@ -79,9 +75,14 @@ export function useNodeViewDescriptor(
       nodeView
     );
 
-    setDOM(dom);
-    setContentDOM(contentDOM);
-    setNodeDOM(nodeDOM);
+    const siblings = siblingsRef.current;
+
+    if (!siblings.includes(viewDesc)) {
+      siblings.push(viewDesc);
+    }
+    siblings.sort(sortViewDescs);
+
+    contentDOMRef.current = getContentDOM(nodeView);
 
     return viewDesc;
   });
@@ -96,12 +97,12 @@ export function useNodeViewDescriptor(
       return false;
     }
 
-    const dom = ref.current;
+    const dom = getDOM();
     if (!dom || dom !== viewDesc.dom) {
       return false;
     }
 
-    const contentDOM = findContentDOM(viewDesc, viewDesc.children);
+    const contentDOM = getContentDOM(viewDesc);
     if (contentDOM !== viewDesc.contentDOM) {
       return false;
     }
@@ -132,9 +133,7 @@ export function useNodeViewDescriptor(
       siblings.splice(index, 1);
     }
 
-    setDOM(null);
-    setContentDOM(null);
-    setNodeDOM(null);
+    contentDOMRef.current = null;
   });
 
   useClientLayoutEffect(() => {
@@ -143,6 +142,14 @@ export function useNodeViewDescriptor(
       destroy();
     };
   }, [create, destroy]);
+
+  const refUpdated = useCallback(() => {
+    if (!viewDescRef.current) return;
+    if (!update()) {
+      destroy();
+      viewDescRef.current = create();
+    }
+  }, [create, destroy, update]);
 
   useClientLayoutEffect(() => {
     if (!update()) {
@@ -214,9 +221,7 @@ export function useNodeViewDescriptor(
 
   return {
     childContextValue,
-    dom,
-    contentDOM,
-    nodeDOM,
-    ref,
+    contentDOM: contentDOMRef.current,
+    refUpdated,
   };
 }

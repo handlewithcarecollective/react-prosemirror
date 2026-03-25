@@ -1,9 +1,9 @@
 import { MarkViewConstructor } from "prosemirror-view";
-import { useContext, useMemo, useRef, useState } from "react";
+import { useCallback, useContext, useMemo, useRef } from "react";
 
 import { ReactEditorView } from "../ReactEditorView.js";
 import { MarkViewComponentProps } from "../components/marks/MarkViewComponentProps.js";
-import { ChildDescriptorsContext } from "../contexts/ChildDescriptorsContext.js";
+import { ChildDescriptionsContext } from "../contexts/ChildDescriptionsContext.js";
 import { EditorContext } from "../contexts/EditorContext.js";
 import { DOMNode } from "../dom.js";
 import {
@@ -16,30 +16,20 @@ import {
 import { useClientLayoutEffect } from "./useClientLayoutEffect.js";
 import { useEffectEvent } from "./useEffectEvent.js";
 
-function findContentDOM(
-  source: { contentDOM?: HTMLElement | null } | null,
-  children: ViewDesc[],
-  dom: DOMNode
-) {
-  return (
-    source?.contentDOM ??
-    children[0]?.dom?.parentElement ??
-    (dom as HTMLElement)
-  );
-}
-
-type Props = MarkViewComponentProps["markProps"];
+type Props = Omit<MarkViewComponentProps["markProps"], "contentDOMRef">;
 
 export function useMarkViewDescription(
-  ref: { readonly current: DOMNode | null },
+  getDOM: () => DOMNode | null,
+  getContentDOM: (
+    markView: { contentDOM?: HTMLElement | null } | null
+  ) => HTMLElement | null,
   constructor: MarkViewConstructor,
   props: Props
 ) {
   const { view } = useContext(EditorContext);
-  const { parentRef, siblingsRef } = useContext(ChildDescriptorsContext);
+  const { parentRef, siblingsRef } = useContext(ChildDescriptionsContext);
 
-  const [dom, setDOM] = useState<DOMNode | null>(null);
-  const [contentDOM, setContentDOM] = useState<HTMLElement | null>(null);
+  const contentDOMRef = useRef<HTMLElement | null>(null);
 
   const viewDescRef = useRef<MarkViewDesc | undefined>();
   const childrenRef = useRef<ViewDesc[]>([]);
@@ -49,7 +39,7 @@ export function useMarkViewDescription(
       return;
     }
 
-    const dom = ref.current;
+    const dom = getDOM();
     if (!dom) {
       return;
     }
@@ -64,7 +54,7 @@ export function useMarkViewDescription(
     const parent = parentRef.current;
     const children = childrenRef.current;
 
-    const contentDOM = findContentDOM(markView, children, ref.current);
+    const contentDOM = getContentDOM(markView);
 
     const viewDesc = new ReactMarkViewDesc(
       parent,
@@ -72,12 +62,11 @@ export function useMarkViewDescription(
       getPos,
       mark,
       dom,
-      contentDOM,
+      contentDOM ?? (markView.dom as HTMLElement),
       markView
     );
 
-    setDOM(dom);
-    setContentDOM(contentDOM);
+    contentDOMRef.current = contentDOM;
 
     return viewDesc;
   });
@@ -92,13 +81,13 @@ export function useMarkViewDescription(
       return false;
     }
 
-    const dom = ref.current;
+    const dom = getDOM();
     if (!dom || dom !== viewDesc.dom) {
       return false;
     }
 
-    const contentDOM = findContentDOM(viewDesc, viewDesc.children, dom);
-    if (contentDOM !== viewDesc.contentDOM) {
+    const contentDOM = getContentDOM(viewDesc);
+    if (contentDOM !== (viewDesc.contentDOM ?? dom)) {
       return false;
     }
 
@@ -121,8 +110,7 @@ export function useMarkViewDescription(
       siblings.splice(index, 1);
     }
 
-    setDOM(null);
-    setContentDOM(null);
+    contentDOMRef.current = null;
   });
 
   useClientLayoutEffect(() => {
@@ -131,6 +119,13 @@ export function useMarkViewDescription(
       destroy();
     };
   }, [create, destroy]);
+
+  const refUpdated = useCallback(() => {
+    if (!update()) {
+      destroy();
+      viewDescRef.current = create();
+    }
+  }, [create, destroy, update]);
 
   useClientLayoutEffect(() => {
     if (!update()) {
@@ -169,8 +164,9 @@ export function useMarkViewDescription(
 
   return {
     childContextValue,
-    dom,
-    contentDOM,
-    ref,
+    contentDOM:
+      contentDOMRef.current ??
+      (viewDescRef.current?.dom as HTMLElement | undefined),
+    refUpdated,
   };
 }

@@ -3,8 +3,9 @@ import { MarkViewConstructor } from "prosemirror-view";
 import React, { ReactNode, memo, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 
-import { ChildDescriptorsContext } from "../../contexts/ChildDescriptorsContext.js";
+import { ChildDescriptionsContext } from "../../contexts/ChildDescriptionsContext.js";
 import { DOMNode } from "../../dom.js";
+import { useForceUpdate } from "../../hooks/useForceUpdate.js";
 import { useMarkViewDescription } from "../../hooks/useMarkViewDescription.js";
 
 interface Props {
@@ -15,7 +16,7 @@ interface Props {
   children: ReactNode;
 }
 
-export const CustomMarkView = memo(function CustomMarkView({
+export const MarkViewConstructorView = memo(function MarkViewConstructorView({
   constructor,
   mark,
   inline,
@@ -24,12 +25,14 @@ export const CustomMarkView = memo(function CustomMarkView({
 }: Props) {
   const ref = useRef<HTMLElement | null>(null);
   const innerRef = useRef<(HTMLSpanElement & HTMLDivElement) | null>(null);
+  const forceUpdate = useForceUpdate();
 
   const markProps = useMemo(
     () => ({
       mark,
       inline,
       getPos,
+      contentDOMRef: { current: null },
     }),
     [mark, inline, getPos]
   );
@@ -49,11 +52,17 @@ export const CustomMarkView = memo(function CustomMarkView({
   };
 
   const { childContextValue, contentDOM } = useMarkViewDescription(
-    ref,
+    () => ref.current,
+    (markView) => markView?.contentDOM ?? null,
     (...args) => {
       const markView = createMarkView(...args);
       const dom = markView.dom;
       const wrapperDOM = (innerRef.current ?? ref.current) as DOMNode;
+      wrapperDOM.appendChild(dom);
+
+      // Force a re-render so that we properly create
+      // a portal into the contentDOM/dom
+      forceUpdate();
 
       return {
         ...markView,
@@ -76,9 +85,9 @@ export const CustomMarkView = memo(function CustomMarkView({
     <Component {...props}>
       {contentDOM
         ? createPortal(
-            <ChildDescriptorsContext.Provider value={childContextValue}>
+            <ChildDescriptionsContext.Provider value={childContextValue}>
               {children}
-            </ChildDescriptorsContext.Provider>,
+            </ChildDescriptionsContext.Provider>,
             contentDOM
           )
         : null}
