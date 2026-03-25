@@ -5,5 +5,7 @@ import { reactKeysPluginKey } from "../plugins/reactKeys.js";
 
 export function useReactKeys() {
   const { view } = useContext(EditorContext);
-  return reactKeysPluginKey.getState(view.state);
+  const reactKeys = reactKeysPluginKey.getState(view.state);
+  if (!reactKeys) throw new Error("EditorState is missing reactKeys plugin");
+  return reactKeys;
 }

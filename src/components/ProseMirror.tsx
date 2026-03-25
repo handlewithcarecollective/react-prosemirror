@@ -16,10 +16,6 @@ import { DocNodeViewContext } from "./ProseMirrorDoc.js";
 import { MarkViewComponentProps } from "./marks/MarkViewComponentProps.js";
 import { NodeViewComponentProps } from "./nodes/NodeViewComponentProps.js";
 
-function getPos() {
-  return -1;
-}
-
 const rootChildDescriptionsContextValue = {
   parentRef: { current: undefined },
   siblingsRef: {
@@ -62,7 +58,6 @@ function ProseMirrorInner({
     () => ({
       setMount,
       node,
-      getPos,
       decorations,
       innerDecorations,
     }),

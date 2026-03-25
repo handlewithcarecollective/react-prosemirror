@@ -4,6 +4,8 @@ import { Component, MutableRefObject } from "react";
 
 import { AbstractEditorView } from "../AbstractEditorView.js";
 import { findDOMNode } from "../findDOMNode.js";
+import { KeyInfo } from "../keys.js";
+import { ReactKeys } from "../plugins/reactKeys.js";
 import {
   CompositionViewDesc,
   TextViewDesc,
@@ -51,9 +53,10 @@ function shallowEqual(
 type Props = {
   view: AbstractEditorView;
   node: Node;
-  getPos: () => number;
+  keyInfo: KeyInfo;
   siblingsRef: MutableRefObject<ViewDesc[]>;
   parentRef: MutableRefObject<ViewDesc | undefined>;
+  reactKeys: ReactKeys;
   decorations: readonly Decoration[];
 };
 
@@ -61,9 +64,23 @@ export class TextNodeView extends Component<Props> {
   private viewDescRef: null | TextViewDesc | CompositionViewDesc = null;
   private renderRef: null | JSX.Element = null;
 
+  getPos = () => {
+    const { keyInfo, reactKeys } = this.props;
+
+    if (keyInfo.key) {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      return reactKeys.keyToPos.get(keyInfo.key)!;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const parentPos = reactKeys.keyToPos.get(keyInfo.parentKey!)!;
+
+    return parentPos + keyInfo.offset;
+  };
+
   updateEffect() {
-    const { view, decorations, siblingsRef, parentRef, getPos, node } =
-      this.props;
+    const { view, decorations, siblingsRef, parentRef, node } = this.props;
+
     // There simply is no other way to ref a text node
     // eslint-disable-next-line react/no-find-dom-node
     const dom = findDOMNode(this);
@@ -76,7 +93,7 @@ export class TextNodeView extends Component<Props> {
 
       this.viewDescRef = new CompositionViewDesc(
         parentRef.current,
-        getPos,
+        this.getPos,
         // These are just placeholders/dummies. We can't
         // actually find the correct DOM nodes from here,
         // so we let our parent do it.
@@ -99,7 +116,7 @@ export class TextNodeView extends Component<Props> {
       this.viewDescRef = new TextViewDesc(
         undefined,
         [],
-        getPos,
+        this.getPos,
         node,
         decorations,
         DecorationSet.empty,
@@ -146,7 +163,7 @@ export class TextNodeView extends Component<Props> {
   }
 
   render() {
-    const { view, getPos, node, decorations } = this.props;
+    const { view, node, decorations } = this.props;
 
     // During a composition, it's crucial that we don't try to
     // update the DOM that the user is working in. If there's
@@ -155,8 +172,8 @@ export class TextNodeView extends Component<Props> {
     // interrupt the composition
     if (
       view.composing &&
-      view.state.selection.from >= getPos() &&
-      view.state.selection.from <= getPos() + node.nodeSize
+      view.state.selection.from >= this.getPos() &&
+      view.state.selection.from <= this.getPos() + node.nodeSize
     ) {
       return this.renderRef;
     }

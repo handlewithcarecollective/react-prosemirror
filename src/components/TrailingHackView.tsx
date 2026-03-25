@@ -1,18 +1,24 @@
-import React, { useContext, useRef } from "react";
+import React, { useCallback, useContext, useRef } from "react";
 
 import { ChildDescriptionsContext } from "../contexts/ChildDescriptionsContext.js";
 import { useClientLayoutEffect } from "../hooks/useClientLayoutEffect.js";
+import { useGetPos } from "../hooks/useGetPos.js";
+import { KeyInfo } from "../keys.js";
 import { TrailingHackViewDesc, sortViewDescs } from "../viewdesc.js";
 
 type Props = {
-  getPos: () => number;
+  keyInfo: KeyInfo;
 };
 
-export function TrailingHackView({ getPos }: Props) {
+export function TrailingHackView({ keyInfo }: Props) {
   const { siblingsRef, parentRef } = useContext(ChildDescriptionsContext);
   const viewDescRef = useRef<TrailingHackViewDesc | null>(null);
 
   const ref = useRef<(HTMLBRElement & HTMLImageElement) | null>(null);
+  const getParentPos = useGetPos(keyInfo.parentKey);
+  const getPos = useCallback(() => {
+    return getParentPos() + keyInfo.offset;
+  }, [getParentPos, keyInfo.offset]);
 
   useClientLayoutEffect(() => {
     const siblings = siblingsRef.current;

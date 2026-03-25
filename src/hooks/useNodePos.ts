@@ -1,8 +1,9 @@
 import { useContext } from "react";
 
-import { GetPosContext } from "../components/nodes/NodeView.js";
+import { ReactKeyContext } from "../components/nodes/NodeView.js";
 
 import { useEditorState } from "./useEditorState.js";
+import { useGetPos } from "./useGetPos.js";
 
 /**
  * Get this node's current position in the document.
@@ -14,6 +15,7 @@ import { useEditorState } from "./useEditorState.js";
  */
 export function useNodePos() {
   useEditorState();
-  const getPos = useContext(GetPosContext);
+  const reactKey = useContext(ReactKeyContext);
+  const getPos = useGetPos(reactKey);
   return getPos();
 }

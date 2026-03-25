@@ -26,14 +26,16 @@ import {
 } from "../../contexts/StopEventContext.js";
 import { DOMNode } from "../../dom.js";
 import { useForceUpdate } from "../../hooks/useForceUpdate.js";
+import { useGetPos } from "../../hooks/useGetPos.js";
 import { useNodeViewDescription } from "../../hooks/useNodeViewDescription.js";
+import { KeyInfo } from "../../keys.js";
 import { ChildNodeViews, wrapInDeco } from "../ChildNodeViews.js";
 import { NodeViewComponentProps } from "../nodes/NodeViewComponentProps.js";
 
 type Props = {
   component: ComponentType<NodeViewComponentProps>;
   outerDeco: readonly Decoration[];
-  getPos: () => number;
+  keyInfo: KeyInfo;
   node: Node;
   innerDeco: DecorationSource;
 };
@@ -41,7 +43,7 @@ type Props = {
 export const ReactNodeView = memo(function ReactNodeView({
   component: Component,
   outerDeco,
-  getPos,
+  keyInfo,
   node,
   innerDeco,
 }: Props) {
@@ -88,6 +90,9 @@ export const ReactNodeView = memo(function ReactNodeView({
       };
     };
   }, []);
+
+  console.log(keyInfo);
+  const getPos = useGetPos(keyInfo.key);
 
   const nodeViewDescProps = useMemo(
     () => ({
@@ -216,7 +221,11 @@ export const ReactNodeView = memo(function ReactNodeView({
   } satisfies NodeViewComponentProps;
 
   const children = !node.isLeaf ? (
-    <ChildNodeViews getPos={getPos} node={node} innerDecorations={innerDeco} />
+    <ChildNodeViews
+      keyInfo={keyInfo}
+      node={node}
+      innerDecorations={innerDeco}
+    />
   ) : null;
 
   const element = cloneElement(

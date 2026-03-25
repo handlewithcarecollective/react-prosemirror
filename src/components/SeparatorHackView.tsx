@@ -1,19 +1,26 @@
-import React, { useContext, useRef, useState } from "react";
+import React, { useCallback, useContext, useRef, useState } from "react";
 
 import { browser } from "../browser.js";
 import { ChildDescriptionsContext } from "../contexts/ChildDescriptionsContext.js";
 import { useClientLayoutEffect } from "../hooks/useClientLayoutEffect.js";
+import { useGetPos } from "../hooks/useGetPos.js";
+import { KeyInfo } from "../keys.js";
 import { TrailingHackViewDesc, sortViewDescs } from "../viewdesc.js";
 
 type Props = {
-  getPos: () => number;
+  keyInfo: KeyInfo;
 };
 
-export function SeparatorHackView({ getPos }: Props) {
+export function SeparatorHackView({ keyInfo }: Props) {
   const { siblingsRef, parentRef } = useContext(ChildDescriptionsContext);
   const viewDescRef = useRef<TrailingHackViewDesc | null>(null);
   const ref = useRef<HTMLImageElement | null>(null);
   const [shouldRender, setShouldRender] = useState(false);
+
+  const getParentPos = useGetPos(keyInfo.parentKey);
+  const getPos = useCallback(() => {
+    return getParentPos() + keyInfo.offset;
+  }, [getParentPos, keyInfo.offset]);
 
   useClientLayoutEffect(() => {
     const siblings = siblingsRef.current;

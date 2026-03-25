@@ -14,14 +14,16 @@ import {
   IgnoreMutationContext,
 } from "../../contexts/IgnoreMutationContext.js";
 import { DOMNode } from "../../dom.js";
+import { useGetPos } from "../../hooks/useGetPos.js";
 import { useMarkViewDescription } from "../../hooks/useMarkViewDescription.js";
+import { KeyInfo } from "../../keys.js";
 
 import { MarkViewComponentProps } from "./MarkViewComponentProps.js";
 
 interface Props {
   component: ComponentType<MarkViewComponentProps>;
   mark: Mark;
-  getPos: () => number;
+  keyInfo: KeyInfo;
   inline: boolean;
   children: ReactNode;
 }
@@ -30,7 +32,7 @@ export const ReactMarkView = memo(function ReactMarkView({
   component: Component,
   mark,
   inline,
-  getPos,
+  keyInfo,
   children,
 }: Props) {
   const ref = useRef<HTMLElement | null>(null);
@@ -47,6 +49,11 @@ export const ReactMarkView = memo(function ReactMarkView({
       };
     };
   }, []);
+
+  const getParentPos = useGetPos(keyInfo.parentKey);
+  const getPos = useCallback(() => {
+    return getParentPos() + keyInfo.offset;
+  }, [getParentPos, keyInfo.offset]);
 
   const markViewDescProps = useMemo(
     () => ({

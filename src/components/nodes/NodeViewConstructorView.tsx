@@ -10,13 +10,15 @@ import { createPortal } from "react-dom";
 import { ChildDescriptionsContext } from "../../contexts/ChildDescriptionsContext.js";
 import { DOMNode } from "../../dom.js";
 import { useForceUpdate } from "../../hooks/useForceUpdate.js";
+import { useGetPos } from "../../hooks/useGetPos.js";
 import { useNodeViewDescription } from "../../hooks/useNodeViewDescription.js";
+import { KeyInfo } from "../../keys.js";
 import { ChildNodeViews, wrapInDeco } from "../ChildNodeViews.js";
 
 interface Props {
   constructor: NodeViewConstructor;
   node: Node;
-  getPos: () => number;
+  keyInfo: KeyInfo;
   innerDeco: DecorationSource;
   outerDeco: readonly Decoration[];
 }
@@ -24,13 +26,14 @@ interface Props {
 export const NodeViewConstructorView = memo(function NodeViewConstructorView({
   constructor,
   node,
-  getPos,
+  keyInfo,
   innerDeco,
   outerDeco,
 }: Props) {
   const ref = useRef<HTMLElement>(null);
   const innerRef = useRef<HTMLSpanElement & HTMLDivElement>(null);
   const forceUpdate = useForceUpdate();
+  const getPos = useGetPos(keyInfo.key);
 
   const nodeProps = useMemo(
     () => ({
@@ -117,8 +120,8 @@ export const NodeViewConstructorView = memo(function NodeViewConstructorView({
       ? createPortal(
           <ChildDescriptionsContext.Provider value={childContextValue}>
             <ChildNodeViews
-              getPos={getPos}
               node={node}
+              keyInfo={keyInfo}
               innerDecorations={innerDeco}
             />
           </ChildDescriptionsContext.Provider>,

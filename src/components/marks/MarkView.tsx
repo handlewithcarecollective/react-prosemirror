@@ -9,6 +9,7 @@ import React, {
 } from "react";
 
 import { NodeViewContext } from "../../contexts/NodeViewContext.js";
+import { KeyInfo } from "../../keys.js";
 
 import { DefaultMarkView } from "./DefaultMarkView.js";
 import { MarkViewComponentProps } from "./MarkViewComponentProps.js";
@@ -18,7 +19,7 @@ import { ReactMarkView } from "./ReactMarkView.js";
 type Props = {
   mark: Mark;
   inline: boolean;
-  getPos: () => number;
+  keyInfo: KeyInfo;
   children: ReactNode;
 };
 

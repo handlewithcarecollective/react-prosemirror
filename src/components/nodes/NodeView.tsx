@@ -13,6 +13,7 @@ import React, {
 } from "react";
 
 import { NodeViewContext } from "../../contexts/NodeViewContext.js";
+import { KeyInfo } from "../../keys.js";
 
 import { DefaultNodeView } from "./DefaultNodeView.js";
 import { NodeViewComponentProps } from "./NodeViewComponentProps.js";
@@ -21,7 +22,7 @@ import { ReactNodeView } from "./ReactNodeView.js";
 
 type Props = {
   node: Node;
-  getPos: () => number;
+  keyInfo: KeyInfo;
   outerDeco: readonly Decoration[];
   innerDeco: DecorationSource;
 };
@@ -52,12 +53,10 @@ export const NodeView = memo(function NodeView(props: Props) {
   }, [constructor, component]);
 
   return (
-    <GetPosContext.Provider value={props.getPos}>
+    <ReactKeyContext.Provider value={props.keyInfo.toString()}>
       <Component {...props} />
-    </GetPosContext.Provider>
+    </ReactKeyContext.Provider>
   );
 });
 
-export const GetPosContext = createContext<() => number>(
-  null as unknown as () => number
-);
+export const ReactKeyContext = createContext<string>(null as unknown as string);

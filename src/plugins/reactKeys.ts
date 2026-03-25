@@ -6,11 +6,15 @@ export function createNodeKey() {
   return key;
 }
 
-export const reactKeysPluginKey = new PluginKey<{
+export type ReactKeys = {
   posToKey: Map<number, string>;
   keyToPos: Map<string, number>;
   posToNode: Map<number, Node>;
-}>("@handlewithcare/react-prosemirror/reactKeys");
+};
+
+export const reactKeysPluginKey = new PluginKey<ReactKeys>(
+  "@handlewithcare/react-prosemirror/reactKeys"
+);
 
 export type ReactKeysPluginMeta =
   | {

@@ -1,20 +1,26 @@
-import React, { useContext, useRef } from "react";
+import React, { useCallback, useContext, useRef } from "react";
 
 import { ChildDescriptionsContext } from "../contexts/ChildDescriptionsContext.js";
 import { ReactWidgetDecoration } from "../decorations/ReactWidgetType.js";
 import { useClientLayoutEffect } from "../hooks/useClientLayoutEffect.js";
+import { useGetPos } from "../hooks/useGetPos.js";
+import { KeyInfo } from "../keys.js";
 import { WidgetViewDesc, sortViewDescs } from "../viewdesc.js";
 
 type Props = {
   widget: ReactWidgetDecoration;
-  getPos: () => number;
+  keyInfo: KeyInfo;
 };
 
-export function WidgetView({ widget, getPos }: Props) {
+export function WidgetView({ widget, keyInfo }: Props) {
   const { siblingsRef, parentRef } = useContext(ChildDescriptionsContext);
   const viewDescRef = useRef<WidgetViewDesc | null>(null);
 
   const domRef = useRef<HTMLElement | null>(null);
+  const getParentPos = useGetPos(keyInfo.parentKey);
+  const getPos = useCallback(() => {
+    return getParentPos() + keyInfo.offset;
+  }, [getParentPos, keyInfo.offset]);
 
   useClientLayoutEffect(() => {
     const siblings = siblingsRef.current;

@@ -1,18 +1,20 @@
 import { DOMSerializer, Mark } from "prosemirror-model";
 import { MarkViewConstructor } from "prosemirror-view";
-import React, { ReactNode, memo, useMemo, useRef } from "react";
+import React, { ReactNode, memo, useCallback, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 
 import { ChildDescriptionsContext } from "../../contexts/ChildDescriptionsContext.js";
 import { DOMNode } from "../../dom.js";
 import { useForceUpdate } from "../../hooks/useForceUpdate.js";
+import { useGetPos } from "../../hooks/useGetPos.js";
 import { useMarkViewDescription } from "../../hooks/useMarkViewDescription.js";
+import { KeyInfo } from "../../keys.js";
 
 interface Props {
   constructor: MarkViewConstructor;
   mark: Mark;
   inline: boolean;
-  getPos: () => number;
+  keyInfo: KeyInfo;
   children: ReactNode;
 }
 
@@ -20,12 +22,16 @@ export const MarkViewConstructorView = memo(function MarkViewConstructorView({
   constructor,
   mark,
   inline,
-  getPos,
+  keyInfo,
   children,
 }: Props) {
   const ref = useRef<HTMLElement | null>(null);
   const innerRef = useRef<(HTMLSpanElement & HTMLDivElement) | null>(null);
   const forceUpdate = useForceUpdate();
+  const getParentPos = useGetPos(keyInfo.parentKey);
+  const getPos = useCallback(() => {
+    return getParentPos() + keyInfo.offset;
+  }, [getParentPos, keyInfo.offset]);
 
   const markProps = useMemo(
     () => ({

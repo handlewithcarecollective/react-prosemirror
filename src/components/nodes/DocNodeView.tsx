@@ -18,7 +18,6 @@ import { ChildNodeViews, wrapInDeco } from "../ChildNodeViews.js";
 export interface DocNodeViewProps extends Omit<HTMLProps<HTMLElement>, "as"> {
   as?: ElementType;
   node: Node;
-  getPos: () => number;
   decorations: readonly Decoration[];
   innerDecorations: DecorationSource;
   setMount: (mount: HTMLElement | null) => void;
@@ -26,15 +25,7 @@ export interface DocNodeViewProps extends Omit<HTMLProps<HTMLElement>, "as"> {
 
 export const DocNodeView = memo(
   forwardRef<HTMLElement, DocNodeViewProps>(function DocNodeView(
-    {
-      as,
-      node,
-      getPos,
-      decorations,
-      innerDecorations,
-      setMount,
-      ...elementProps
-    },
+    { as, node, decorations, innerDecorations, setMount, ...elementProps },
     ref
   ) {
     const innerRef = useRef<HTMLElement>(null);
@@ -49,7 +40,7 @@ export const DocNodeView = memo(
         innerDecorations,
         contentDOMRef: innerRef,
       }),
-      [node, getPos, decorations, innerDecorations]
+      [node, decorations, innerDecorations]
     );
 
     const { childContextValue } = useNodeViewDescription(
@@ -70,11 +61,7 @@ export const DocNodeView = memo(
 
     const children = (
       <ChildDescriptionsContext.Provider value={childContextValue}>
-        <ChildNodeViews
-          getPos={getPos}
-          node={node}
-          innerDecorations={innerDecorations}
-        />
+        <ChildNodeViews node={node} innerDecorations={innerDecorations} />
       </ChildDescriptionsContext.Provider>
     );
 
@@ -91,3 +78,7 @@ export const DocNodeView = memo(
     return nodeProps.decorations.reduce(wrapInDeco, element);
   })
 );
+
+function getPos() {
+  return -1;
+}

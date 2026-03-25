@@ -12,7 +12,6 @@ import { DocNodeView } from "./nodes/DocNodeView.js";
 
 interface DocNodeViewContextValue {
   node: Node;
-  getPos: () => number;
   decorations: readonly Decoration[];
   innerDecorations: DecorationSource;
   setMount: (mount: HTMLElement | null) => void;

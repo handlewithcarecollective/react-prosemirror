@@ -1,21 +1,28 @@
 import { Decoration, EditorView } from "prosemirror-view";
-import React, { useContext, useRef } from "react";
+import React, { useCallback, useContext, useRef } from "react";
 
 import { ChildDescriptionsContext } from "../contexts/ChildDescriptionsContext.js";
 import { useClientLayoutEffect } from "../hooks/useClientLayoutEffect.js";
 import { useEditorEffect } from "../hooks/useEditorEffect.js";
+import { useGetPos } from "../hooks/useGetPos.js";
+import { KeyInfo } from "../keys.js";
 import { WidgetViewDesc, sortViewDescs } from "../viewdesc.js";
 
 type Props = {
   widget: Decoration;
-  getPos: () => number;
+  keyInfo: KeyInfo;
 };
 
-export function NativeWidgetView({ widget, getPos }: Props) {
+export function NativeWidgetView({ widget, keyInfo }: Props) {
   const { siblingsRef, parentRef } = useContext(ChildDescriptionsContext);
   const viewDescRef = useRef<WidgetViewDesc | null>(null);
 
   const rootDomRef = useRef<HTMLDivElement | null>(null);
+
+  const getParentPos = useGetPos(keyInfo.parentKey);
+  const getPos = useCallback(() => {
+    return getParentPos() + keyInfo.offset;
+  }, [getParentPos, keyInfo.offset]);
 
   useClientLayoutEffect(() => {
     const siblings = siblingsRef.current;

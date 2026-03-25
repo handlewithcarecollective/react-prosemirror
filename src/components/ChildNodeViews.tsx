@@ -6,7 +6,6 @@ import React, {
   cloneElement,
   createElement,
   memo,
-  useCallback,
   useContext,
   useRef,
 } from "react";
@@ -17,6 +16,7 @@ import { ReactWidgetDecoration } from "../decorations/ReactWidgetType.js";
 import { InternalDecorationSource } from "../decorations/internalTypes.js";
 import { iterDeco } from "../decorations/iterDeco.js";
 import { useReactKeys } from "../hooks/useReactKeys.js";
+import { KeyInfo } from "../keys.js";
 import { htmlAttrsToReactProps, mergeReactProps } from "../props.js";
 import { sameOuterDeco } from "../viewdesc.js";
 
@@ -52,7 +52,7 @@ function areChildrenEqual(a: Child, b: Child) {
     a.type === b.type &&
     a.marks.every((mark) => mark.isInSet(b.marks)) &&
     b.marks.every((mark) => mark.isInSet(a.marks)) &&
-    a.key === b.key &&
+    a.key.eq(b.key) &&
     (a.type !== "node" ||
       b.type !== "node" ||
       (a.node.eq(b.node) &&
@@ -68,7 +68,7 @@ type ChildWidget = {
   marks: readonly Mark[];
   offset: number;
   index: number;
-  key: string;
+  key: KeyInfo;
 };
 
 type ChildNativeWidget = {
@@ -77,7 +77,7 @@ type ChildNativeWidget = {
   marks: readonly Mark[];
   offset: number;
   index: number;
-  key: string;
+  key: KeyInfo;
 };
 
 type ChildNode = {
@@ -88,69 +88,61 @@ type ChildNode = {
   outerDeco: readonly Decoration[];
   offset: number;
   index: number;
-  key: string;
+  key: KeyInfo;
 };
 
 type ChildHack = {
   type: "hack";
-  component: ComponentType<{ getPos: () => number }>;
+  component: ComponentType<{ keyInfo: KeyInfo }>;
   marks: readonly Mark[];
   offset: number;
   index: number;
-  key: string;
+  key: KeyInfo;
 };
 
 type Child = ChildNode | ChildWidget | ChildNativeWidget | ChildHack;
 
 type SharedMarksProps = {
-  getInnerPos: () => number;
   childViews: Child[];
 };
 
-const ChildView = memo(function ChildView({
-  child,
-  getInnerPos,
-}: {
-  child: Child;
-  getInnerPos: () => number;
-}) {
+const ChildView = memo(function ChildView({ child }: { child: Child }) {
   const { view } = useContext(EditorContext);
-
-  const childRef = useRef<Child>(child);
-  childRef.current = child;
-
-  const getPos = useCallback(() => {
-    return getInnerPos() + childRef.current.offset;
-  }, [getInnerPos]);
+  const reactKeys = useReactKeys();
 
   return child.type === "widget" ? (
     <WidgetView
-      key={child.key}
+      key={child.key.toString()}
       widget={child.widget as unknown as ReactWidgetDecoration}
-      getPos={getPos}
+      keyInfo={child.key}
     />
   ) : child.type === "native-widget" ? (
-    <NativeWidgetView key={child.key} widget={child.widget} getPos={getPos} />
+    <NativeWidgetView
+      key={child.key.toString()}
+      widget={child.widget}
+      keyInfo={child.key}
+    />
   ) : child.type === "hack" ? (
-    <child.component key={child.key} getPos={getPos} />
+    <child.component key={child.key.toString()} keyInfo={child.key} />
   ) : child.node.isText ? (
-    <ChildDescriptionsContext.Consumer key={child.key}>
+    <ChildDescriptionsContext.Consumer key={child.key.toString()}>
       {({ siblingsRef, parentRef }) => (
         <TextNodeView
           view={view}
           node={child.node}
-          getPos={getPos}
+          keyInfo={child.key}
           siblingsRef={siblingsRef}
           parentRef={parentRef}
+          reactKeys={reactKeys}
           decorations={child.outerDeco}
         />
       )}
     </ChildDescriptionsContext.Consumer>
   ) : (
     <NodeView
-      key={child.key}
+      key={child.key.toString()}
       node={child.node}
-      getPos={getPos}
+      keyInfo={child.key}
       outerDeco={child.outerDeco}
       innerDeco={child.innerDeco}
     />
@@ -159,41 +151,31 @@ const ChildView = memo(function ChildView({
 
 const InlinePartition = memo(function InlinePartition({
   childViews,
-  getInnerPos,
 }: {
   childViews: [Child, ...Child[]];
-  getInnerPos: () => number;
 }) {
   const firstChild = childViews[0];
-  const firstChildRef = useRef(firstChild);
-  firstChildRef.current = firstChild;
-
-  const getPos = useCallback(() => {
-    return getInnerPos() + firstChildRef.current.offset;
-  }, [getInnerPos]);
 
   const firstMark = firstChild.marks[0];
   if (!firstMark) {
     return (
       <>
         {childViews.map((child) => {
-          return (
-            <ChildView
-              key={child.key}
-              child={child}
-              getInnerPos={getInnerPos}
-            />
-          );
+          return <ChildView key={child.key.toString()} child={child} />;
         })}
       </>
     );
   }
 
   return (
-    <MarkView key={firstChild.key} mark={firstMark} getPos={getPos} inline>
+    <MarkView
+      key={firstChild.key.toString()}
+      mark={firstMark}
+      keyInfo={firstChild.key}
+      inline
+    >
       <InlineView
-        key={firstChild.key}
-        getInnerPos={getInnerPos}
+        key={firstChild.key.toString()}
         childViews={childViews.map((child) => ({
           ...child,
           marks: child.marks.slice(1),
@@ -203,10 +185,7 @@ const InlinePartition = memo(function InlinePartition({
   );
 });
 
-const InlineView = memo(function InlineView({
-  getInnerPos,
-  childViews,
-}: SharedMarksProps) {
+const InlineView = memo(function InlineView({ childViews }: SharedMarksProps) {
   // const editorState = useEditorState();
   const partitioned = childViews.reduce((acc, child) => {
     const lastPartition = acc[acc.length - 1];
@@ -241,9 +220,8 @@ const InlineView = memo(function InlineView({
         if (!firstChild) return null;
         return (
           <InlinePartition
-            key={firstChild.key}
+            key={firstChild.key.toString()}
             childViews={childViews as [Child, ...Child[]]}
-            getInnerPos={getInnerPos}
           />
         );
       })}
@@ -256,38 +234,35 @@ function createKey(
   offset: number,
   index: number,
   type: Child["type"],
-  posToKey: Map<number, string> | undefined,
+  posToKey: Map<number, string>,
   widget?: ReactWidgetDecoration | Decoration
 ) {
   const pos = innerPos + offset;
-  const key = posToKey?.get(pos);
+  const key =
+    type === "widget" || type === "native-widget"
+      ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (widget as any).type.spec.key
+      : posToKey.get(pos);
 
-  if (type === "widget" || type === "native-widget") {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if ((widget as any).type.spec.key)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return (widget as any).type.spec.key;
-
-    if (type === "widget") {
-      // eslint-disable-next-line no-console
-      console.warn(
-        `Widget at position ${pos} doesn't have a key specified. React ProseMirror will generate a key partially based on this widget’s index into its parent’s children. This can cause issues if there are multiple adjacent widgets.`
-      );
-    }
-    return `${key}-${index}`;
+  if (type === "widget" && !key) {
+    // eslint-disable-next-line no-console
+    console.warn(
+      `Widget at position ${pos} doesn't have a key specified. React ProseMirror will generate a key partially based on this widget’s index into its parent’s children. This can cause issues if there are multiple adjacent widgets.`
+    );
   }
-
-  if (key) return key;
-
-  // if (!doc) return pos;
 
   const parentPos = innerPos - 1;
 
-  const parentKey = posToKey?.get(parentPos);
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  const parentKey = posToKey.get(parentPos)!;
 
-  if (parentKey) return `${parentKey}-${offset}`;
-
-  return pos;
+  return new KeyInfo(
+    key,
+    type === "native-widget" ? "widget" : type,
+    parentKey,
+    offset,
+    index
+  );
 }
 
 function adjustWidgetMarksForward(
@@ -339,43 +314,24 @@ function adjustWidgetMarksBack(
 }
 
 const ChildElement = memo(
-  function ChildElement({
-    child,
-    getInnerPos,
-  }: {
-    child: Child;
-    getInnerPos: () => number;
-  }) {
-    const childRef = useRef<Child>(child);
-    childRef.current = child;
-
-    const getPos = useCallback(() => {
-      return getInnerPos() + childRef.current.offset;
-    }, [getInnerPos]);
-
+  function ChildElement({ child }: { child: Child }) {
     if (child.type === "node") {
       return child.marks.reduce(
         (element, mark) => (
-          <MarkView mark={mark} getPos={getPos} inline={false}>
+          <MarkView mark={mark} keyInfo={child.key} inline={false}>
             {element}
           </MarkView>
         ),
         <NodeView
-          key={child.key}
+          key={child.key.toString()}
           outerDeco={child.outerDeco}
           node={child.node}
           innerDeco={child.innerDeco}
-          getPos={getPos}
+          keyInfo={child.key}
         />
       );
     } else {
-      return (
-        <InlineView
-          key={child.key}
-          childViews={[child]}
-          getInnerPos={getInnerPos}
-        />
-      );
+      return <InlineView key={child.key.toString()} childViews={[child]} />;
     }
   }
   /**
@@ -387,42 +343,34 @@ const ChildElement = memo(
   // (prevProps, nextProps) => areChildrenEqual(prevProps.child, nextProps.child)
 );
 
-function createChildElements(
-  children: Child[],
-  getInnerPos: () => number
-): ReactNode[] {
-  if (!children.length) return [];
+function createChildElements(children: Child[]): ReactNode[] {
+  const firstChild = children[0];
+  if (!firstChild) return [];
 
   if (children.every((child) => child.type !== "node" || child.node.isInline)) {
     return [
-      <InlineView
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        key={children[0]!.key}
-        childViews={children}
-        getInnerPos={getInnerPos}
-      />,
+      <InlineView key={firstChild.key.toString()} childViews={children} />,
     ];
   }
 
   return children.map((child) => {
-    return (
-      <ChildElement key={child.key} child={child} getInnerPos={getInnerPos} />
-    );
+    return <ChildElement key={child.key.toString()} child={child} />;
   });
 }
 
 export const ChildNodeViews = memo(function ChildNodeViews({
-  getPos,
+  keyInfo,
   node,
   innerDecorations,
 }: {
-  getPos: () => number;
+  keyInfo?: KeyInfo;
   node: Node | undefined;
   innerDecorations: DecorationSource;
 }) {
   const reactKeys = useReactKeys();
 
-  const getInnerPos = useCallback(() => getPos() + 1, [getPos]);
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  const innerPos = keyInfo ? reactKeys.keyToPos.get(keyInfo.key!)! + 1 : 0;
 
   const childMap = useRef(new Map<string, Child>()).current;
 
@@ -442,11 +390,11 @@ export const ChildNodeViews = memo(function ChildNodeViews({
       let key;
       if (isNative) {
         key = createKey(
-          getInnerPos(),
+          innerPos,
           offset,
           index,
           "native-widget",
-          reactKeys?.posToKey,
+          reactKeys.posToKey,
           widget
         );
         const child = {
@@ -457,20 +405,20 @@ export const ChildNodeViews = memo(function ChildNodeViews({
           index,
           key,
         } as const;
-        const prevChild = childMap.get(key);
+        const prevChild = childMap.get(key.toString());
         if (prevChild && areChildrenEqual(prevChild, child)) {
           prevChild.offset = offset;
         } else {
-          childMap.set(key, child);
+          childMap.set(key.toString(), child);
         }
-        keysSeen.set(key, keysSeen.size);
+        keysSeen.set(key.toString(), keysSeen.size);
       } else {
         key = createKey(
-          getInnerPos(),
+          innerPos,
           offset,
           index,
           "widget",
-          reactKeys?.posToKey,
+          reactKeys.posToKey,
           widget
         );
         const child = {
@@ -481,28 +429,30 @@ export const ChildNodeViews = memo(function ChildNodeViews({
           index,
           key,
         } as const;
-        const prevChild = childMap.get(key);
+        const prevChild = childMap.get(key.toString());
         if (prevChild && areChildrenEqual(prevChild, child)) {
           prevChild.offset = offset;
         } else {
-          childMap.set(key, child);
+          childMap.set(key.toString(), child);
         }
-        keysSeen.set(key, keysSeen.size);
+        keysSeen.set(key.toString(), keysSeen.size);
       }
-      const child = childMap.get(key) as ChildWidget | ChildNativeWidget;
+      const child = childMap.get(key.toString()) as
+        | ChildWidget
+        | ChildNativeWidget;
       widgetChildren.push(child);
       adjustWidgetMarksForward(
         lastNodeChild,
-        childMap.get(key) as ChildWidget | ChildNativeWidget
+        childMap.get(key.toString()) as ChildWidget | ChildNativeWidget
       );
     },
     (childNode, outerDeco, innerDeco, offset, index) => {
       const key = createKey(
-        getInnerPos(),
+        innerPos,
         offset,
         index,
         "node",
-        reactKeys?.posToKey
+        reactKeys.posToKey
       );
       const child = {
         type: "node",
@@ -514,15 +464,15 @@ export const ChildNodeViews = memo(function ChildNodeViews({
         index,
         key,
       } as const;
-      const prevChild = childMap.get(key);
+      const prevChild = childMap.get(key.toString());
       if (prevChild && areChildrenEqual(prevChild, child)) {
         prevChild.offset = offset;
         lastNodeChild = prevChild as ChildNode;
       } else {
-        childMap.set(key, child);
+        childMap.set(key.toString(), child);
         lastNodeChild = child;
       }
-      keysSeen.set(key, keysSeen.size);
+      keysSeen.set(key.toString(), keysSeen.size);
       adjustWidgetMarksBack(widgetChildren, lastNodeChild);
       widgetChildren = [];
     }
@@ -538,7 +488,7 @@ export const ChildNodeViews = memo(function ChildNodeViews({
     // We already ensured that these existed in keysSeen in the previous
     // step
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    (a, b) => keysSeen.get(a.key)! - keysSeen.get(b.key)!
+    (a, b) => keysSeen.get(a.key.toString())! - keysSeen.get(b.key.toString())!
   );
 
   if (node.isTextblock) {
@@ -559,7 +509,16 @@ export const ChildNodeViews = memo(function ChildNodeViews({
           marks: [],
           offset: lastChild?.offset ?? 0,
           index: (lastChild?.index ?? 0) + 2,
-          key: "trailing-hack-img",
+          key: new KeyInfo(
+            undefined,
+            "hack",
+            keyInfo?.key,
+            lastChild
+              ? lastChild.offset +
+                (lastChild.type === "node" ? lastChild.node.nodeSize : 0)
+              : 0,
+            lastChild?.index ?? 0
+          ),
         },
         {
           type: "hack",
@@ -567,13 +526,22 @@ export const ChildNodeViews = memo(function ChildNodeViews({
           marks: [],
           offset: lastChild?.offset ?? 0,
           index: (lastChild?.index ?? 0) + 1,
-          key: "trailing-hack-br",
+          key: new KeyInfo(
+            undefined,
+            "hack",
+            keyInfo?.key,
+            lastChild
+              ? lastChild.offset +
+                (lastChild.type === "node" ? lastChild.node.nodeSize : 0)
+              : 0,
+            (lastChild?.index ?? 0) + 1
+          ),
         }
       );
     }
   }
 
-  const childElements = createChildElements(children, getInnerPos);
+  const childElements = createChildElements(children);
 
   return <>{childElements}</>;
 });
