@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
+import { GapCursor, gapCursor } from "prosemirror-gapcursor";
 import { doc, em, p, strong } from "prosemirror-test-builder";
 // @ts-expect-error This is an internal export
 import { EditorView, __endComposition } from "prosemirror-view";
@@ -429,4 +430,64 @@ describe.skip("EditorView composition", () => {
 
   // it("can handle cross-paragraph compositions (keeping the last paragraph)", () =>
   //   crossParagraph(false));
+});
+
+describe("GapCursor composition", () => {
+  // In doc(p("foo"), p("bar")):
+  //   p("foo") occupies positions 0..4 (nodeSize 5)
+  //   position 5 is between the two paragraphs (parent = doc, not a textblock)
+  //   p("bar") occupies positions 5..9 (nodeSize 5)
+  const GAP_POS = 5;
+
+  it("compositionstart at a GapCursor position inserts a wrapping textblock", () => {
+    const { view } = tempEditor({
+      doc: doc(p("foo"), p("bar")),
+      plugins: [gapCursor()],
+    });
+
+    // Place a GapCursor between the two paragraphs.
+    view.dispatch(
+      view.state.tr.setSelection(new GapCursor(view.state.doc.resolve(GAP_POS)))
+    );
+    expect(view.state.selection).toBeInstanceOf(GapCursor);
+
+    view.dom.dispatchEvent(new CompositionEvent("compositionstart"));
+
+    // The fix inserts an empty paragraph at the gap position so the browser
+    // IME has a textblock to compose into.
+    expect(view.state.doc.childCount).toBe(3);
+    // The cursor must now be inside a textblock.
+    expect(view.state.selection.$from.parent.isTextblock).toBe(true);
+    // view.composing must be true — the handler did not bail out early.
+    expect(view.composing).toBe(true);
+  });
+
+  it("compositionend at a former GapCursor position inserts text exactly once", () => {
+    const { view } = tempEditor({
+      doc: doc(p("foo"), p("bar")),
+      plugins: [gapCursor()],
+    });
+
+    view.dispatch(
+      view.state.tr.setSelection(new GapCursor(view.state.doc.resolve(GAP_POS)))
+    );
+
+    view.dom.dispatchEvent(new CompositionEvent("compositionstart"));
+    // Sanity: paragraph was created, cursor is inside it.
+    expect(view.state.doc.childCount).toBe(3);
+
+    view.dom.dispatchEvent(
+      new CompositionEvent("compositionend", { data: "hi" })
+    );
+
+    // Collect all text in the document.
+    const texts: string[] = [];
+    view.state.doc.descendants((node) => {
+      if (node.isText && node.text) texts.push(node.text);
+    });
+    const fullText = texts.join("");
+
+    // "hi" must appear exactly once — not doubled.
+    expect(fullText).toBe("foohibar");
+  });
 });

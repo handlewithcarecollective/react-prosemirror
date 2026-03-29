@@ -1,11 +1,11 @@
-import { Mark } from "prosemirror-model";
-import { Plugin } from "prosemirror-state";
-import { Decoration, EditorView } from "prosemirror-view";
+import { Fragment, type Mark, Slice } from "prosemirror-model";
+import { Plugin, TextSelection } from "prosemirror-state";
+import type { Decoration, EditorView } from "prosemirror-view";
 
-import { ReactEditorView } from "../ReactEditorView.js";
+import type { ReactEditorView } from "../ReactEditorView.js";
 import { CursorWrapper } from "../components/CursorWrapper.js";
 import { widget } from "../decorations/ReactWidgetType.js";
-import { DOMNode } from "../dom.js";
+import type { DOMNode } from "../dom.js";
 
 function insertText(
   view: EditorView,
@@ -54,62 +54,109 @@ export function beforeInputPlugin(
 
           view.dispatch(state.tr.deleteSelection());
 
-          const $pos = state.selection.$from;
+          // Re-read state after dispatch — the stale `state` reference no
+          // longer reflects the current document after deleteSelection.
+          let currentState = view.state;
+          let $pos = currentState.selection.$from;
 
-          compositionMarks = state.storedMarks ?? $pos.marks();
+          // If the cursor is not in a textblock (e.g. a GapCursor between
+          // block nodes), insert a wrapping textblock so the browser has a
+          // text node to compose into. We must do this here — before
+          // taking the DOM snapshot — because without a snapshot the
+          // compositionend handler cannot restore the DOM prior to calling
+          // insertText, which leads to the composed text appearing twice.
+          if (!$pos.parent.isTextblock) {
+            const textNodeType = currentState.schema.nodes.text;
+            if (!textNodeType) return false;
+            const wrap = $pos.parent
+              .contentMatchAt($pos.index())
+              .findWrapping(textNodeType);
+            if (!wrap) return false;
+
+            let frag = Fragment.empty;
+            for (let i = wrap.length - 1; i >= 0; i--) {
+              const wrapType = wrap[i];
+              if (!wrapType) return false;
+              const node = wrapType.createAndFill(null, frag);
+              if (!node) return false;
+              frag = Fragment.from(node);
+            }
+
+            const tr = currentState.tr.replace(
+              $pos.pos,
+              $pos.pos,
+              new Slice(frag, 0, 0)
+            );
+            tr.setSelection(TextSelection.near(tr.doc.resolve($pos.pos + 1)));
+            view.dispatch(tr);
+            currentState = view.state;
+            $pos = currentState.selection.$from;
+            // Safety check: if still not in a textblock after wrapping, bail.
+            if (!$pos.parent.isTextblock) return false;
+          }
+
+          compositionMarks = currentState.storedMarks ?? $pos.marks();
           if (compositionMarks) {
             setCursorWrapper(
-              widget(state.selection.from, CursorWrapper, {
+              widget(currentState.selection.from, CursorWrapper, {
                 key: "cursor-wrapper",
                 marks: compositionMarks,
               })
             );
           }
 
-          // Snapshot the siblings of the node that contains the
-          // current cursor. We'll restore this later, so that React
-          // doesn't panic about unknown DOM nodes.
+          // Snapshot the siblings of the node that contains the current
+          // cursor. We'll restore this later, so that React doesn't panic
+          // about unknown DOM nodes introduced by the browser's IME.
           const { node: parent } = view.domAtPos($pos.pos);
           precompositionSnapshot = [];
           for (const node of parent.childNodes) {
             precompositionSnapshot.push(node);
           }
 
-          // @ts-expect-error Internal property - input
-          view.input.composing = true;
+          (view as ReactEditorView).input.composing = true;
           return true;
         },
         compositionupdate() {
           return true;
         },
         compositionend(view, event) {
-          // @ts-expect-error Internal property - input
-          view.input.composing = false;
+          (view as ReactEditorView).input.composing = false;
 
           const { state } = view;
           const { node: parent } = view.domAtPos(state.selection.from);
 
           if (precompositionSnapshot) {
-            // Restore the snapshot of the parent node's children
-            // from before the composition started. This gives us a
-            // clean slate from which to dispatch our transaction
-            // and trigger a React update.
-            precompositionSnapshot.forEach((prevNode, i) => {
-              if (parent.childNodes.length <= i) {
-                parent.appendChild(prevNode);
-                return;
-              }
-              parent.replaceChild(prevNode, parent.childNodes.item(i));
-            });
+            // Restore the snapshot of the parent node's children from before
+            // the composition started. This gives us a clean slate from
+            // which to dispatch our transaction and trigger a React update.
+            //
+            // Wrapped in try/catch because structural edits dispatched during
+            // compositionstart (e.g. inserting a wrapping textblock at a
+            // gap-cursor position) may have moved or removed the snapshotted
+            // nodes, making replaceChild throw. In that case we skip
+            // restoration and let React reconcile the DOM on the next render.
+            try {
+              precompositionSnapshot.forEach((prevNode, i) => {
+                if (parent.childNodes.length <= i) {
+                  parent.appendChild(prevNode);
+                  return;
+                }
+                parent.replaceChild(prevNode, parent.childNodes.item(i));
+              });
 
-            if (parent.childNodes.length > precompositionSnapshot.length) {
-              for (
-                let i = precompositionSnapshot.length;
-                i < parent.childNodes.length;
-                i++
-              ) {
-                parent.removeChild(parent.childNodes.item(i));
+              if (parent.childNodes.length > precompositionSnapshot.length) {
+                for (
+                  let i = precompositionSnapshot.length;
+                  i < parent.childNodes.length;
+                  i++
+                ) {
+                  parent.removeChild(parent.childNodes.item(i));
+                }
               }
+            } catch (_) {
+              // DOM restoration failed — structural changes during composition
+              // made the snapshot stale. React will reconcile on next render.
             }
           }
 

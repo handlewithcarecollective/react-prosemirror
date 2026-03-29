@@ -44,6 +44,7 @@ interface DOMObserver {
 }
 
 interface InputState {
+  composing: boolean;
   compositionID: number;
   compositionNodes: ViewDesc[];
   compositionPendingChanges: number;
