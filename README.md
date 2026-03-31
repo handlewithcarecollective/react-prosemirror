@@ -35,7 +35,7 @@ npm install @handlewithcare/react-prosemirror \
     react@^19.1.0 \
     react-dom@^19.1.0 \
     react-reconciler@0.32.0 \
-    prosemirror-view@1.39.2 \
+    prosemirror-view@1.41.7 \
     prosemirror-state \
     prosemirror-model
 ```
@@ -47,7 +47,7 @@ yarn add @handlewithcare/react-prosemirror \
     react@^19.1.0 \
     react-dom@^19.1.0 \
     react-reconciler@0.32.0 \
-    prosemirror-view@1.39.2 \
+    prosemirror-view@1.41.7 \
     prosemirror-state \
     prosemirror-model
 ```
