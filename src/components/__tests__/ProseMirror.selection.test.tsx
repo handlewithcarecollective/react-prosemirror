@@ -23,8 +23,11 @@ import { Decoration, DecorationSet, EditorView } from "prosemirror-view";
 import { tempEditor } from "../../testing/editorViewTestHelpers.js";
 
 const img = img_({
-  src: "data:image/gif;base64,R0lGODlhBQAFAIABAAAAAP///yH5BAEKAAEALAAAAAAFAAUAAAIEjI+pWAA7",
+  src: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAVFBMVEUAAAD/zE3/zE3/zE3/zE3/zE3/zE3/zE3/zE3/zE3BlS5mRQBtSwSFYA+ddhyRaxW0pILg2sz///9zUAa3jCl6VwprSgPxwEb+y0zgsT60iieYcRk7fYG6AAAACnRSTlMAOYbF8wAUjv+pYbspWwAAAHJJREFUGBkFwQlKQDEUBLBM+z64gPc/pyAK1o5JIEm0HeSRBNDWkh2A7FhSa8FaGuuEBBJyVgCArAAAmaCgkIELLpgyXUFvjk7ZZyfau49O+X39AS/fdKa5ecuX9/bq5Mn+SBJt+/nXPJIA2hrak0TbwT8U8zdOEulMLAAAAABJRU5ErkJggg==",
 });
+
+const style = document.head.appendChild(document.createElement("style"));
+style.textContent = "img[src] { min-height: 10px }";
 
 async function findTextNode(_: HTMLElement, text: string) {
   const parent = await screen.findByText(text);

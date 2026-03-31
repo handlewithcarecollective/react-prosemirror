@@ -202,13 +202,13 @@ export class ReactEditorView extends EditorView implements AbstractEditorView {
     this.setProps({ state });
   }
 
-  someProp<PropName extends keyof EditorProps>(
-    propName: PropName
-  ): EditorProps[PropName] | undefined;
   someProp<PropName extends keyof EditorProps, Result>(
     propName: PropName,
-    f?: (value: NonNullable<EditorProps[PropName]>) => Result
+    f: (value: NonNullable<EditorProps[PropName]>) => Result
   ): Result | undefined;
+  someProp<PropName extends keyof EditorProps>(
+    propName: PropName
+  ): NonNullable<EditorProps[PropName]> | undefined;
   someProp<PropName extends keyof EditorProps, Result>(
     propName: PropName,
     f?: (value: NonNullable<EditorProps[PropName]>) => Result
@@ -219,7 +219,7 @@ export class ReactEditorView extends EditorView implements AbstractEditorView {
     }
 
     const prop = this.props[propName];
-    if (prop) {
+    if (prop != null) {
       const result = f ? f(prop) : prop;
       if (result) {
         return result;
@@ -228,8 +228,8 @@ export class ReactEditorView extends EditorView implements AbstractEditorView {
 
     for (const plugin of this.props.plugins ?? []) {
       const prop = plugin.props[propName];
-      if (prop) {
-        const result = f ? f(prop) : prop;
+      if (prop != null) {
+        const result = f ? f(prop as NonNullable<EditorProps[PropName]>) : prop;
         if (result) {
           return result;
         }
@@ -238,8 +238,8 @@ export class ReactEditorView extends EditorView implements AbstractEditorView {
 
     for (const plugin of this.state.plugins) {
       const prop = plugin.props[propName];
-      if (prop) {
-        const result = f ? f(prop) : prop;
+      if (prop != null) {
+        const result = f ? f(prop as NonNullable<EditorProps[PropName]>) : prop;
         if (result) {
           return result;
         }
