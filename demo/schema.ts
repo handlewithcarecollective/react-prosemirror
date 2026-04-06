@@ -58,6 +58,8 @@ export const schema = new Schema({
             "img",
             {
               src: node.attrs.url,
+              height: "300px",
+              width: "300px",
             },
           ],
         ];

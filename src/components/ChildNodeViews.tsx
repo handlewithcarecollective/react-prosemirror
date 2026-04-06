@@ -326,7 +326,10 @@ function adjustWidgetMarksBack(
     if (
       // Using internal Decoration property, "type"
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (child.widget as any).type.side < 0
+      (child.widget as any).type.side < 0 ||
+      // Using internal Decoration property, "type"
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (child.widget as any).type.spec.marks
     ) {
       continue;
     }
