@@ -47,7 +47,12 @@ export interface TiptapNodeViewProps {
       }) => Record<string, string>)
     | undefined;
   as?: ElementType | undefined;
-  stopEvent?: ((props: { event: Event }) => boolean) | null;
+  stopEvent?:
+    | ((props: {
+        event: Event;
+        defaultStopEvent: (event: Event) => boolean;
+      }) => boolean)
+    | null;
   ignoreMutation?:
     | ((props: { mutation: ViewMutationRecord }) => boolean)
     | null;
@@ -117,13 +122,6 @@ export function tiptapNodeView({
         }, [extensions, node]);
 
         useStopEvent(function (this: ViewDesc, _, event) {
-          if (stopEvent) {
-            return stopEvent.call(
-              { name: extension.name, editor, type: node.type },
-              { event }
-            );
-          }
-
           if (!editor || !(this.dom instanceof HTMLElement)) return false;
 
           const nodeView = new ReactProseMirrorNodeView(
@@ -141,6 +139,13 @@ export function tiptapNodeView({
             this.dom,
             this.contentDOM
           );
+
+          if (stopEvent) {
+            return stopEvent.call(
+              { name: extension.name, editor, type: node.type },
+              { event, defaultStopEvent: nodeView.stopEvent.bind(nodeView) }
+            );
+          }
 
           nodeView.isDragging = isDraggingRef.current;
           const result = nodeView.stopEvent(event) ?? false;
