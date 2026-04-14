@@ -175,7 +175,23 @@ export function useNodeViewDescription(
     if (!siblings.includes(viewDesc)) {
       siblings.push(viewDesc);
     }
+
+    // In strict/concurrent mode, a node can sometimes re-render
+    // entirely on its own, without even its parent re-rendering.
+    // In this case, we will have added our view descriptions to
+    // our parent's children, but our parent has no opportunity
+    // to sort its children, because it never renders. So
+    // we always sort our siblings, too.
     siblings.sort(sortViewDescs);
+
+    // If a child updates, usually it will re-render and sort
+    // our children for us. But it's possible to reorder
+    // child nodes without changing their keys or node
+    // instances, in which case our children _won't_
+    // rerender. As a fallback, we do one last pass through
+    // our own child view descriptions and make sure
+    // they're ordered. This should be a cheap no-op in most cases.
+    children.sort(sortViewDescs);
 
     for (const child of children) {
       child.parent = viewDesc;
