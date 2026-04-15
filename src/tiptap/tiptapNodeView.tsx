@@ -139,15 +139,17 @@ export function tiptapNodeView({
             this.dom,
             this.contentDOM
           );
+          nodeView.isDragging = isDraggingRef.current;
 
           if (stopEvent) {
-            return stopEvent.call(
+            const result = stopEvent.call(
               { name: extension.name, editor, type: node.type },
               { event, defaultStopEvent: nodeView.stopEvent.bind(nodeView) }
             );
+            isDraggingRef.current = nodeView.isDragging;
+            return result;
           }
 
-          nodeView.isDragging = isDraggingRef.current;
           const result = nodeView.stopEvent(event) ?? false;
           isDraggingRef.current = nodeView.isDragging;
           return result;
