@@ -14,6 +14,7 @@ import {
 } from "prosemirror-test-builder";
 import React, { forwardRef } from "react";
 
+import { browser } from "../../browser.js";
 import { tempEditor } from "../../testing/editorViewTestHelpers.js";
 import { NodeViewComponentProps } from "../nodes/NodeViewComponentProps.js";
 
@@ -307,5 +308,63 @@ describe("EditorView draw", () => {
     });
 
     expect(view.dom.textContent).toBe("Some bold text");
+  });
+
+  it("renders a separator hack after non-editable nodes", () => {
+    if (!browser.chrome) return;
+
+    const testSchema = new Schema<"doc" | "paragraph" | "mention">({
+      nodes: schema.spec.nodes.addToEnd("mention", {
+        group: "inline",
+        inline: true,
+        atom: true,
+        selectable: true,
+        attrs: {
+          id: { default: null },
+          label: { default: null },
+        },
+        parseDOM: [
+          {
+            tag: 'span.mention[data-mention="true"]',
+            getAttrs(dom) {
+              const el = dom as HTMLElement;
+              return {
+                id: el.getAttribute("data-id"),
+                label: el.getAttribute("data-label"),
+              };
+            },
+          },
+        ],
+        toDOM(node) {
+          return [
+            "span",
+            {
+              class: "mention",
+              "data-mention": "true",
+              "data-id": node.attrs.id,
+              "data-label": node.attrs.label,
+            },
+            `@${node.attrs.label ?? ""}`,
+          ];
+        },
+      }),
+    });
+
+    const { doc, paragraph, mention } = builders(testSchema);
+
+    const { view } = tempEditor({
+      doc: doc(paragraph(mention({ id: "u1", label: "alice" }))),
+    });
+
+    const p = view.dom.firstElementChild;
+    const mentionDom = p?.firstElementChild;
+    const separatorHack = mentionDom?.nextElementSibling;
+    const trailingHack = separatorHack?.nextElementSibling;
+
+    expect(mentionDom?.textContent).toBe("@alice");
+    expect(separatorHack?.tagName).toBe("IMG");
+    expect(separatorHack?.className).toBe("ProseMirror-separator");
+    expect(trailingHack?.tagName).toBe("BR");
+    expect(trailingHack?.className).toBe("ProseMirror-trailingBreak");
   });
 });

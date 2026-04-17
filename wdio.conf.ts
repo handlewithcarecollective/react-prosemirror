@@ -66,23 +66,23 @@ export const config: WebdriverIO.Config = {
   // https://saucelabs.com/platform/platform-configurator
   //
   capabilities: [
-    // {
-    //   browserName: "chrome",
-    //   "wdio:exclude": mobileSpecs,
-    // },
+    {
+      browserName: "chrome",
+      "wdio:exclude": mobileSpecs,
+    },
     {
       browserName: "firefox",
       "wdio:exclude": mobileSpecs,
     },
-    // {
-    //   browserName: "chrome",
-    //   "wdio:specs": mobileSpecs,
-    //   "goog:chromeOptions": {
-    //     mobileEmulation: {
-    //       deviceName: "Pixel 7",
-    //     },
-    //   },
-    // },
+    {
+      browserName: "chrome",
+      "wdio:specs": mobileSpecs,
+      "goog:chromeOptions": {
+        mobileEmulation: {
+          deviceName: "Pixel 7",
+        },
+      },
+    },
   ],
 
   //

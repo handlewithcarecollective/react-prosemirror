@@ -30,7 +30,10 @@ export function SeparatorHackView({ getPos }: Props) {
   // we call setShouldRender conditionally
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useClientLayoutEffect(() => {
-    const lastSibling = siblingsRef.current[siblingsRef.current.length - 1];
+    const nonHackSiblings = siblingsRef.current.filter(
+      (viewdesc) => !(viewdesc instanceof TrailingHackViewDesc)
+    );
+    const lastSibling = nonHackSiblings[nonHackSiblings.length - 1];
     if (
       (browser.safari || browser.chrome) &&
       (lastSibling?.dom as HTMLElement)?.contentEditable == "false"
@@ -60,6 +63,6 @@ export function SeparatorHackView({ getPos }: Props) {
   });
 
   return shouldRender ? (
-    <img ref={ref} className="ProseMirror-separator" />
+    <img ref={ref} className="ProseMirror-separator" alt="" />
   ) : null;
 }
