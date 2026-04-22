@@ -660,6 +660,10 @@ export class ViewDesc {
   get ignoreForSelection() {
     return false;
   }
+
+  isText(_text: string) {
+    return false;
+  }
 }
 
 // A widget desc represents a widget decoration, which is a DOM node
@@ -1018,6 +1022,10 @@ export class TextViewDesc extends NodeViewDesc {
 
   get domAtom() {
     return false;
+  }
+
+  isText(text: string) {
+    return this.node.text == text;
   }
 }
 
