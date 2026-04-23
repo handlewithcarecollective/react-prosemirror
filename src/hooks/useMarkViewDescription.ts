@@ -66,6 +66,14 @@ export function useMarkViewDescription(
       markView
     );
 
+    // When create() runs after a destroy() (either here in a layout
+    // effect or in refUpdated), the inherited children still reference
+    // the just-destroyed desc. Re-parent them onto this fresh desc
+    // before any other code can observe the stale pointer.
+    for (const child of children) {
+      child.parent = viewDesc;
+    }
+
     contentDOMRef.current = contentDOM;
 
     return viewDesc;

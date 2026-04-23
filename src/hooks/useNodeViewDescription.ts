@@ -75,6 +75,10 @@ export function useNodeViewDescription(
       nodeView
     );
 
+    for (const child of children) {
+      child.parent = viewDesc;
+    }
+
     const siblings = siblingsRef.current;
 
     if (!siblings.includes(viewDesc)) {
