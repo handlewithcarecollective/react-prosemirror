@@ -1,6 +1,7 @@
 import { Mark } from "prosemirror-model";
 import { Plugin } from "prosemirror-state";
 import { Decoration, EditorView } from "prosemirror-view";
+import { MutableRefObject } from "react";
 
 import { ReactEditorView } from "../ReactEditorView.js";
 import { CursorWrapper } from "../components/CursorWrapper.js";
@@ -42,7 +43,8 @@ function insertText(
 }
 
 export function beforeInputPlugin(
-  setCursorWrapper: (deco: Decoration | null) => void
+  setCursorWrapper: (deco: Decoration | null) => void,
+  flushSyncRef: MutableRefObject<boolean>
 ) {
   let compositionMarks: readonly Mark[] | null = null;
   let precompositionSnapshot: DOMNode[] | null = null;
@@ -52,14 +54,25 @@ export function beforeInputPlugin(
         compositionstart(view) {
           const { state } = view;
 
-          view.dispatch(state.tr.deleteSelection());
+          compositionMarks = state.storedMarks ?? state.selection.$from.marks();
+          const hasMarks = compositionMarks && compositionMarks.length;
 
-          const $pos = state.selection.$from;
+          // Batch: if we need to both delete selection AND set cursor
+          // wrapper, defer the dispatch so setCursorWrapper's flushSync
+          // flushes both state updates in a single render.
+          if (!state.selection.empty) {
+            if (hasMarks) {
+              flushSyncRef.current = false;
+            }
+            view.dispatch(state.tr.deleteSelection());
+            if (hasMarks) {
+              flushSyncRef.current = true;
+            }
+          }
 
-          compositionMarks = state.storedMarks ?? $pos.marks();
-          if (compositionMarks) {
+          if (hasMarks) {
             setCursorWrapper(
-              widget(state.selection.from, CursorWrapper, {
+              widget(view.state.selection.from, CursorWrapper, {
                 key: "cursor-wrapper",
                 marks: compositionMarks,
               })
@@ -69,7 +82,9 @@ export function beforeInputPlugin(
           // Snapshot the siblings of the node that contains the
           // current cursor. We'll restore this later, so that React
           // doesn't panic about unknown DOM nodes.
-          const { node: parent } = view.domAtPos($pos.pos);
+          const { node: parent } = view.domAtPos(
+            view.state.selection.$from.pos
+          );
           precompositionSnapshot = [];
           for (const node of parent.childNodes) {
             precompositionSnapshot.push(node);
@@ -113,6 +128,11 @@ export function beforeInputPlugin(
             }
           }
 
+          // Batch: disable flushSync for insertText dispatch so that
+          // setCursorWrapper(null) below flushes both the text insertion
+          // and cursor wrapper removal in a single render pass.
+          flushSyncRef.current = false;
+
           if (event.data) {
             insertText(view, event.data, {
               marks: compositionMarks,
@@ -121,6 +141,12 @@ export function beforeInputPlugin(
 
           compositionMarks = null;
           precompositionSnapshot = null;
+
+          // Re-enable flushSync. setCursorWrapper calls flushSync
+          // internally, which will flush ALL pending React state
+          // updates (including the deferred insertText dispatch)
+          // in one render.
+          flushSyncRef.current = true;
           setCursorWrapper(null);
           return true;
         },

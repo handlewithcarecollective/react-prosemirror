@@ -4,7 +4,7 @@ import React, { useContext, useRef } from "react";
 import { ChildDescriptionsContext } from "../contexts/ChildDescriptionsContext.js";
 import { useClientLayoutEffect } from "../hooks/useClientLayoutEffect.js";
 import { useEditorEffect } from "../hooks/useEditorEffect.js";
-import { WidgetViewDesc, sortViewDescs } from "../viewdesc.js";
+import { WidgetViewDesc, sortViewDescsCached } from "../viewdesc.js";
 
 type Props = {
   widget: Decoration;
@@ -69,7 +69,7 @@ export function NativeWidgetView({ widget, getPos }: Props) {
     if (!siblingsRef.current.includes(viewDescRef.current)) {
       siblingsRef.current.push(viewDescRef.current);
     }
-    siblingsRef.current.sort(sortViewDescs);
+    sortViewDescsCached(siblingsRef.current);
   });
 
   return <span ref={rootDomRef} />;

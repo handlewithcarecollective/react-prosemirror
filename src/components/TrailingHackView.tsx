@@ -2,7 +2,7 @@ import React, { useContext, useRef } from "react";
 
 import { ChildDescriptionsContext } from "../contexts/ChildDescriptionsContext.js";
 import { useClientLayoutEffect } from "../hooks/useClientLayoutEffect.js";
-import { TrailingHackViewDesc, sortViewDescs } from "../viewdesc.js";
+import { TrailingHackViewDesc, sortViewDescsCached } from "../viewdesc.js";
 
 type Props = {
   getPos: () => number;
@@ -43,7 +43,7 @@ export function TrailingHackView({ getPos }: Props) {
     if (!siblingsRef.current.includes(viewDescRef.current)) {
       siblingsRef.current.push(viewDescRef.current);
     }
-    siblingsRef.current.sort(sortViewDescs);
+    sortViewDescsCached(siblingsRef.current);
   });
 
   return <br ref={ref} className="ProseMirror-trailingBreak" />;

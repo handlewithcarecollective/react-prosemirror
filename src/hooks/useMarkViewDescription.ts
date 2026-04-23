@@ -10,7 +10,7 @@ import {
   MarkViewDesc,
   ReactMarkViewDesc,
   ViewDesc,
-  sortViewDescs,
+  sortViewDescsCached,
 } from "../viewdesc.js";
 
 import { useClientLayoutEffect } from "./useClientLayoutEffect.js";
@@ -155,7 +155,7 @@ export function useMarkViewDescription(
     if (!siblings.includes(viewDesc)) {
       siblings.push(viewDesc);
     }
-    siblings.sort(sortViewDescs);
+    sortViewDescsCached(siblings);
 
     for (const child of children) {
       child.parent = viewDesc;

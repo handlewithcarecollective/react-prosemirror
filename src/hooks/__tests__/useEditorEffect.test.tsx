@@ -39,7 +39,7 @@ describe("useEditorEffect", () => {
         <EditorContext.Provider
           value={{
             view: editorView,
-            cursorWrapper: null,
+
             flushSyncRef,
             registerEventListener,
             unregisterEventListener,
@@ -69,7 +69,7 @@ describe("useEditorEffect", () => {
 
     const contextValue = {
       view: editorView,
-      cursorWrapper: null,
+
       flushSyncRef: { current: true },
       registerEventListener,
       unregisterEventListener,
@@ -114,7 +114,7 @@ describe("useEditorEffect", () => {
         <EditorContext.Provider
           value={{
             view: editorView,
-            cursorWrapper: null,
+
             flushSyncRef: { current: true },
             registerEventListener,
             unregisterEventListener,
@@ -135,7 +135,7 @@ describe("useEditorEffect", () => {
             view: editorView,
             registerEventListener,
             unregisterEventListener,
-            cursorWrapper: null,
+
             flushSyncRef: { current: true },
             isStatic: false,
           }}

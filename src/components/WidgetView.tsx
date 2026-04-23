@@ -3,7 +3,7 @@ import React, { useContext, useRef } from "react";
 import { ChildDescriptionsContext } from "../contexts/ChildDescriptionsContext.js";
 import { ReactWidgetDecoration } from "../decorations/ReactWidgetType.js";
 import { useClientLayoutEffect } from "../hooks/useClientLayoutEffect.js";
-import { WidgetViewDesc, sortViewDescs } from "../viewdesc.js";
+import { WidgetViewDesc, sortViewDescsCached } from "../viewdesc.js";
 
 type Props = {
   widget: ReactWidgetDecoration;
@@ -45,7 +45,7 @@ export function WidgetView({ widget, getPos }: Props) {
     if (!siblingsRef.current.includes(viewDescRef.current)) {
       siblingsRef.current.push(viewDescRef.current);
     }
-    siblingsRef.current.sort(sortViewDescs);
+    sortViewDescsCached(siblingsRef.current);
   });
 
   const { Component } = widget.type;

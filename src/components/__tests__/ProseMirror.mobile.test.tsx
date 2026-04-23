@@ -50,9 +50,12 @@ function createPlugins() {
       },
     }),
     keymap(baseKeymap),
-    beforeInputPlugin(() => {
-      // no-op as this doesn't matter for this test
-    }),
+    beforeInputPlugin(
+      () => {
+        // no-op as this doesn't matter for this test
+      },
+      { current: true }
+    ),
   ];
 }
 

@@ -47,6 +47,31 @@ export function sortViewDescs(a: ViewDesc, b: ViewDesc) {
   return a.getPos() - b.getPos();
 }
 
+/**
+ * Sort an array of ViewDescs by document position, caching getPos()
+ * results to avoid redundant tree walks during comparison.
+ *
+ * Includes an early exit when the array is already sorted (common case).
+ */
+export function sortViewDescsCached(descs: ViewDesc[]) {
+  if (descs.length <= 1) return;
+
+  const positions = new Map<ViewDesc, number>();
+  let alreadySorted = true;
+  let prevPos = -Infinity;
+
+  for (const desc of descs) {
+    const pos = desc instanceof TrailingHackViewDesc ? Infinity : desc.getPos();
+    positions.set(desc, pos);
+    if (pos < prevPos) alreadySorted = false;
+    prevPos = pos;
+  }
+
+  if (alreadySorted) return;
+
+  descs.sort((a, b) => positions.get(a)! - positions.get(b)!);
+}
+
 const NOT_DIRTY = 0,
   CHILD_DIRTY = 1,
   CONTENT_DIRTY = 2,

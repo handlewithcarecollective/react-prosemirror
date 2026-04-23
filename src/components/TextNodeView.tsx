@@ -8,7 +8,7 @@ import {
   CompositionViewDesc,
   TextViewDesc,
   ViewDesc,
-  sortViewDescs,
+  sortViewDescsCached,
 } from "../viewdesc.js";
 
 import { wrapInDeco } from "./ChildNodeViews.js";
@@ -121,7 +121,7 @@ export class TextNodeView extends Component<Props> {
       siblingsRef.current.push(this.viewDescRef);
     }
 
-    siblingsRef.current.sort(sortViewDescs);
+    sortViewDescsCached(siblingsRef.current);
   }
 
   shouldComponentUpdate(nextProps: Props): boolean {

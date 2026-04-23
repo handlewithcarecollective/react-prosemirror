@@ -55,7 +55,7 @@ export function useEditor<T extends HTMLElement = HTMLElement>(
     }
   }
   const flushSyncRef = useRef(true);
-  const [cursorWrapper, _setCursorWrapper] = useState<Decoration | null>(null);
+  const cursorWrapperRef = useRef<Decoration | null>(null);
   const forceUpdate = useForceUpdate();
 
   const defaultState = options.defaultState ?? EMPTY_STATE;
@@ -68,17 +68,21 @@ export function useEditor<T extends HTMLElement = HTMLElement>(
     unregisterEventListener,
   } = useComponentEventListeners();
 
-  const setCursorWrapper = useCallback((deco: Decoration | null) => {
-    flushSync(() => {
-      _setCursorWrapper(deco);
-    });
-  }, []);
+  const setCursorWrapper = useCallback(
+    (deco: Decoration | null) => {
+      cursorWrapperRef.current = deco;
+      flushSync(() => {
+        forceUpdate();
+      });
+    },
+    [forceUpdate]
+  );
 
   const plugins = useMemo(
     () => [
       ...(options.plugins ?? []),
       componentEventListenersPlugin,
-      beforeInputPlugin(setCursorWrapper),
+      beforeInputPlugin(setCursorWrapper, flushSyncRef),
     ],
     [options.plugins, componentEventListenersPlugin, setCursorWrapper]
   );
@@ -152,20 +156,13 @@ export function useEditor<T extends HTMLElement = HTMLElement>(
   const editor = useMemo(
     () => ({
       view,
-      cursorWrapper,
       flushSyncRef,
       registerEventListener,
       unregisterEventListener,
       isStatic: options.static ?? false,
     }),
-    [
-      cursorWrapper,
-      options.static,
-      registerEventListener,
-      unregisterEventListener,
-      view,
-    ]
+    [options.static, registerEventListener, unregisterEventListener, view]
   );
 
-  return { editor, state };
+  return { editor, cursorWrapper: cursorWrapperRef.current, state };
 }
