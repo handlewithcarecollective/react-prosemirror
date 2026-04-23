@@ -3,7 +3,7 @@ import React, { useContext, useRef, useState } from "react";
 import { browser } from "../browser.js";
 import { ChildDescriptionsContext } from "../contexts/ChildDescriptionsContext.js";
 import { useClientLayoutEffect } from "../hooks/useClientLayoutEffect.js";
-import { TrailingHackViewDesc, sortViewDescsCached } from "../viewdesc.js";
+import { TrailingHackViewDesc, sortViewDescs } from "../viewdesc.js";
 
 type Props = {
   getPos: () => number;
@@ -59,7 +59,7 @@ export function SeparatorHackView({ getPos }: Props) {
     if (!siblingsRef.current.includes(viewDescRef.current)) {
       siblingsRef.current.push(viewDescRef.current);
     }
-    sortViewDescsCached(siblingsRef.current);
+    siblingsRef.current.sort(sortViewDescs);
   });
 
   return shouldRender ? (

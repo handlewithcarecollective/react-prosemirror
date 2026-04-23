@@ -11,7 +11,7 @@ import {
   NodeViewDesc,
   ReactNodeViewDesc,
   ViewDesc,
-  sortViewDescsCached,
+  sortViewDescs,
 } from "../viewdesc.js";
 
 import { useClientLayoutEffect } from "./useClientLayoutEffect.js";
@@ -84,7 +84,7 @@ export function useNodeViewDescription(
     if (!siblings.includes(viewDesc)) {
       siblings.push(viewDesc);
     }
-    sortViewDescsCached(siblings);
+    siblings.sort(sortViewDescs);
 
     contentDOMRef.current = getContentDOM(nodeView);
 
@@ -186,7 +186,7 @@ export function useNodeViewDescription(
     // our parent's children, but our parent has no opportunity
     // to sort its children, because it never renders. So
     // we always sort our siblings, too.
-    sortViewDescsCached(siblings);
+    siblings.sort(sortViewDescs);
 
     // If a child updates, usually it will re-render and sort
     // our children for us. But it's possible to reorder
@@ -195,7 +195,7 @@ export function useNodeViewDescription(
     // rerender. As a fallback, we do one last pass through
     // our own child view descriptions and make sure
     // they're ordered. This should be a cheap no-op in most cases.
-    sortViewDescsCached(children);
+    children.sort(sortViewDescs);
 
     for (const child of children) {
       child.parent = viewDesc;

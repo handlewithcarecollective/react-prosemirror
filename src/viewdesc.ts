@@ -47,14 +47,6 @@ export function sortViewDescs(a: ViewDesc, b: ViewDesc) {
   return a.getPos() - b.getPos();
 }
 
-/**
- * Sort an array of ViewDescs by document position.
- * Wrapper for use at call sites that pass an array directly.
- */
-export function sortViewDescsCached(descs: ViewDesc[]) {
-  descs.sort(sortViewDescs);
-}
-
 const NOT_DIRTY = 0,
   CHILD_DIRTY = 1,
   CONTENT_DIRTY = 2,
