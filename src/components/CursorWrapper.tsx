@@ -1,9 +1,4 @@
-import React, {
-  forwardRef,
-  useImperativeHandle,
-  useRef,
-  useState,
-} from "react";
+import React, { forwardRef, useImperativeHandle, useRef } from "react";
 
 import { domIndex } from "../dom.js";
 import { useEditorEffect } from "../hooks/useEditorEffect.js";

@@ -45,7 +45,7 @@ function ProseMirrorInner({
 }: Props) {
   const [mount, setMount] = useState<HTMLElement | null>(null);
 
-  const { editor, state } = useEditor(mount, props);
+  const { editor, cursorWrapper, state } = useEditor(mount, props);
 
   const nodeViewConstructors = editor.view.nodeViews;
   const nodeViewContextValue = useMemo<NodeViewContextValue>(() => {
@@ -57,7 +57,7 @@ function ProseMirrorInner({
 
   const node = state.doc;
   const decorations = computeDocDeco(editor.view);
-  const innerDecorations = viewDecorations(editor.view, editor.cursorWrapper);
+  const innerDecorations = viewDecorations(editor.view, cursorWrapper);
   const docNodeViewContextValue = useMemo(
     () => ({
       setMount,

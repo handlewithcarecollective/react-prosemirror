@@ -152,20 +152,13 @@ export function useEditor<T extends HTMLElement = HTMLElement>(
   const editor = useMemo(
     () => ({
       view,
-      cursorWrapper,
       flushSyncRef,
       registerEventListener,
       unregisterEventListener,
       isStatic: options.static ?? false,
     }),
-    [
-      cursorWrapper,
-      options.static,
-      registerEventListener,
-      unregisterEventListener,
-      view,
-    ]
+    [options.static, registerEventListener, unregisterEventListener, view]
   );
 
-  return { editor, state };
+  return { editor, cursorWrapper, state };
 }
