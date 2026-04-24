@@ -2,7 +2,7 @@
 import { render } from "@testing-library/react";
 import { MatcherFunction, expect } from "expect";
 import { Node } from "prosemirror-model";
-import { EditorState, TextSelection } from "prosemirror-state";
+import { EditorState, Selection, TextSelection } from "prosemirror-state";
 import { doc, eq, p, schema } from "prosemirror-test-builder";
 import { EditorView, EditorView as EditorViewT } from "prosemirror-view";
 import React from "react";
@@ -62,10 +62,11 @@ export function tempEditor({
     doc: startDoc,
     schema,
     selection:
-      selection ?? startDoc.tag?.a
+      selection ??
+      (startDoc.tag?.a
         ? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           TextSelection.create(startDoc, startDoc.tag.a!, startDoc.tag?.b)
-        : undefined,
+        : undefined),
     plugins: [...(plugins ?? []), reactKeys()],
   });
 

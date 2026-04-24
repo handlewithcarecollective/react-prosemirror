@@ -1,5 +1,5 @@
-import { Mark } from "prosemirror-model";
-import { Plugin } from "prosemirror-state";
+import { Fragment, Mark, Slice } from "prosemirror-model";
+import { Plugin, TextSelection } from "prosemirror-state";
 import { Decoration, EditorView } from "prosemirror-view";
 
 import { ReactEditorView } from "../ReactEditorView.js";
@@ -41,6 +41,44 @@ function insertText(
   return true;
 }
 
+// Taken from https://github.com/ProseMirror/prosemirror-gapcursor/blob/master/src/index.ts#L67-L84
+// This is a hack that, when a composition starts while a gap cursor
+// is active, quickly creates an inline context for the composition to
+// happen in, to avoid it being aborted by the DOM selection being
+// moved into a valid position.
+//
+// We can't rely on the actual hack from prosemirror-gapcursor, because
+// it happens too late. We snapshot the DOM during compositionstart, but
+// the gapcursor hack runs in beforeinput (after compositionstart).
+function handleGapCursorComposition(view: EditorView) {
+  // @ts-expect-error Internal property - jsonID
+  if (!(view.state.selection.jsonID === "gapcursor")) {
+    return;
+  }
+  const { $from } = view.state.selection;
+  const insert = $from.parent
+    .contentMatchAt($from.index())
+    // All schemas _must_ have a text node type
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    .findWrapping(view.state.schema.nodes.text!);
+  if (!insert) return;
+
+  let fragment = Fragment.empty;
+  for (let i = insert.length - 1; i >= 0; i--) {
+    fragment = Fragment.from(
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      insert[i]!.createAndFill(null, fragment)
+    );
+  }
+  const tr = view.state.tr.replace(
+    $from.pos,
+    $from.pos,
+    new Slice(fragment, 0, 0)
+  );
+  tr.setSelection(TextSelection.near(tr.doc.resolve($from.pos + 1)));
+  view.dispatch(tr);
+}
+
 export function beforeInputPlugin(
   setCursorWrapper: (deco: Decoration | null) => void
 ) {
@@ -50,13 +88,15 @@ export function beforeInputPlugin(
     props: {
       handleDOMEvents: {
         compositionstart(view) {
+          compositionMarks =
+            view.state.storedMarks ?? view.state.selection.$from.marks();
+
+          view.dispatch(view.state.tr.deleteSelection());
+          handleGapCursorComposition(view);
+
           const { state } = view;
-
-          view.dispatch(state.tr.deleteSelection());
-
           const $pos = state.selection.$from;
 
-          compositionMarks = state.storedMarks ?? $pos.marks();
           if (compositionMarks) {
             setCursorWrapper(
               widget(state.selection.from, CursorWrapper, {
