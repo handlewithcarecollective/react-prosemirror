@@ -213,7 +213,13 @@ export function tiptapNodeView({
               return;
             }
 
-            editor.commands.updateAttributes(extension.name, attributes);
+            editor.commands.command(({ tr }) => {
+              const pos = getPos();
+              Object.keys(attributes).forEach((key) => {
+                tr.setNodeAttribute(pos, key, attributes[key]);
+              });
+              return true;
+            });
           }
         );
 
