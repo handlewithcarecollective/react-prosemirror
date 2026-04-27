@@ -213,16 +213,7 @@ export function tiptapNodeView({
               return;
             }
 
-            editor.commands.command(({ tr }) => {
-              const pos = getPos();
-
-              tr.setNodeMarkup(pos, undefined, {
-                ...node.attrs,
-                ...attributes,
-              });
-
-              return true;
-            });
+            editor.commands.updateAttributes(extension.name, attributes);
           }
         );
 
