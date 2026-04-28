@@ -58,8 +58,7 @@ function compose(
     if (i < 0) node = start();
     else update[i]!(node!);
     // const { focusNode, focusOffset } = sel;
-    // @ts-expect-error Internal property
-    pm.domObserver.flush();
+    // pm.domObserver.flush();
 
     if (options.cancel && i == update.length - 1) {
       expect(hasCompositionNode(pm)).toBeFalsy();
@@ -392,19 +391,19 @@ describe("EditorView composition", () => {
     expect(pm.state.doc).toEqualNode(doc(p("ab")));
   });
 
-  // it("cancels composition when a change fully overlaps with it", () => {
-  //   const { view: pm } = tempEditor({
-  //     doc: doc(p("one"), p("two"), p("three")),
-  //   });
-  //   compose(
-  //     pm,
-  //     () => edit(findTextNode(pm.dom, "two")!, "x"),
-  //     [() => pm.dispatch(pm.state.tr.insertText("---", 3, 13))],
-  //     "x",
-  //     { cancel: true }
-  //   );
-  //   expect(pm.state.doc).toEqualNode(doc(p("on---hree")));
-  // });
+  it("cancels composition when a change fully overlaps with it", async () => {
+    const { view: pm } = tempEditor({
+      doc: doc(p("one"), p("two<a>"), p("three")),
+    });
+    compose(
+      pm,
+      () => edit(findTextNode(pm.dom, "two")!, "x"),
+      [() => pm.dispatch(pm.state.tr.insertText("---", 3, 13))],
+      "x",
+      { cancel: true }
+    );
+    expect(pm.state.doc).toEqualNode(doc(p("on---hree")));
+  });
 
   // it("cancels composition when a change partially overlaps with it", () => {
   //   const { view: pm } = requireFocus(

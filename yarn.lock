@@ -1447,6 +1447,7 @@ __metadata:
     "@typescript-eslint/eslint-plugin": "npm:^5.51.0"
     "@typescript-eslint/parser": "npm:^5.51.0"
     "@uiw/react-codemirror": "npm:^4.23.7"
+    "@vitejs/plugin-basic-ssl": "npm:^2.3.0"
     "@vitejs/plugin-react": "npm:^4.3.1"
     "@wdio/browser-runner": "npm:^9.18.1"
     "@wdio/cli": "npm:^9.18.1"
@@ -3685,6 +3686,15 @@ __metadata:
     react: ">=16.8.0"
     react-dom: ">=16.8.0"
   checksum: 10/dc6f1fd2f1863120e29ea331b2e279054bf508f00656d3fed97779f17818ae00b6cf9d74d3b0996800174d444b59702da74ca88c303db563daad85c0824fc952
+  languageName: node
+  linkType: hard
+
+"@vitejs/plugin-basic-ssl@npm:^2.3.0":
+  version: 2.3.0
+  resolution: "@vitejs/plugin-basic-ssl@npm:2.3.0"
+  peerDependencies:
+    vite: ^6.0.0 || ^7.0.0 || ^8.0.0
+  checksum: 10/7bc8e11350b87eafe6d58d2c9ae26c64e4456de88b8ed821eeea13ff640fe897e4096688b78f27bb56cca9fd43f5105e07462796a2bc9eb1c3a695dbf8a6f577
   languageName: node
   linkType: hard
 

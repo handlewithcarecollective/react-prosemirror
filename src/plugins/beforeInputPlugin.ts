@@ -5,7 +5,6 @@ import { Decoration, EditorView } from "prosemirror-view";
 import { ReactEditorView } from "../ReactEditorView.js";
 import { CursorWrapper } from "../components/CursorWrapper.js";
 import { widget } from "../decorations/ReactWidgetType.js";
-import { DOMNode } from "../dom.js";
 
 function insertText(
   view: EditorView,
@@ -83,11 +82,13 @@ export function beforeInputPlugin(
   setCursorWrapper: (deco: Decoration | null) => void
 ) {
   let compositionMarks: readonly Mark[] | null = null;
-  let precompositionSnapshot: DOMNode[] | null = null;
+  // let precompositionSnapshot: DOMNode[] | null = null;
+
   return new Plugin({
     props: {
       handleDOMEvents: {
         compositionstart(view) {
+          if (!(view instanceof ReactEditorView)) return false;
           compositionMarks =
             view.state.storedMarks ?? view.state.selection.$from.marks();
 
@@ -95,9 +96,9 @@ export function beforeInputPlugin(
           handleGapCursorComposition(view);
 
           const { state } = view;
-          const $pos = state.selection.$from;
+          // const $pos = state.selection.$from;
 
-          if (compositionMarks) {
+          if (compositionMarks.length) {
             setCursorWrapper(
               widget(state.selection.from, CursorWrapper, {
                 key: "cursor-wrapper",
@@ -106,62 +107,27 @@ export function beforeInputPlugin(
             );
           }
 
-          // Snapshot the siblings of the node that contains the
-          // current cursor. We'll restore this later, so that React
-          // doesn't panic about unknown DOM nodes.
-          const { node: parent } = view.domAtPos($pos.pos);
-          precompositionSnapshot = [];
-          for (const node of parent.childNodes) {
-            precompositionSnapshot.push(node);
-          }
-
-          // @ts-expect-error Internal property - input
           view.input.composing = true;
           return true;
         },
         compositionupdate() {
           return true;
         },
-        compositionend(view, event) {
-          // @ts-expect-error Internal property - input
+        compositionend(view) {
+          if (!(view instanceof ReactEditorView)) return false;
+
           view.input.composing = false;
 
-          const { state } = view;
-          const { node: parent } = view.domAtPos(state.selection.from);
-
-          if (precompositionSnapshot) {
-            // Restore the snapshot of the parent node's children
-            // from before the composition started. This gives us a
-            // clean slate from which to dispatch our transaction
-            // and trigger a React update.
-            precompositionSnapshot.forEach((prevNode, i) => {
-              if (parent.childNodes.length <= i) {
-                parent.appendChild(prevNode);
-                return;
-              }
-              parent.replaceChild(prevNode, parent.childNodes.item(i));
-            });
-
-            if (parent.childNodes.length > precompositionSnapshot.length) {
-              for (
-                let i = precompositionSnapshot.length;
-                i < parent.childNodes.length;
-                i++
-              ) {
-                parent.removeChild(parent.childNodes.item(i));
-              }
-            }
-          }
-
-          if (event.data) {
-            insertText(view, event.data, {
-              marks: compositionMarks,
-            });
-          }
-
           compositionMarks = null;
-          precompositionSnapshot = null;
           setCursorWrapper(null);
+          if (
+            view.input.compositionNode &&
+            !view.input.compositionNode.pmViewDesc &&
+            (view.input.compositionNode instanceof CharacterData ||
+              view.input.compositionNode instanceof Element)
+          ) {
+            view.input.compositionNode.remove();
+          }
           return true;
         },
         beforeinput(view, event) {
@@ -215,6 +181,57 @@ export function beforeInputPlugin(
             }
             case "insertText": {
               insertText(view, event.data);
+              break;
+            }
+            case "insertCompositionText": {
+              const { tr } = view.state;
+
+              // There's always a range on insertCompositionText beforeinput events
+              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+              const range = event.getTargetRanges()[0]!;
+
+              const start = view.posAtDOM(
+                range.startContainer,
+                range.startOffset
+              );
+              const end = view.posAtDOM(range.endContainer, range.endOffset);
+
+              if (
+                view.state.doc.textBetween(start, end, "**", "*") === event.data
+              ) {
+                return;
+              }
+
+              if (event.data) {
+                tr.replace(
+                  start,
+                  end,
+                  new Slice(
+                    Fragment.from(view.state.schema.text(event.data)),
+                    0,
+                    0
+                  )
+                );
+              } else {
+                tr.delete(start, end);
+              }
+
+              // When we insert the text that corresponds to an ongoing composition,
+              // the relevant TextNodeView will pause re-rendering so that React doesn't
+              // clobber the composition in the DOM. This means that we have to wait for
+              // the browser to update the DOM itself before attempting to reconcile
+              // the selection, so we specifically defer pending effects to the next
+              // macro task
+              if (view instanceof ReactEditorView) {
+                view.deferPendingEffects = true;
+              }
+
+              view.dispatch(tr);
+
+              if (view instanceof ReactEditorView) {
+                view.deferPendingEffects = false;
+              }
+
               break;
             }
             case "deleteWordBackward":

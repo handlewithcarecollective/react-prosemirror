@@ -136,14 +136,20 @@ const ChildView = memo(function ChildView({
   ) : child.node.isText ? (
     <ChildDescriptionsContext.Consumer key={child.key}>
       {({ siblingsRef, parentRef }) => (
-        <TextNodeView
-          view={view}
-          node={child.node}
-          getPos={getPos}
-          siblingsRef={siblingsRef}
-          parentRef={parentRef}
-          decorations={child.outerDeco}
-        />
+        <EditorContext.Consumer>
+          {({ registerEventListener, unregisterEventListener }) => (
+            <TextNodeView
+              view={view}
+              node={child.node}
+              getPos={getPos}
+              siblingsRef={siblingsRef}
+              parentRef={parentRef}
+              decorations={child.outerDeco}
+              registerEventListener={registerEventListener}
+              unregisterEventListener={unregisterEventListener}
+            />
+          )}
+        </EditorContext.Consumer>
       )}
     </ChildDescriptionsContext.Consumer>
   ) : (

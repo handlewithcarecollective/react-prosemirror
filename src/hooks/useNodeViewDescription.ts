@@ -199,36 +199,40 @@ export function useNodeViewDescription(
 
     for (const child of children) {
       child.parent = viewDesc;
-
-      // Because TextNodeViews can't locate the DOM nodes
-      // for compositions, we need to override them here
-      if (child instanceof CompositionViewDesc) {
-        const compositionTopDOM = viewDesc?.contentDOM?.firstChild;
-        if (!compositionTopDOM)
-          throw new Error(
-            `Started a composition but couldn't find the text node it belongs to.`
-          );
-
-        let textDOM = compositionTopDOM;
-        while (textDOM.firstChild) {
-          textDOM = textDOM.firstChild as Element | Text;
-        }
-
-        if (!textDOM || !(textDOM instanceof Text))
-          throw new Error(
-            `Started a composition but couldn't find the text node it belongs to.`
-          );
-
-        child.dom = compositionTopDOM;
-        child.textDOM = textDOM;
-        child.text = textDOM.data;
-        child.textDOM.pmViewDesc = child;
-
-        // It should not be possible to be in a composition because one could
-        // not start between the renders that switch the view type.
-        (view as ReactEditorView).input.compositionNodes.push(child);
-      }
     }
+
+    setTimeout(() => {
+      for (const child of viewDescRef.current?.children ?? []) {
+        // Because TextNodeViews can't locate the DOM nodes
+        // for compositions, we need to override them here
+        if (child instanceof CompositionViewDesc) {
+          const compositionTopDOM = viewDesc?.contentDOM?.firstChild;
+          if (!compositionTopDOM)
+            throw new Error(
+              `Started a composition but couldn't find the text node it belongs to.`
+            );
+
+          let textDOM = compositionTopDOM;
+          while (textDOM.firstChild) {
+            textDOM = textDOM.firstChild as Element | Text;
+          }
+
+          if (!textDOM || !(textDOM instanceof Text))
+            throw new Error(
+              `Started a composition but couldn't find the text node it belongs to.`
+            );
+
+          child.dom = compositionTopDOM;
+          child.textDOM = textDOM;
+          child.text = textDOM.data;
+          child.textDOM.pmViewDesc = child;
+
+          // It should not be possible to be in a composition because one could
+          // not start between the renders that switch the view type.
+          (view as ReactEditorView).input.compositionNodes.push(child);
+        }
+      }
+    });
   });
 
   const childContextValue = useMemo(

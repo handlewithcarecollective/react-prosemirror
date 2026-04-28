@@ -1,9 +1,10 @@
 import { Node } from "prosemirror-model";
-import { Decoration, DecorationSet } from "prosemirror-view";
+import { DOMEventMap, Decoration, DecorationSet } from "prosemirror-view";
 import { Component, MutableRefObject } from "react";
 
 import { AbstractEditorView } from "../AbstractEditorView.js";
 import { findDOMNode } from "../findDOMNode.js";
+import { EventHandler } from "../plugins/componentEventListeners.js";
 import {
   CompositionViewDesc,
   TextViewDesc,
@@ -55,11 +56,36 @@ type Props = {
   siblingsRef: MutableRefObject<ViewDesc[]>;
   parentRef: MutableRefObject<ViewDesc | undefined>;
   decorations: readonly Decoration[];
+  registerEventListener<EventType extends keyof DOMEventMap>(
+    eventType: EventType,
+    handler: EventHandler<EventType>
+  ): void;
+  unregisterEventListener<EventType extends keyof DOMEventMap>(
+    eventType: EventType,
+    handler: EventHandler<EventType>
+  ): void;
 };
 
 export class TextNodeView extends Component<Props> {
   private viewDescRef: null | TextViewDesc | CompositionViewDesc = null;
   private renderRef: null | JSX.Element = null;
+  private wasProtecting = false;
+
+  private shouldProtect(props: Props): boolean {
+    const { view, getPos, node } = props;
+    // TODO: also check if content still in dom
+    return (
+      view.composing &&
+      view.state.selection.from >= getPos() &&
+      view.state.selection.from <= getPos() + node.nodeSize
+    );
+  }
+
+  private handleCompositionEnd = () => {
+    if (!this.wasProtecting) return false;
+    this.forceUpdate();
+    return false;
+  };
 
   updateEffect() {
     const { view, decorations, siblingsRef, parentRef, getPos, node } =
@@ -72,7 +98,8 @@ export class TextNodeView extends Component<Props> {
     // when a composition was started that produces a new text node.
     // Otherwise we just rely on re-rendering the renderRef
     if (!dom) {
-      if (!view.composing) return;
+      if (!view.composing || this.viewDescRef instanceof CompositionViewDesc)
+        return;
 
       this.viewDescRef = new CompositionViewDesc(
         parentRef.current,
@@ -87,7 +114,20 @@ export class TextNodeView extends Component<Props> {
         node.text ?? ""
       );
 
+      if (!siblingsRef.current.includes(this.viewDescRef)) {
+        siblingsRef.current.push(this.viewDescRef);
+      }
+
+      siblingsRef.current.sort(sortViewDescs);
+
       return;
+    }
+
+    if (this.viewDescRef instanceof CompositionViewDesc) {
+      const index = siblingsRef.current.indexOf(this.viewDescRef);
+      siblingsRef.current.splice(index, 1);
+      this.viewDescRef.destroy();
+      this.viewDescRef = null;
     }
 
     let textNode = dom;
@@ -95,9 +135,9 @@ export class TextNodeView extends Component<Props> {
       textNode = textNode.firstChild as Element | Text;
     }
 
-    if (!this.viewDescRef || this.viewDescRef instanceof CompositionViewDesc) {
+    if (!this.viewDescRef) {
       this.viewDescRef = new TextViewDesc(
-        undefined,
+        parentRef.current,
         [],
         getPos,
         node,
@@ -125,10 +165,23 @@ export class TextNodeView extends Component<Props> {
   }
 
   shouldComponentUpdate(nextProps: Props): boolean {
+    // When leaving the protected state, force a re-render so React's
+    // virtual DOM resyncs with whatever the IME wrote into the real DOM
+    // while we were returning a stale renderRef.
+    if (this.wasProtecting && !this.shouldProtect(nextProps)) {
+      return true;
+    }
     return !shallowEqual(this.props, nextProps);
   }
 
   componentDidMount(): void {
+    this.viewDescRef = null;
+    // After a composition, force an update so that we re-check whether we need
+    // to be protecting our rendered content and allow React to re-sync with the
+    // DOM.
+    const { registerEventListener } = this.props;
+    registerEventListener("compositionend", this.handleCompositionEnd);
+
     this.updateEffect();
   }
 
@@ -137,29 +190,32 @@ export class TextNodeView extends Component<Props> {
   }
 
   componentWillUnmount(): void {
+    const { unregisterEventListener } = this.props;
+    unregisterEventListener("compositionend", this.handleCompositionEnd);
+
     const { siblingsRef } = this.props;
     if (!this.viewDescRef) return;
     if (siblingsRef.current.includes(this.viewDescRef)) {
       const index = siblingsRef.current.indexOf(this.viewDescRef);
       siblingsRef.current.splice(index, 1);
     }
+    this.viewDescRef.destroy();
   }
 
   render() {
-    const { view, getPos, node, decorations } = this.props;
+    const { node, decorations } = this.props;
 
     // During a composition, it's crucial that we don't try to
     // update the DOM that the user is working in. If there's
     // an active composition and the selection is in this node,
     // we freeze the DOM of this element so that it doesn't
     // interrupt the composition
-    if (
-      view.composing &&
-      view.state.selection.from >= getPos() &&
-      view.state.selection.from <= getPos() + node.nodeSize
-    ) {
+    if (this.shouldProtect(this.props)) {
+      this.wasProtecting = true;
       return this.renderRef;
     }
+
+    this.wasProtecting = false;
 
     this.renderRef = decorations.reduce(
       wrapInDeco,

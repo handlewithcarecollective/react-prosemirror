@@ -143,7 +143,13 @@ export function useEditor<T extends HTMLElement = HTMLElement>(
     // running effects. Running effects will reattach selection
     // change listeners if the EditorView has been destroyed.
     if (view instanceof ReactEditorView && !view.isDestroyed) {
-      view.commitPendingEffects();
+      if (view.deferPendingEffects) {
+        setTimeout(() => {
+          view.commitPendingEffects();
+        });
+      } else {
+        view.commitPendingEffects();
+      }
     }
   });
 
