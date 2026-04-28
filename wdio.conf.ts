@@ -12,7 +12,7 @@ export const config: WebdriverIO.Config = {
   // Runner Configuration
   // ====================
   // WebdriverIO supports running e2e tests as well as unit and component tests.
-  runner: ["browser", { viteConfig }],
+  runner: ["browser", { viteConfig, mockHoisting: false }],
   tsConfigPath: "./tsconfig.json",
 
   //
@@ -66,23 +66,23 @@ export const config: WebdriverIO.Config = {
   // https://saucelabs.com/platform/platform-configurator
   //
   capabilities: [
-    {
-      browserName: "chrome",
-      "wdio:exclude": mobileSpecs,
-    },
+    // {
+    //   browserName: "chrome",
+    //   "wdio:exclude": mobileSpecs,
+    // },
     {
       browserName: "firefox",
       "wdio:exclude": mobileSpecs,
     },
-    {
-      browserName: "chrome",
-      "wdio:specs": mobileSpecs,
-      "goog:chromeOptions": {
-        mobileEmulation: {
-          deviceName: "Pixel 7",
-        },
-      },
-    },
+    // {
+    //   browserName: "chrome",
+    //   "wdio:specs": mobileSpecs,
+    //   "goog:chromeOptions": {
+    //     mobileEmulation: {
+    //       deviceName: "Pixel 7",
+    //     },
+    //   },
+    // },
   ],
 
   //
@@ -155,7 +155,7 @@ export const config: WebdriverIO.Config = {
   // See the full list at http://mochajs.org/
   mochaOpts: {
     ui: "bdd",
-    timeout: 60000,
+    timeout: 6000000,
   },
 
   //

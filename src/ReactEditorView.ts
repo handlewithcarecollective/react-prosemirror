@@ -45,7 +45,9 @@ interface DOMObserver {
 }
 
 interface InputState {
+  composing: boolean;
   compositionID: number;
+  compositionNode: DOMNode;
   compositionNodes: ViewDesc[];
   compositionPendingChanges: number;
   hideSelectionGuard: (() => void) | null;
@@ -101,6 +103,8 @@ export class ReactEditorView extends EditorView implements AbstractEditorView {
 
   private _destroyed: boolean;
 
+  public deferPendingEffects: boolean;
+
   constructor(place: { mount: HTMLElement }, props: DirectEditorProps) {
     // Prevent the base class from destroying the React-managed nodes.
     // Restore them below after invoking the base class constructor.
@@ -153,6 +157,7 @@ export class ReactEditorView extends EditorView implements AbstractEditorView {
     // @ts-expect-error this violates the typing but class does it, too.
     this.docView = null;
     this._destroyed = false;
+    this.deferPendingEffects = false;
   }
 
   get props() {
