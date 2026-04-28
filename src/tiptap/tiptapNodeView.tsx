@@ -215,16 +215,9 @@ export function tiptapNodeView({
 
             editor.commands.command(({ tr }) => {
               const pos = getPos();
-              if (node.isLeaf) {
-                Object.keys(attributes).forEach((key) => {
-                  tr.setNodeAttribute(pos, key, attributes[key]);
-                });
-              } else {
-                tr.setNodeMarkup(pos, undefined, {
-                  ...node.attrs,
-                  ...attributes,
-                });
-              }
+              Object.keys(attributes).forEach((key) => {
+                tr.setNodeAttribute(pos, key, attributes[key]);
+              });
               return true;
             });
           }
