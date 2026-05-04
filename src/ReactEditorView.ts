@@ -47,7 +47,8 @@ interface DOMObserver {
 interface InputState {
   composing: boolean;
   compositionID: number;
-  compositionNode: DOMNode;
+  compositionNode: Text | null;
+  compositionEndedAt: number;
   compositionNodes: ViewDesc[];
   compositionPendingChanges: number;
   hideSelectionGuard: (() => void) | null;
