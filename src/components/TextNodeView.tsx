@@ -3,6 +3,7 @@ import { DOMEventMap, Decoration, DecorationSet } from "prosemirror-view";
 import { Component, MutableRefObject } from "react";
 
 import { AbstractEditorView } from "../AbstractEditorView.js";
+import { ReactEditorView } from "../ReactEditorView.js";
 import { findDOMNode } from "../findDOMNode.js";
 import { EventHandler } from "../plugins/componentEventListeners.js";
 import {
@@ -67,11 +68,11 @@ type Props = {
 };
 
 export class TextNodeView extends Component<Props> {
-  private viewDescRef: null | TextViewDesc | CompositionViewDesc = null;
-  private renderRef: null | JSX.Element = null;
-  private wasProtecting = false;
+  viewDescRef: null | TextViewDesc | CompositionViewDesc = null;
+  renderRef: null | JSX.Element = null;
+  wasProtecting = false;
 
-  private shouldProtect(props: Props): boolean {
+  shouldProtect(props: Props): boolean {
     const { view, getPos, node } = props;
     // TODO: also check if content still in dom
     return (
@@ -81,62 +82,50 @@ export class TextNodeView extends Component<Props> {
     );
   }
 
-  private handleCompositionEnd = () => {
+  handleCompositionEnd = () => {
     if (!this.wasProtecting) return false;
     this.forceUpdate();
     return false;
   };
 
-  updateEffect() {
+  create() {
     const { view, decorations, siblingsRef, parentRef, getPos, node } =
       this.props;
     // There simply is no other way to ref a text node
     // eslint-disable-next-line react/no-find-dom-node
     const dom = findDOMNode(this);
 
-    // We only need to explicitly create a CompositionViewDesc
-    // when a composition was started that produces a new text node.
-    // Otherwise we just rely on re-rendering the renderRef
-    if (!dom) {
-      if (!view.composing || this.viewDescRef instanceof CompositionViewDesc)
-        return;
-
-      this.viewDescRef = new CompositionViewDesc(
-        parentRef.current,
-        getPos,
-        // These are just placeholders/dummies. We can't
-        // actually find the correct DOM nodes from here,
-        // so we let our parent do it.
-        // Passing a valid element here just so that the
-        // ViewDesc constructor doesn't blow up.
-        document.createElement("div"),
-        document.createTextNode(node.text ?? ""),
-        node.text ?? ""
-      );
-
-      if (!siblingsRef.current.includes(this.viewDescRef)) {
-        siblingsRef.current.push(this.viewDescRef);
-      }
-
-      siblingsRef.current.sort(sortViewDescs);
-
-      return;
-    }
-
-    if (this.viewDescRef instanceof CompositionViewDesc) {
-      const index = siblingsRef.current.indexOf(this.viewDescRef);
-      siblingsRef.current.splice(index, 1);
-      this.viewDescRef.destroy();
-      this.viewDescRef = null;
-    }
+    if (!dom && !view.composing) return null;
 
     let textNode = dom;
-    while (textNode.firstChild) {
+    while (textNode?.firstChild) {
       textNode = textNode.firstChild as Element | Text;
     }
 
-    if (!this.viewDescRef) {
-      this.viewDescRef = new TextViewDesc(
+    if (!(textNode instanceof Text)) {
+      textNode = null;
+    }
+
+    let viewDesc!: CompositionViewDesc | TextViewDesc;
+
+    if (this.shouldProtect(this.props)) {
+      viewDesc = new CompositionViewDesc(
+        parentRef.current,
+        getPos,
+        // If we can't
+        // actually find the correct DOM nodes from here (
+        // which is the case in a composition in a newly
+        // created text node), we let our parent do it.
+        // Passing a valid element here just so that the
+        // ViewDesc constructor doesn't blow up.
+        dom ?? document.createElement("div"),
+        textNode ?? document.createTextNode(node.text ?? ""),
+        node.text ?? ""
+      );
+    } else {
+      if (!dom || !textNode) return null;
+
+      viewDesc = new TextViewDesc(
         parentRef.current,
         [],
         getPos,
@@ -146,22 +135,61 @@ export class TextNodeView extends Component<Props> {
         dom,
         textNode
       );
-    } else {
-      this.viewDescRef.parent = parentRef.current;
-      this.viewDescRef.children = [];
-      this.viewDescRef.node = node;
-      this.viewDescRef.outerDeco = decorations;
-      this.viewDescRef.innerDeco = DecorationSet.empty;
-      this.viewDescRef.dom = dom;
-      this.viewDescRef.dom.pmViewDesc = this.viewDescRef;
-      this.viewDescRef.nodeDOM = textNode;
     }
 
-    if (!siblingsRef.current.includes(this.viewDescRef)) {
-      siblingsRef.current.push(this.viewDescRef);
-    }
-
+    siblingsRef.current.push(viewDesc);
     siblingsRef.current.sort(sortViewDescs);
+
+    return viewDesc;
+  }
+
+  update() {
+    const { view, node, decorations } = this.props;
+
+    if (!(view instanceof ReactEditorView)) return false;
+
+    const viewDesc = this.viewDescRef;
+    if (!viewDesc) return false;
+
+    if (this.shouldProtect(this.props)) {
+      if (viewDesc instanceof CompositionViewDesc) return true;
+      return false;
+    }
+
+    if (viewDesc instanceof CompositionViewDesc) return false;
+
+    // There simply is no other way to ref a text node
+    // eslint-disable-next-line react/no-find-dom-node
+    const dom = findDOMNode(this);
+    if (!dom || dom !== viewDesc.dom) return false;
+
+    if (!dom.contains(viewDesc.nodeDOM)) return false;
+
+    return (
+      viewDesc.matchesNode(node, decorations, DecorationSet.empty) ||
+      viewDesc.update(node, decorations, DecorationSet.empty, view)
+    );
+  }
+
+  destroy() {
+    const viewDesc = this.viewDescRef;
+    if (!viewDesc) return;
+
+    viewDesc.destroy();
+
+    const siblings = this.props.siblingsRef.current;
+
+    if (siblings.includes(viewDesc)) {
+      const index = siblings.indexOf(viewDesc);
+      siblings.splice(index, 1);
+    }
+  }
+
+  updateEffect() {
+    if (!this.update()) {
+      this.destroy();
+      this.viewDescRef = this.create();
+    }
   }
 
   shouldComponentUpdate(nextProps: Props): boolean {
@@ -193,13 +221,7 @@ export class TextNodeView extends Component<Props> {
     const { unregisterEventListener } = this.props;
     unregisterEventListener("compositionend", this.handleCompositionEnd);
 
-    const { siblingsRef } = this.props;
-    if (!this.viewDescRef) return;
-    if (siblingsRef.current.includes(this.viewDescRef)) {
-      const index = siblingsRef.current.indexOf(this.viewDescRef);
-      siblingsRef.current.splice(index, 1);
-    }
-    this.viewDescRef.destroy();
+    this.destroy();
   }
 
   render() {
