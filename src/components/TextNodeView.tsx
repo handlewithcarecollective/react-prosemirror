@@ -1,4 +1,5 @@
 import { Node } from "prosemirror-model";
+import { TextSelection } from "prosemirror-state";
 import { DOMEventMap, Decoration, DecorationSet } from "prosemirror-view";
 import { Component, MutableRefObject } from "react";
 
@@ -71,21 +72,41 @@ export class TextNodeView extends Component<Props> {
   viewDescRef: null | TextViewDesc | CompositionViewDesc = null;
   renderRef: null | JSX.Element = null;
   wasProtecting = false;
+  containsCompositionNodeText = true;
 
+  // This is basically NodeViewDesc.localCompositionInfo
+  // from prosemirror-view. It's been slightly adjusted so that
+  // it can be used accurately during render, before we've
+  // necessarily found (or even let the browser create)
+  // view.input.compositionNode
   shouldProtect(props: Props): boolean {
     const { view, getPos, node } = props;
-    // TODO: also check if content still in dom
-    return (
-      view.composing &&
-      view.state.selection.from >= getPos() &&
-      view.state.selection.from <= getPos() + node.nodeSize
-    );
+
+    if (!(view instanceof ReactEditorView)) return false;
+    if (!view.composing) {
+      return false;
+    }
+
+    const pos = getPos();
+
+    const { from, to } = view.state.selection;
+
+    if (
+      !(view.state.selection instanceof TextSelection) ||
+      from < pos ||
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      to > pos + node.nodeSize
+    ) {
+      return false;
+    }
+
+    return this.containsCompositionNodeText;
   }
 
   handleCompositionEnd = () => {
-    if (!this.wasProtecting) return false;
+    if (!this.wasProtecting) return;
     this.forceUpdate();
-    return false;
+    return;
   };
 
   create() {
@@ -190,6 +211,27 @@ export class TextNodeView extends Component<Props> {
       this.destroy();
       this.viewDescRef = this.create();
     }
+
+    setTimeout(() => {
+      const { view, node } = this.props;
+      if (!(view instanceof ReactEditorView)) {
+        this.containsCompositionNodeText = true;
+        return;
+      }
+
+      const textNode = view.input.compositionNode;
+
+      if (!textNode) {
+        this.containsCompositionNodeText = true;
+        return;
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const text = textNode.nodeValue!;
+
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      this.containsCompositionNodeText = node.text! === text;
+    });
   }
 
   shouldComponentUpdate(nextProps: Props): boolean {

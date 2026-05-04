@@ -112,9 +112,10 @@ export function beforeInputPlugin(
         compositionupdate() {
           return true;
         },
-        compositionend(view) {
+        compositionend(view, event) {
           if (!(view instanceof ReactEditorView)) return false;
 
+          if (!view.composing) return false;
           view.input.composing = false;
 
           compositionMarks = null;
@@ -122,11 +123,16 @@ export function beforeInputPlugin(
           if (
             view.input.compositionNode &&
             !view.input.compositionNode.pmViewDesc &&
-            (view.input.compositionNode instanceof CharacterData ||
+            (view.input.compositionNode instanceof Text ||
               view.input.compositionNode instanceof Element)
           ) {
             view.input.compositionNode.remove();
           }
+
+          view.input.compositionEndedAt = event.timeStamp;
+          view.input.compositionNode = null;
+          view.input.compositionID++;
+
           return true;
         },
         beforeinput(view, event) {
