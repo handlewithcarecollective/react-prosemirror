@@ -985,11 +985,19 @@ export class TextViewDesc extends NodeViewDesc {
   }
 
   update(
-    _node: Node,
-    _outerDeco: readonly Decoration[],
+    node: Node,
+    outerDeco: readonly Decoration[],
     _innerDeco: DecorationSource,
     _view: ReactEditorView
   ) {
+    if (
+      this.dirty == NODE_DIRTY ||
+      (this.dirty != NOT_DIRTY && !this.inParent()) ||
+      !node.sameMarkup(this.node)
+    )
+      return false;
+    this.updateOuterDeco(outerDeco);
+    this.node = node;
     this.dirty = NOT_DIRTY;
     return true;
   }

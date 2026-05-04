@@ -89,15 +89,15 @@ export function beforeInputPlugin(
       handleDOMEvents: {
         compositionstart(view) {
           if (!(view instanceof ReactEditorView)) return false;
-          compositionMarks =
-            view.state.storedMarks ?? view.state.selection.$from.marks();
+          view.input.composing = true;
+          compositionMarks = view.state.storedMarks;
 
           view.dispatch(view.state.tr.deleteSelection());
           handleGapCursorComposition(view);
 
           const { state } = view;
 
-          if (compositionMarks.length) {
+          if (compositionMarks?.length) {
             setCursorWrapper(
               widget(state.selection.from, CursorWrapper, {
                 key: "cursor-wrapper",
@@ -193,7 +193,7 @@ export function beforeInputPlugin(
                 range.startContainer,
                 range.startOffset
               );
-              const end = view.posAtDOM(range.endContainer, range.endOffset);
+              const end = view.posAtDOM(range.endContainer, range.endOffset, 1);
 
               if (
                 view.state.doc.textBetween(start, end, "**", "*") === event.data
@@ -202,15 +202,8 @@ export function beforeInputPlugin(
               }
 
               if (event.data) {
-                tr.replace(
-                  start,
-                  end,
-                  new Slice(
-                    Fragment.from(view.state.schema.text(event.data)),
-                    0,
-                    0
-                  )
-                );
+                if (compositionMarks) tr.ensureMarks(compositionMarks);
+                tr.insertText(event.data, start, end);
               } else {
                 tr.delete(start, end);
               }
