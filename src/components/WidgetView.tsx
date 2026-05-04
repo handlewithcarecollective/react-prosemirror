@@ -41,6 +41,7 @@ export function WidgetView({ widget, getPos }: Props) {
       viewDescRef.current.parent = parentRef.current;
       viewDescRef.current.widget = widget;
       viewDescRef.current.dom = domRef.current;
+      viewDescRef.current.dom.pmViewDesc = viewDescRef.current;
     }
     if (!siblingsRef.current.includes(viewDescRef.current)) {
       siblingsRef.current.push(viewDescRef.current);
