@@ -112,8 +112,6 @@ export class TextNodeView extends Component<Props> {
   create() {
     const { view, decorations, siblingsRef, parentRef, getPos, node } =
       this.props;
-    // There simply is no other way to ref a text node
-    // eslint-disable-next-line react/no-find-dom-node
     const dom = findDOMNode(this);
 
     if (!dom && !view.composing) return null;
@@ -172,15 +170,15 @@ export class TextNodeView extends Component<Props> {
     const viewDesc = this.viewDescRef;
     if (!viewDesc) return false;
 
-    if (this.shouldProtect(this.props)) {
-      if (viewDesc instanceof CompositionViewDesc) return true;
+    if (
+      this.shouldProtect(this.props) !==
+      viewDesc instanceof CompositionViewDesc
+    ) {
       return false;
     }
 
     if (viewDesc instanceof CompositionViewDesc) return false;
 
-    // There simply is no other way to ref a text node
-    // eslint-disable-next-line react/no-find-dom-node
     const dom = findDOMNode(this);
     if (!dom || dom !== viewDesc.dom) return false;
 

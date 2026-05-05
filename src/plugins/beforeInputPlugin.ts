@@ -82,7 +82,6 @@ export function beforeInputPlugin(
   setCursorWrapper: (deco: Decoration | null) => void
 ) {
   let compositionMarks: readonly Mark[] | null = null;
-  // let precompositionSnapshot: DOMNode[] | null = null;
 
   return new Plugin({
     props: {
@@ -102,6 +101,7 @@ export function beforeInputPlugin(
               widget(state.selection.from, CursorWrapper, {
                 key: "cursor-wrapper",
                 marks: compositionMarks,
+                side: 1,
               })
             );
           }

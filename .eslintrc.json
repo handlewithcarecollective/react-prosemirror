@@ -17,7 +17,12 @@
     "node": false
   },
   "rules": {
-    "no-console": ["error", { "allow": ["error"] }],
+    "no-console": [
+      "error",
+      {
+        "allow": ["error"]
+      }
+    ],
     "react/prop-types": "off",
     "react-hooks/exhaustive-deps": [
       "warn",
@@ -46,7 +51,8 @@
     ],
     "no-inner-declarations": "off",
     "import/no-unresolved": "off", // Typescript does this better!
-    "@typescript-eslint/no-unused-vars": "off" // Let the TS compiler do this, too
+    "@typescript-eslint/no-unused-vars": "off", // Let the TS compiler do this, too
+    "react/no-find-dom-node": "off"
   },
   "settings": {
     "import/extensions": [".js", ".jsx", ".ts", ".tsx"],
