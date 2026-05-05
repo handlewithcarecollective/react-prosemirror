@@ -105,7 +105,7 @@
     "prosemirror-tables": "^1.8.5",
     "prosemirror-test-builder": "^1.1.1",
     "prosemirror-transform": "^1.12.0",
-    "prosemirror-view": "1.41.7",
+    "prosemirror-view": "1.41.8",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-reconciler": "^0.29.0",
@@ -121,7 +121,7 @@
   "peerDependencies": {
     "prosemirror-model": "^1.0.0",
     "prosemirror-state": "^1.0.0",
-    "prosemirror-view": "1.41.7",
+    "prosemirror-view": "1.41.8",
     "react": ">=17 <20",
     "react-dom": ">=17 <20",
     "react-reconciler": ">=0.26.1 <=0.33.0"
