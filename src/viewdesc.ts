@@ -343,8 +343,9 @@ export class ViewDesc {
         prev = i ? this.children[i - 1] : null;
         if (!prev || prev.dom.parentNode == this.contentDOM) break;
       }
-      if (prev && side && enter && !prev.border && !prev.domAtom)
+      if (prev && side && enter && !prev.border && !prev.domAtom) {
         return prev.domFromPos(prev.size, side);
+      }
       return {
         node: this.contentDOM,
         offset: prev ? domIndex(prev.dom) + 1 : 0,
@@ -558,8 +559,9 @@ export class ViewDesc {
         selRange.focusNode!,
         selRange.focusOffset
       )
-    )
+    ) {
       return;
+    }
 
     // Selection.extend can be used to create an 'inverted' selection
     // (one where the focus is before the anchor), but not all
@@ -985,11 +987,19 @@ export class TextViewDesc extends NodeViewDesc {
   }
 
   update(
-    _node: Node,
-    _outerDeco: readonly Decoration[],
+    node: Node,
+    outerDeco: readonly Decoration[],
     _innerDeco: DecorationSource,
     _view: ReactEditorView
   ) {
+    if (
+      this.dirty == NODE_DIRTY ||
+      (this.dirty != NOT_DIRTY && !this.inParent()) ||
+      !node.sameMarkup(this.node)
+    )
+      return false;
+    this.updateOuterDeco(outerDeco);
+    this.node = node;
     this.dirty = NOT_DIRTY;
     return true;
   }

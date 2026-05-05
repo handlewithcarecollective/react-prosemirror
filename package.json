@@ -66,6 +66,7 @@
     "@typescript-eslint/eslint-plugin": "^5.51.0",
     "@typescript-eslint/parser": "^5.51.0",
     "@uiw/react-codemirror": "^4.23.7",
+    "@vitejs/plugin-basic-ssl": "^2.3.0",
     "@vitejs/plugin-react": "^4.3.1",
     "@wdio/browser-runner": "^9.18.1",
     "@wdio/cli": "^9.18.1",

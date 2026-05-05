@@ -2,15 +2,20 @@ import { NodeViewConstructor } from "prosemirror-view";
 import { useCallback, useContext, useMemo, useRef } from "react";
 
 import { ReactEditorView } from "../ReactEditorView.js";
+import { CursorWrapper } from "../components/CursorWrapper.js";
 import { NodeViewComponentProps } from "../components/nodes/NodeViewComponentProps.js";
 import { ChildDescriptionsContext } from "../contexts/ChildDescriptionsContext.js";
 import { EditorContext } from "../contexts/EditorContext.js";
+import { ReactWidgetType } from "../decorations/ReactWidgetType.js";
+import { InternalDecoration } from "../decorations/internalTypes.js";
 import { DOMNode } from "../dom.js";
 import {
   CompositionViewDesc,
+  MarkViewDesc,
   NodeViewDesc,
   ReactNodeViewDesc,
   ViewDesc,
+  WidgetViewDesc,
   sortViewDescs,
 } from "../viewdesc.js";
 
@@ -199,36 +204,67 @@ export function useNodeViewDescription(
 
     for (const child of children) {
       child.parent = viewDesc;
+    }
 
+    setTimeout(() => {
       // Because TextNodeViews can't locate the DOM nodes
       // for compositions, we need to override them here
-      if (child instanceof CompositionViewDesc) {
-        const compositionTopDOM = viewDesc?.contentDOM?.firstChild;
-        if (!compositionTopDOM)
-          throw new Error(
-            `Started a composition but couldn't find the text node it belongs to.`
-          );
+      if (!viewDescRef.current?.contentDOM) return;
+      const children = viewDescRef.current?.children;
+      const compositionChildIndex = children.findIndex(
+        (child) => child instanceof CompositionViewDesc
+      );
+      if (compositionChildIndex === -1) return;
 
-        let textDOM = compositionTopDOM;
-        while (textDOM.firstChild) {
-          textDOM = textDOM.firstChild as Element | Text;
-        }
+      const compositionViewDesc = children[compositionChildIndex];
 
-        if (!textDOM || !(textDOM instanceof Text))
-          throw new Error(
-            `Started a composition but couldn't find the text node it belongs to.`
-          );
+      if (!(compositionViewDesc instanceof CompositionViewDesc)) return;
 
-        child.dom = compositionTopDOM;
-        child.textDOM = textDOM;
-        child.text = textDOM.data;
-        child.textDOM.pmViewDesc = child;
+      let compositionTopDOM: ChildNode | null = null;
 
-        // It should not be possible to be in a composition because one could
-        // not start between the renders that switch the view type.
-        (view as ReactEditorView).input.compositionNodes.push(child);
+      let search = children[compositionChildIndex - 1];
+      while (search instanceof MarkViewDesc) {
+        search = search.children[0];
       }
-    }
+
+      if (
+        search instanceof WidgetViewDesc &&
+        (search.widget as InternalDecoration).type instanceof ReactWidgetType &&
+        ((search.widget as InternalDecoration).type as ReactWidgetType)
+          .Component === CursorWrapper
+      ) {
+        compositionTopDOM = search.dom.nextSibling;
+      } else {
+        for (const childNode of viewDescRef.current.contentDOM.childNodes) {
+          if (children.every((child) => child.dom !== childNode)) {
+            compositionTopDOM = childNode;
+            break;
+          }
+        }
+      }
+
+      if (!compositionTopDOM) return;
+
+      let textDOM = compositionTopDOM;
+      while (textDOM.firstChild) {
+        textDOM = textDOM.firstChild as Element | Text;
+      }
+
+      if (!textDOM || !(textDOM instanceof Text)) {
+        console.error(compositionTopDOM, textDOM);
+        throw new Error(
+          `Started a composition but couldn't find the text node it belongs to.`
+        );
+      }
+      compositionViewDesc.dom = compositionTopDOM;
+      compositionViewDesc.textDOM = textDOM;
+      compositionViewDesc.text = textDOM.data;
+      compositionViewDesc.textDOM.pmViewDesc = compositionViewDesc;
+
+      (view as ReactEditorView).input.compositionNodes.push(
+        compositionViewDesc
+      );
+    });
   });
 
   const childContextValue = useMemo(
