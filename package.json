@@ -1,6 +1,6 @@
 {
   "name": "@handlewithcare/react-prosemirror",
-  "version": "3.0.5",
+  "version": "3.1.0-tiptap.48",
   "license": "Apache-2.0",
   "type": "module",
   "main": "dist/cjs/index.js",
@@ -11,6 +11,11 @@
       "types": "./dist/types/index.d.ts",
       "import": "./dist/esm/index.js",
       "require": "./dist/cjs/index.js"
+    },
+    "./tiptap": {
+      "types": "./dist/types/tiptap/index.d.ts",
+      "import": "./dist/esm/tiptap/index.js",
+      "require": "./dist/cjs/tiptap/index.js"
     },
     "./src": "./src/index.ts"
   },
@@ -118,6 +123,9 @@
     "webdriver": "^9.18.0",
     "webdriverio": "^9.18.1"
   },
+  "resolutions": {
+    "prosemirror-view": "1.41.7"
+  },
   "peerDependencies": {
     "prosemirror-model": "^1.0.0",
     "prosemirror-state": "^1.0.0",
@@ -131,6 +139,9 @@
     "node": ">=16.9"
   },
   "dependencies": {
+    "@tiptap/core": "^3.15.3",
+    "@tiptap/pm": "^3.15.3",
+    "@tiptap/react": "^3.15.3",
     "classnames": "^2.5.1"
   },
   "publishConfig": {
