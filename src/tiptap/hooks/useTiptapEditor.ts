@@ -1,9 +1,10 @@
-import { useEditor } from "@tiptap/react";
 import { DependencyList } from "react";
 
 import { StaticEditorView } from "../../StaticEditorView.js";
 import { ReactProseMirror } from "../extensions/ReactProseMirror.js";
 import { ReactProseMirrorCommands } from "../extensions/ReactProseMirrorCommands.js";
+
+import { useEditor } from "./useEditor.js";
 
 export type UseTiptapEditorOptions = Omit<
   Parameters<typeof useEditor>[0],
