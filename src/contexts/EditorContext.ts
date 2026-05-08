@@ -3,7 +3,7 @@ import type { DOMEventMap } from "prosemirror-view";
 import { MutableRefObject, createContext } from "react";
 
 import { AbstractEditorView } from "../AbstractEditorView.js";
-import type { EventHandler } from "../plugins/componentEventListeners.js";
+import type { EventHandler } from "../hooks/useComponentEventListeners.js";
 
 export interface EditorContextValue {
   view: AbstractEditorView;
