@@ -91,7 +91,8 @@ export function beforeInputPlugin(
           view.input.composing = true;
           compositionMarks = view.state.storedMarks;
 
-          view.dispatch(view.state.tr.deleteSelection());
+          const tr = view.state.tr.deleteSelection().setStoredMarks(null);
+          view.dispatch(tr);
           handleGapCursorComposition(view);
 
           const { state } = view;
@@ -106,7 +107,6 @@ export function beforeInputPlugin(
             );
           }
 
-          view.input.composing = true;
           return true;
         },
         compositionupdate() {
@@ -121,8 +121,8 @@ export function beforeInputPlugin(
           compositionMarks = null;
           setCursorWrapper(null);
           if (
+            view.input.compositionNode &&
             !view.input.compositionNode.pmViewDesc
-              view.input.compositionNode instanceof Element)
           ) {
             view.input.compositionNode.remove();
           }

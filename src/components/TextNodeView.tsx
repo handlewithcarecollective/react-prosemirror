@@ -114,10 +114,10 @@ export class TextNodeView extends Component<Props> {
     const dom = findDOMNode(this);
 
     if (!dom && !view.composing) return null;
+
     let textNode: ChildNode | null = dom;
-    let textNode = dom;
+    while (textNode?.firstChild) {
       textNode = textNode.firstChild;
-      textNode = textNode.firstChild as Element | Text;
     }
 
     if (!(textNode instanceof Text)) {

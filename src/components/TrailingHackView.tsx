@@ -1,7 +1,9 @@
-import React, { useContext, useRef } from "react";
+import React, { useContext, useRef, useState } from "react";
 
 import { ChildDescriptionsContext } from "../contexts/ChildDescriptionsContext.js";
 import { useClientLayoutEffect } from "../hooks/useClientLayoutEffect.js";
+import { useEditorEffect } from "../hooks/useEditorEffect.js";
+import { useEditorEventListener } from "../hooks/useEditorEventListener.js";
 import { TrailingHackViewDesc, sortViewDescs } from "../viewdesc.js";
 
 type Props = {
@@ -9,6 +11,7 @@ type Props = {
 };
 
 export function TrailingHackView({ getPos }: Props) {
+  const [shouldRender, setShouldRender] = useState(true);
   const { siblingsRef, parentRef } = useContext(ChildDescriptionsContext);
   const viewDescRef = useRef<TrailingHackViewDesc | null>(null);
 
@@ -45,6 +48,37 @@ export function TrailingHackView({ getPos }: Props) {
     }
     siblingsRef.current.sort(sortViewDescs);
   });
+
+  // At the start of a composition, the browser will automatically delete
+  // the trailing hack br element. We need to unmount ourselves _before_
+  // that happens, so that React doesn't try to remove the already-removed
+  // br node when this component gets unmounted
+  useEditorEventListener("compositionstart", (view) => {
+    const { from } = view.state.selection;
+    if (from === getPos()) {
+      setShouldRender(false);
+    }
+  });
+
+  // We need to run the same composition check when we first get mounted,
+  // in case we got mounted in the same render batch as the beginning of
+  // a composition
+  useEditorEffect(
+    (view) => {
+      if (!view.composing) return;
+      const { from } = view.state.selection;
+      if (from === getPos()) {
+        setShouldRender(false);
+      }
+    },
+    [getPos]
+  );
+
+  useEditorEventListener("compositionend", () => {
+    setShouldRender(true);
+  });
+
+  if (!shouldRender) return null;
 
   return <br ref={ref} className="ProseMirror-trailingBreak" />;
 }

@@ -567,7 +567,7 @@ export const ChildNodeViews = memo(function ChildNodeViews({
           component: SeparatorHackView,
           marks: [],
           offset: lastChild?.offset ?? 0,
-          index: (lastChild?.index ?? 0) + 2,
+          index: (lastChild?.index ?? 0) + 1,
           key: "trailing-hack-img",
         },
         {
@@ -575,7 +575,7 @@ export const ChildNodeViews = memo(function ChildNodeViews({
           component: TrailingHackView,
           marks: [],
           offset: lastChild?.offset ?? 0,
-          index: (lastChild?.index ?? 0) + 1,
+          index: (lastChild?.index ?? 0) + 2,
           key: "trailing-hack-br",
         }
       );
