@@ -7,6 +7,7 @@ import React, {
 
 import { domIndex } from "../dom.js";
 import { useEditorEffect } from "../hooks/useEditorEffect.js";
+import { useEditorEventListener } from "../hooks/useEditorEventListener.js";
 
 import { WidgetViewComponentProps } from "./WidgetViewComponentProps.js";
 
@@ -26,6 +27,7 @@ export const CursorWrapper = forwardRef<
   );
 
   useEditorEffect((view) => {
+    console.log("CursorWrapper selection update");
     if (!view || !innerRef.current) return;
 
     // @ts-expect-error Internal property - domObserver
@@ -40,8 +42,12 @@ export const CursorWrapper = forwardRef<
     // @ts-expect-error Internal property - domObserver
     view.domObserver.connectSelection();
 
-    setShouldRender(false);
+    console.log(domSel.anchorNode, domSel.anchorOffset);
   }, []);
+
+  useEditorEventListener("input", () => {
+    setShouldRender(false);
+  });
 
   return shouldRender ? (
     <img

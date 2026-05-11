@@ -187,6 +187,8 @@ export function beforeInputPlugin(
               break;
             }
             case "insertCompositionText": {
+              if (!(view instanceof ReactEditorView)) break;
+
               const { tr } = view.state;
 
               // There's always a range on insertCompositionText beforeinput events
@@ -199,6 +201,8 @@ export function beforeInputPlugin(
               );
               const end = view.posAtDOM(range.endContainer, range.endOffset, 1);
 
+              console.log({ range, start, end });
+
               if (
                 view.state.doc.textBetween(start, end, "**", "*") === event.data
               ) {
@@ -208,10 +212,12 @@ export function beforeInputPlugin(
               if (event.data) {
                 if (compositionMarks) tr.ensureMarks(compositionMarks);
                 tr.insertText(event.data, start, end);
+                console.log(tr.doc);
               } else {
                 tr.delete(start, end);
               }
 
+              console.log(view.dom.innerHTML);
               view.dom.addEventListener(
                 "input",
                 () => {

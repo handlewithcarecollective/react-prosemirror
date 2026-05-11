@@ -27,6 +27,7 @@ import { TrailingHackView } from "./TrailingHackView.js";
 import { WidgetView } from "./WidgetView.js";
 import { MarkView } from "./marks/MarkView.js";
 import { NodeView } from "./nodes/NodeView.js";
+import { CursorWrapper } from "./CursorWrapper.js";
 
 export function wrapInDeco(reactNode: JSX.Element | string, deco: Decoration) {
   const {
@@ -561,6 +562,12 @@ export const ChildNodeViews = memo(function ChildNodeViews({
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       /\n$/.test(lastChild.node.text!)
     ) {
+      // if (
+      //   !(
+      //     lastChild?.type === "widget" &&
+      //     lastChild.widget.type.Component === CursorWrapper
+      //   )
+      // ) {
       children.push(
         {
           type: "hack",
@@ -579,6 +586,7 @@ export const ChildNodeViews = memo(function ChildNodeViews({
           key: "trailing-hack-br",
         }
       );
+      // }
     }
   }
 

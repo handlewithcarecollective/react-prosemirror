@@ -16,6 +16,10 @@ export function TrailingHackView({ getPos }: Props) {
   const viewDescRef = useRef<TrailingHackViewDesc | null>(null);
 
   const ref = useRef<(HTMLBRElement & HTMLImageElement) | null>(null);
+  const preservedRef = useRef(ref.current);
+  if (ref.current) {
+    preservedRef.current = ref.current;
+  }
 
   useClientLayoutEffect(() => {
     const siblings = siblingsRef.current;
@@ -56,9 +60,42 @@ export function TrailingHackView({ getPos }: Props) {
   useEditorEventListener("compositionstart", (view) => {
     const { from } = view.state.selection;
     if (from === getPos()) {
+      // console.log(document.getSelection()?.anchorOffset);
       setShouldRender(false);
     }
   });
+
+  useClientLayoutEffect(() => {
+    if (shouldRender) return;
+    const preservedHack = preservedRef.current;
+    if (!preservedHack) return;
+    console.log("TrailingHackView re-insert");
+
+    if (!viewDescRef.current) return;
+    const { parent } = viewDescRef.current;
+
+    if (!parent) return;
+
+    const dom = parent.contentDOM;
+    if (!dom) return;
+
+    preservedHack.pmViewDesc = undefined;
+
+    const index = parent.children.indexOf(viewDescRef.current);
+
+    if (index === 0) {
+      dom.appendChild(preservedHack);
+    } else {
+      dom.insertBefore(preservedHack, dom.childNodes.item(index));
+    }
+
+    return () => {
+      console.log("TrailingHackView remove");
+      try {
+        dom.removeChild(preservedHack);
+      } catch {}
+    };
+  }, [shouldRender]);
 
   // We need to run the same composition check when we first get mounted,
   // in case we got mounted in the same render batch as the beginning of

@@ -22,7 +22,7 @@ import { schema } from "./schema.js";
 
 const editorState = EditorState.create({
   schema,
-  doc,
+  // doc,
   plugins: [
     inputRules({
       rules: [wrappingInputRule(/^\s*([-+*])\s$/, schema.nodes.list)],
@@ -85,3 +85,9 @@ root.render(
     <DemoEditor />
   </StrictMode>
 );
+//
+// const root = document.getElementById("root")!;
+// root.addEventListener("beforeinput", (e) => {
+//   console.log(e);
+//   console.log(e.getTargetRanges());
+// });
