@@ -1,7 +1,8 @@
 import { Editor } from "@tiptap/core";
 import { useCurrentEditor } from "@tiptap/react";
+import { useCallback, useRef } from "react";
 
-import { useEditorEventCallback } from "../../hooks/useEditorEventCallback.js";
+import { useEditorEffect } from "../../hooks/useEditorEffect.js";
 
 function assertEditor(editor: Editor | null): asserts editor is Editor {
   if (editor) return;
@@ -26,10 +27,18 @@ function assertEditor(editor: Editor | null): asserts editor is Editor {
 export function useTiptapEditorEventCallback<T extends unknown[], R>(
   callback: (editor: Editor, ...args: T) => R
 ) {
+  const ref = useRef(callback);
   const { editor } = useCurrentEditor();
 
-  return useEditorEventCallback((_, ...args: T) => {
-    assertEditor(editor);
-    return callback(editor, ...args);
-  });
+  useEditorEffect(() => {
+    ref.current = callback;
+  }, [callback]);
+
+  return useCallback(
+    (...args: T) => {
+      assertEditor(editor);
+      return ref.current(editor, ...args);
+    },
+    [editor]
+  );
 }
