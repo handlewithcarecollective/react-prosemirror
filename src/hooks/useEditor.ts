@@ -62,11 +62,8 @@ export function useEditor<T extends HTMLElement = HTMLElement>(
   const [_state, setState] = useState<EditorState>(defaultState);
   const state = options.state ?? _state;
 
-  const {
-    componentEventListenersPlugin,
-    registerEventListener,
-    unregisterEventListener,
-  } = useComponentEventListeners();
+  const { handleDOMEvents, registerEventListener, unregisterEventListener } =
+    useComponentEventListeners(options.handleDOMEvents);
 
   const setCursorWrapper = useCallback((deco: Decoration | null) => {
     flushSync(() => {
@@ -75,12 +72,8 @@ export function useEditor<T extends HTMLElement = HTMLElement>(
   }, []);
 
   const plugins = useMemo(
-    () => [
-      ...(options.plugins ?? []),
-      componentEventListenersPlugin,
-      beforeInputPlugin(setCursorWrapper),
-    ],
-    [options.plugins, componentEventListenersPlugin, setCursorWrapper]
+    () => [...(options.plugins ?? []), beforeInputPlugin(setCursorWrapper)],
+    [options.plugins, setCursorWrapper]
   );
 
   const dispatchTransaction = useCallback(
@@ -113,6 +106,7 @@ export function useEditor<T extends HTMLElement = HTMLElement>(
     state,
     plugins,
     dispatchTransaction,
+    handleDOMEvents,
   };
 
   const [view, setView] = useState<AbstractEditorView>(() => {
