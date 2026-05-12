@@ -28,7 +28,7 @@ import {
   DecorationSource,
   EditorView,
 } from "prosemirror-view";
-import React, { forwardRef, useEffect } from "react";
+import React, { HTMLAttributes, forwardRef, useEffect } from "react";
 
 import { widget } from "../../decorations/ReactWidgetType.js";
 import { useEditorEffect } from "../../hooks/useEditorEffect.js";
@@ -37,15 +37,16 @@ import { tempEditor } from "../../testing/editorViewTestHelpers.js";
 import { WidgetViewComponentProps } from "../WidgetViewComponentProps.js";
 import { NodeViewComponentProps } from "../nodes/NodeViewComponentProps.js";
 
-const Widget = forwardRef<HTMLButtonElement, WidgetViewComponentProps>(
-  function Widget({ widget, getPos, ...props }, ref) {
-    return (
-      <button ref={ref} {...props}>
-        ω
-      </button>
-    );
-  }
-);
+const Widget = forwardRef<
+  HTMLButtonElement,
+  WidgetViewComponentProps<HTMLAttributes<HTMLButtonElement>>
+>(function Widget({ widget, getPos, ...props }, ref) {
+  return (
+    <button ref={ref} {...props}>
+      ω
+    </button>
+  );
+});
 
 function make(str: string | Decoration): Decoration {
   if (typeof str != "string") return str;
@@ -259,7 +260,7 @@ describe("Decoration drawing", () => {
     let destroyed = false;
     const DestroyableWidget = forwardRef<
       HTMLButtonElement,
-      WidgetViewComponentProps
+      WidgetViewComponentProps<HTMLAttributes<HTMLButtonElement>>
     >(function DestroyableWidget({ widget, getPos, ...props }, ref) {
       useEffect(() => {
         destroyed = true;
@@ -725,19 +726,17 @@ describe("Decoration drawing", () => {
         return DecorationSet.create(state.doc, [
           widget(
             3,
-            forwardRef<HTMLButtonElement, WidgetViewComponentProps>(
-              function Widget(
-                { widget, getPos, ...props }: WidgetViewComponentProps,
-                ref
-              ) {
-                expect(getPos()).toBe(3);
-                return (
-                  <button ref={ref} {...props}>
-                    ω
-                  </button>
-                );
-              }
-            ),
+            forwardRef<
+              HTMLButtonElement,
+              WidgetViewComponentProps<HTMLAttributes<HTMLButtonElement>>
+            >(function Widget({ widget, getPos, ...props }, ref) {
+              expect(getPos()).toBe(3);
+              return (
+                <button ref={ref} {...props}>
+                  ω
+                </button>
+              );
+            }),
             { key: "button-widget" }
           ),
         ]);
