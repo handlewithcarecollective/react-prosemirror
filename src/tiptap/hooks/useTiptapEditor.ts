@@ -11,6 +11,13 @@ export type UseTiptapEditorOptions = Omit<
   "element"
 >;
 
+/**
+ * Create a React ProseMirror integrated Tiptap Editor instance.
+ * @param options The editor options
+ * @param deps The dependencies to watch for changes
+ * @returns The editor instance
+ * @example const editor = useEditor({ extensions: [...] })
+ */
 export function useTiptapEditor(
   options: UseTiptapEditorOptions,
   deps?: DependencyList
