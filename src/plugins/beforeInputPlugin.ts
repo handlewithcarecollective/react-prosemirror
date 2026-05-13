@@ -3,6 +3,7 @@ import { Plugin, TextSelection } from "prosemirror-state";
 import { Decoration, EditorView } from "prosemirror-view";
 
 import { ReactEditorView } from "../ReactEditorView.js";
+import { browser } from "../browser.js";
 import { CursorWrapper } from "../components/CursorWrapper.js";
 import { widget } from "../decorations/ReactWidgetType.js";
 
@@ -97,7 +98,7 @@ export function beforeInputPlugin(
 
           const { state } = view;
 
-          if (compositionMarks?.length) {
+          if (!browser.safari && compositionMarks?.length) {
             setCursorWrapper(
               widget(state.selection.from, CursorWrapper, {
                 key: "cursor-wrapper",
@@ -134,7 +135,9 @@ export function beforeInputPlugin(
           return true;
         },
         beforeinput(view, event) {
-          event.preventDefault();
+          if (event.inputType !== "insertFromComposition") {
+            event.preventDefault();
+          }
           switch (event.inputType) {
             case "insertParagraph":
             case "insertLineBreak": {
@@ -186,7 +189,9 @@ export function beforeInputPlugin(
               insertText(view, event.data);
               break;
             }
-            case "insertCompositionText": {
+            case "insertCompositionText":
+            case "deleteCompositionText":
+            case "insertFromComposition": {
               if (!(view instanceof ReactEditorView)) break;
 
               const { tr } = view.state;
@@ -201,8 +206,6 @@ export function beforeInputPlugin(
               );
               const end = view.posAtDOM(range.endContainer, range.endOffset, 1);
 
-              console.log({ range, start, end });
-
               if (
                 view.state.doc.textBetween(start, end, "**", "*") === event.data
               ) {
@@ -212,12 +215,10 @@ export function beforeInputPlugin(
               if (event.data) {
                 if (compositionMarks) tr.ensureMarks(compositionMarks);
                 tr.insertText(event.data, start, end);
-                console.log(tr.doc);
               } else {
                 tr.delete(start, end);
               }
 
-              console.log(view.dom.innerHTML);
               view.dom.addEventListener(
                 "input",
                 () => {

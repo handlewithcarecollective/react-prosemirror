@@ -12,6 +12,7 @@ type Props = {
 
 export function TrailingHackView({ getPos }: Props) {
   const [shouldRender, setShouldRender] = useState(true);
+  const [shouldReinsert, setShouldReinsert] = useState(false);
   const { siblingsRef, parentRef } = useContext(ChildDescriptionsContext);
   const viewDescRef = useRef<TrailingHackViewDesc | null>(null);
 
@@ -62,14 +63,14 @@ export function TrailingHackView({ getPos }: Props) {
     if (from === getPos()) {
       // console.log(document.getSelection()?.anchorOffset);
       setShouldRender(false);
+      setShouldReinsert(true);
     }
   });
 
   useClientLayoutEffect(() => {
-    if (shouldRender) return;
+    if (!shouldReinsert) return;
     const preservedHack = preservedRef.current;
     if (!preservedHack) return;
-    console.log("TrailingHackView re-insert");
 
     if (!viewDescRef.current) return;
     const { parent } = viewDescRef.current;
@@ -90,12 +91,11 @@ export function TrailingHackView({ getPos }: Props) {
     }
 
     return () => {
-      console.log("TrailingHackView remove");
       try {
         dom.removeChild(preservedHack);
       } catch {}
     };
-  }, [shouldRender]);
+  }, [shouldReinsert]);
 
   // We need to run the same composition check when we first get mounted,
   // in case we got mounted in the same render batch as the beginning of
@@ -113,6 +113,7 @@ export function TrailingHackView({ getPos }: Props) {
 
   useEditorEventListener("compositionend", () => {
     setShouldRender(true);
+    setShouldReinsert(false);
   });
 
   if (!shouldRender) return null;

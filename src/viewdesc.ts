@@ -546,19 +546,20 @@ export class ViewDesc {
     }
 
     if (
-      !(force || (brKludge && browser.safari)) &&
-      isEquivalentPosition(
-        anchorDOM.node,
-        anchorDOM.offset,
-        selRange.anchorNode!,
-        selRange.anchorOffset
-      ) &&
-      isEquivalentPosition(
-        headDOM.node,
-        headDOM.offset,
-        selRange.focusNode!,
-        selRange.focusOffset
-      )
+      (browser.safari && view.composing) ||
+      (!(force || (brKludge && browser.safari)) &&
+        isEquivalentPosition(
+          anchorDOM.node,
+          anchorDOM.offset,
+          selRange.anchorNode!,
+          selRange.anchorOffset
+        ) &&
+        isEquivalentPosition(
+          headDOM.node,
+          headDOM.offset,
+          selRange.focusNode!,
+          selRange.focusOffset
+        ))
     ) {
       return;
     }
