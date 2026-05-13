@@ -27,7 +27,6 @@ import { TrailingHackView } from "./TrailingHackView.js";
 import { WidgetView } from "./WidgetView.js";
 import { MarkView } from "./marks/MarkView.js";
 import { NodeView } from "./nodes/NodeView.js";
-import { CursorWrapper } from "./CursorWrapper.js";
 
 export function wrapInDeco(reactNode: JSX.Element | string, deco: Decoration) {
   const {

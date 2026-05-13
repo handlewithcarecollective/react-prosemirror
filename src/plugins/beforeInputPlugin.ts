@@ -3,7 +3,6 @@ import { Plugin, TextSelection } from "prosemirror-state";
 import { Decoration, EditorView } from "prosemirror-view";
 
 import { ReactEditorView } from "../ReactEditorView.js";
-import { browser } from "../browser.js";
 import { CursorWrapper } from "../components/CursorWrapper.js";
 import { widget } from "../decorations/ReactWidgetType.js";
 
@@ -98,7 +97,7 @@ export function beforeInputPlugin(
 
           const { state } = view;
 
-          if (!browser.safari && compositionMarks?.length) {
+          if (compositionMarks?.length) {
             setCursorWrapper(
               widget(state.selection.from, CursorWrapper, {
                 key: "cursor-wrapper",

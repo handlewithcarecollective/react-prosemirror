@@ -5,6 +5,7 @@ import React, {
   useState,
 } from "react";
 
+import { browser } from "../browser.js";
 import { domIndex } from "../dom.js";
 import { useEditorEffect } from "../hooks/useEditorEffect.js";
 import { useEditorEventListener } from "../hooks/useEditorEventListener.js";
@@ -27,7 +28,7 @@ export const CursorWrapper = forwardRef<
   );
 
   useEditorEffect((view) => {
-    console.log("CursorWrapper selection update");
+    // console.log("CursorWrapper selection update");
     if (!view || !innerRef.current) return;
 
     // @ts-expect-error Internal property - domObserver
@@ -42,10 +43,11 @@ export const CursorWrapper = forwardRef<
     // @ts-expect-error Internal property - domObserver
     view.domObserver.connectSelection();
 
-    console.log(domSel.anchorNode, domSel.anchorOffset);
+    // console.log(domSel.anchorNode, domSel.anchorOffset);
   }, []);
 
   useEditorEventListener("input", () => {
+    if (browser.safari) return;
     setShouldRender(false);
   });
 
