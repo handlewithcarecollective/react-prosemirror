@@ -1,11 +1,11 @@
 import { MutableRefObject, createContext } from "react";
 
-import { ViewDesc } from "../viewdesc.js";
+import { CompositionViewDesc, ViewDesc } from "../viewdesc.js";
 
 export type ChildDescriptionsContextValue = {
   parentRef: MutableRefObject<ViewDesc | undefined>;
   siblingsRef: MutableRefObject<ViewDesc[]>;
-  findCompositionDOM: () => void;
+  findCompositionDOM: (compositionViewDesc: CompositionViewDesc) => void;
 };
 
 export const ChildDescriptionsContext =

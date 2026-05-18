@@ -97,12 +97,12 @@ export function beforeInputPlugin(
 
           const { state } = view;
 
-          if (compositionMarks?.length) {
+          if (compositionMarks) {
             setCursorWrapper(
               widget(state.selection.from, CursorWrapper, {
                 key: "cursor-wrapper",
                 marks: compositionMarks,
-                side: -1,
+                side: 0,
               })
             );
           }

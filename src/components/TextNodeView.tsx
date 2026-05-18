@@ -57,7 +57,7 @@ type Props = {
   getPos: () => number;
   siblingsRef: MutableRefObject<ViewDesc[]>;
   parentRef: MutableRefObject<ViewDesc | undefined>;
-  findCompositionDOM: () => void;
+  findCompositionDOM: (compositionViewDesc: CompositionViewDesc) => void;
   decorations: readonly Decoration[];
   registerEventListener<EventType extends keyof DOMEventMap>(
     eventType: EventType,
@@ -163,8 +163,8 @@ export class TextNodeView extends Component<Props> {
     siblingsRef.current.push(viewDesc);
     siblingsRef.current.sort(sortViewDescs);
 
-    if (this.shouldProtect(this.props)) {
-      this.props.findCompositionDOM();
+    if (viewDesc instanceof CompositionViewDesc) {
+      this.props.findCompositionDOM(viewDesc);
     }
 
     return viewDesc;
@@ -257,9 +257,6 @@ export class TextNodeView extends Component<Props> {
   }
 
   componentDidMount(): void {
-    this.viewDescRef.current = null;
-    this.renderRef.current = null;
-    this.wasProtecting.current = false;
     this.containsCompositionNodeText.current = true;
 
     // After a composition, force an update so that we re-check whether we need
@@ -268,6 +265,7 @@ export class TextNodeView extends Component<Props> {
     const { registerEventListener } = this.props;
     registerEventListener("compositionend", this.handleCompositionEnd);
 
+    this.viewDescRef.current = this.create();
     this.updateEffect();
   }
 

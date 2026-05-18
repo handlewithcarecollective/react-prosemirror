@@ -202,52 +202,49 @@ export function useNodeViewDescription(
     }
   });
 
-  const findCompositionDOM = useCallback(() => {
-    if (!props.node.isTextblock) return;
+  const findCompositionDOM = useCallback(
+    (compositionViewDesc: CompositionViewDesc) => {
+      if (!props.node.isTextblock) return;
 
-    const children = childrenRef.current;
+      const children = childrenRef.current;
 
-    // Because TextNodeViews can't locate the DOM nodes
-    // for compositions, we need to override them here
-    if (!viewDescRef.current?.contentDOM) return;
-    const compositionChildIndex = children.findIndex(
-      (child) => child instanceof CompositionViewDesc
-    );
-    if (compositionChildIndex === -1) return;
+      // Because TextNodeViews can't locate the DOM nodes
+      // for compositions, we need to override them here
+      if (!viewDescRef.current?.contentDOM) return;
 
-    const compositionViewDesc = children[compositionChildIndex];
+      let compositionTopDOM: ChildNode | null = null;
 
-    if (!(compositionViewDesc instanceof CompositionViewDesc)) return;
-
-    let compositionTopDOM: ChildNode | null = null;
-
-    for (const childNode of viewDescRef.current.contentDOM.childNodes) {
-      if (children.every((child) => child.dom !== childNode)) {
-        compositionTopDOM = childNode;
-        break;
+      for (const childNode of viewDescRef.current.contentDOM.childNodes) {
+        if (children.every((child) => child.dom !== childNode)) {
+          compositionTopDOM = childNode;
+          break;
+        }
       }
-    }
 
-    if (!compositionTopDOM) return;
+      if (!compositionTopDOM) return;
 
-    let textDOM = compositionTopDOM;
-    while (textDOM.firstChild) {
-      textDOM = textDOM.firstChild as Element | Text;
-    }
+      let textDOM = compositionTopDOM;
+      while (textDOM.firstChild) {
+        textDOM = textDOM.firstChild as Element | Text;
+      }
 
-    if (!textDOM || !(textDOM instanceof Text)) {
-      console.error(compositionTopDOM, textDOM);
-      throw new Error(
-        `Started a composition but couldn't find the text node it belongs to.`
+      if (!textDOM || !(textDOM instanceof Text)) {
+        console.error(compositionTopDOM, textDOM);
+        throw new Error(
+          `Started a composition but couldn't find the text node it belongs to.`
+        );
+      }
+      compositionViewDesc.dom = compositionTopDOM;
+      compositionViewDesc.textDOM = textDOM;
+      compositionViewDesc.text = textDOM.data;
+      compositionViewDesc.textDOM.pmViewDesc = compositionViewDesc;
+
+      (view as ReactEditorView).input.compositionNodes.push(
+        compositionViewDesc
       );
-    }
-    compositionViewDesc.dom = compositionTopDOM;
-    compositionViewDesc.textDOM = textDOM;
-    compositionViewDesc.text = textDOM.data;
-    compositionViewDesc.textDOM.pmViewDesc = compositionViewDesc;
-
-    (view as ReactEditorView).input.compositionNodes.push(compositionViewDesc);
-  }, [props.node.isTextblock, view]);
+    },
+    [props.node.isTextblock, view]
+  );
 
   const childContextValue = useMemo(
     () => ({
