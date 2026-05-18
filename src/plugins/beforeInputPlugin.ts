@@ -88,7 +88,7 @@ export function beforeInputPlugin(
       handleDOMEvents: {
         compositionstart(view) {
           if (!(view instanceof ReactEditorView)) return false;
-          view.input.composing = true;
+          view.compositionStarting = true;
           compositionMarks = view.state.storedMarks;
 
           const tr = view.state.tr.setStoredMarks(null);
@@ -106,6 +106,13 @@ export function beforeInputPlugin(
               })
             );
           }
+
+          view.compositionStarting = false;
+          // We set composing to true after creating the cursor wrapper
+          // so that no existing text nodes try to protect themselves
+          // while we're creating the cursor wrapper, which may need
+          // to split a text node.
+          view.input.composing = true;
 
           return true;
         },

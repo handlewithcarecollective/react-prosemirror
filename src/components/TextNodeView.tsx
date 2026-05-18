@@ -69,10 +69,6 @@ type Props = {
   ): void;
 };
 
-function createMutRef<T>(): MutableRefObject<T | null> {
-  return createRef();
-}
-
 export class TextNodeView extends Component<Props> {
   viewDescRef = createMutRef<TextViewDesc | CompositionViewDesc>();
   renderRef = createMutRef<JSX.Element>();
@@ -98,7 +94,7 @@ export class TextNodeView extends Component<Props> {
 
     if (
       !(view.state.selection instanceof TextSelection) ||
-      from < pos ||
+      from <= pos ||
       to > pos + node.nodeSize
     ) {
       return false;
@@ -302,4 +298,13 @@ export class TextNodeView extends Component<Props> {
 
     return this.renderRef.current;
   }
+}
+
+/**
+ * createRef returns a RefObject, even though the docs
+ * say that it's acceptible to manage the ref's value
+ * yourself.
+ */
+function createMutRef<T>(): MutableRefObject<T | null> {
+  return createRef();
 }

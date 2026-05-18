@@ -1,5 +1,6 @@
 import React, { useContext, useRef, useState } from "react";
 
+import { ReactEditorView } from "../ReactEditorView.js";
 import { ChildDescriptionsContext } from "../contexts/ChildDescriptionsContext.js";
 import { useClientLayoutEffect } from "../hooks/useClientLayoutEffect.js";
 import { useEditorEffect } from "../hooks/useEditorEffect.js";
@@ -61,12 +62,15 @@ export function TrailingHackView({ getPos }: Props) {
   useEditorEventListener("compositionstart", (view) => {
     const { from } = view.state.selection;
     if (from === getPos()) {
-      // console.log(document.getSelection()?.anchorOffset);
       setShouldRender(false);
       setShouldReinsert(true);
     }
   });
 
+  // Chrome and Safari will cancel/mangle the composition if the br element isn't
+  // still in the DOM after the compositionstart event. We manually add it
+  // back to the DOM, without React managing it, so that it can be removed
+  // again by the browser when it starts the composition.
   useClientLayoutEffect(() => {
     if (!shouldReinsert) return;
     const preservedHack = preservedRef.current;
@@ -93,7 +97,11 @@ export function TrailingHackView({ getPos }: Props) {
     return () => {
       try {
         dom.removeChild(preservedHack);
-      } catch {}
+      } catch {
+        // It may have already been removed by the browser during
+        // the composition, but if we get unmounted before that happens,
+        // we need to remove it ourselves
+      }
     };
   }, [shouldReinsert]);
 
@@ -102,7 +110,8 @@ export function TrailingHackView({ getPos }: Props) {
   // a composition
   useEditorEffect(
     (view) => {
-      if (!view.composing) return;
+      if (!(view instanceof ReactEditorView)) return;
+      if (!view.compositionStarting) return;
       const { from } = view.state.selection;
       if (from === getPos()) {
         setShouldRender(false);

@@ -104,7 +104,9 @@ export class ReactEditorView extends EditorView implements AbstractEditorView {
 
   private _destroyed: boolean;
 
-  public deferPendingEffects: boolean;
+  // TODO: Probably refactor? It's used in TrailingHackView to detect
+  // whether it was mounted during a compositionstart event handler
+  public compositionStarting: boolean;
 
   constructor(place: { mount: HTMLElement }, props: DirectEditorProps) {
     // Prevent the base class from destroying the React-managed nodes.
@@ -158,7 +160,7 @@ export class ReactEditorView extends EditorView implements AbstractEditorView {
     // @ts-expect-error this violates the typing but class does it, too.
     this.docView = null;
     this._destroyed = false;
-    this.deferPendingEffects = false;
+    this.compositionStarting = false;
   }
 
   get props() {
