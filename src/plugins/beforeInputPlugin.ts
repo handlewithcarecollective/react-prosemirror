@@ -102,7 +102,7 @@ export function beforeInputPlugin(
               widget(state.selection.from, CursorWrapper, {
                 key: "cursor-wrapper",
                 marks: compositionMarks,
-                side: 1,
+                side: -1,
               })
             );
           }

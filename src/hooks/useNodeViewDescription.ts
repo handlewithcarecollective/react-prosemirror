@@ -2,20 +2,15 @@ import { NodeViewConstructor } from "prosemirror-view";
 import { useCallback, useContext, useMemo, useRef } from "react";
 
 import { ReactEditorView } from "../ReactEditorView.js";
-import { CursorWrapper } from "../components/CursorWrapper.js";
 import { NodeViewComponentProps } from "../components/nodes/NodeViewComponentProps.js";
 import { ChildDescriptionsContext } from "../contexts/ChildDescriptionsContext.js";
 import { EditorContext } from "../contexts/EditorContext.js";
-import { ReactWidgetType } from "../decorations/ReactWidgetType.js";
-import { InternalDecoration } from "../decorations/internalTypes.js";
 import { DOMNode } from "../dom.js";
 import {
   CompositionViewDesc,
-  MarkViewDesc,
   NodeViewDesc,
   ReactNodeViewDesc,
   ViewDesc,
-  WidgetViewDesc,
   sortViewDescs,
 } from "../viewdesc.js";
 
@@ -222,24 +217,10 @@ export function useNodeViewDescription(
 
     let compositionTopDOM: ChildNode | null = null;
 
-    let search = children[compositionChildIndex - 1];
-    while (search instanceof MarkViewDesc) {
-      search = search.children[0];
-    }
-
-    if (
-      search instanceof WidgetViewDesc &&
-      (search.widget as InternalDecoration).type instanceof ReactWidgetType &&
-      ((search.widget as InternalDecoration).type as ReactWidgetType)
-        .Component === CursorWrapper
-    ) {
-      compositionTopDOM = search.dom.nextSibling;
-    } else {
-      for (const childNode of viewDescRef.current.contentDOM.childNodes) {
-        if (children.every((child) => child.dom !== childNode)) {
-          compositionTopDOM = childNode;
-          break;
-        }
+    for (const childNode of viewDescRef.current.contentDOM.childNodes) {
+      if (children.every((child) => child.dom !== childNode)) {
+        compositionTopDOM = childNode;
+        break;
       }
     }
 

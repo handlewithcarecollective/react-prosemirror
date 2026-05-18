@@ -28,7 +28,6 @@ export const CursorWrapper = forwardRef<
   );
 
   useEditorEffect((view) => {
-    // console.log("CursorWrapper selection update");
     if (!view || !innerRef.current) return;
 
     // @ts-expect-error Internal property - domObserver
@@ -42,8 +41,6 @@ export const CursorWrapper = forwardRef<
 
     // @ts-expect-error Internal property - domObserver
     view.domObserver.connectSelection();
-
-    // console.log(domSel.anchorNode, domSel.anchorOffset);
   }, []);
 
   useEditorEventListener("input", () => {

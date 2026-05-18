@@ -7,6 +7,7 @@ import { ChildDescriptionsContext } from "../contexts/ChildDescriptionsContext.j
 import { EditorContext } from "../contexts/EditorContext.js";
 import { DOMNode } from "../dom.js";
 import {
+  CompositionViewDesc,
   MarkViewDesc,
   ReactMarkViewDesc,
   ViewDesc,
@@ -160,6 +161,47 @@ export function useMarkViewDescription(
     for (const child of children) {
       child.parent = viewDesc;
     }
+
+    // Because TextNodeViews can't locate the DOM nodes
+    // for compositions, we need to override them here
+    if (!viewDescRef.current?.contentDOM) return;
+    const compositionChildIndex = children.findIndex(
+      (child) => child instanceof CompositionViewDesc
+    );
+    if (compositionChildIndex === -1) return;
+
+    const compositionViewDesc = children[compositionChildIndex];
+
+    if (!(compositionViewDesc instanceof CompositionViewDesc)) return;
+
+    let compositionTopDOM: ChildNode | null = null;
+
+    for (const childNode of viewDescRef.current.contentDOM.childNodes) {
+      if (children.every((child) => child.dom !== childNode)) {
+        compositionTopDOM = childNode;
+        break;
+      }
+    }
+
+    if (!compositionTopDOM) return;
+
+    let textDOM = compositionTopDOM;
+    while (textDOM.firstChild) {
+      textDOM = textDOM.firstChild as Element | Text;
+    }
+
+    if (!textDOM || !(textDOM instanceof Text)) {
+      console.error(compositionTopDOM, textDOM);
+      throw new Error(
+        `Started a composition but couldn't find the text node it belongs to.`
+      );
+    }
+    compositionViewDesc.dom = compositionTopDOM;
+    compositionViewDesc.textDOM = textDOM;
+    compositionViewDesc.text = textDOM.data;
+    compositionViewDesc.textDOM.pmViewDesc = compositionViewDesc;
+
+    (view as ReactEditorView).input.compositionNodes.push(compositionViewDesc);
   });
 
   const childContextValue = useMemo(
