@@ -200,8 +200,12 @@ export function useNodeViewDescription(
     for (const child of children) {
       child.parent = viewDesc;
     }
+  });
 
+  const findCompositionDOM = useCallback(() => {
     if (!props.node.isTextblock) return;
+
+    const children = childrenRef.current;
 
     // Because TextNodeViews can't locate the DOM nodes
     // for compositions, we need to override them here
@@ -243,14 +247,15 @@ export function useNodeViewDescription(
     compositionViewDesc.textDOM.pmViewDesc = compositionViewDesc;
 
     (view as ReactEditorView).input.compositionNodes.push(compositionViewDesc);
-  });
+  }, [props.node.isTextblock, view]);
 
   const childContextValue = useMemo(
     () => ({
       parentRef: viewDescRef,
       siblingsRef: childrenRef,
+      findCompositionDOM,
     }),
-    [childrenRef, viewDescRef]
+    [findCompositionDOM]
   );
 
   return {

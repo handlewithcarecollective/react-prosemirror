@@ -1,6 +1,9 @@
 import React, { ComponentType, ReactNode, useMemo, useState } from "react";
 
-import { ChildDescriptionsContext } from "../contexts/ChildDescriptionsContext.js";
+import {
+  ChildDescriptionsContext,
+  ChildDescriptionsContextValue,
+} from "../contexts/ChildDescriptionsContext.js";
 import { EditorContext } from "../contexts/EditorContext.js";
 import { EditorStateContext } from "../contexts/EditorStateContext.js";
 import {
@@ -25,7 +28,9 @@ const rootChildDescriptionsContextValue = {
   siblingsRef: {
     current: [],
   },
-};
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  findCompositionDOM: () => {},
+} satisfies ChildDescriptionsContextValue;
 
 export type Props = UseEditorOptions & {
   children?: ReactNode;

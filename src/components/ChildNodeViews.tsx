@@ -135,7 +135,7 @@ const ChildView = memo(function ChildView({
     <child.component key={child.key} getPos={getPos} />
   ) : child.node.isText ? (
     <ChildDescriptionsContext.Consumer key={child.key}>
-      {({ siblingsRef, parentRef }) => (
+      {({ siblingsRef, parentRef, findCompositionDOM }) => (
         <EditorContext.Consumer>
           {({ registerEventListener, unregisterEventListener }) => (
             <TextNodeView
@@ -144,6 +144,7 @@ const ChildView = memo(function ChildView({
               getPos={getPos}
               siblingsRef={siblingsRef}
               parentRef={parentRef}
+              findCompositionDOM={findCompositionDOM}
               decorations={child.outerDeco}
               registerEventListener={registerEventListener}
               unregisterEventListener={unregisterEventListener}

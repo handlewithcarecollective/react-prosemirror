@@ -1,7 +1,7 @@
 import { Node } from "prosemirror-model";
 import { TextSelection } from "prosemirror-state";
 import { DOMEventMap, Decoration, DecorationSet } from "prosemirror-view";
-import { Component, MutableRefObject } from "react";
+import { Component, MutableRefObject, createRef } from "react";
 
 import { AbstractEditorView } from "../AbstractEditorView.js";
 import { ReactEditorView } from "../ReactEditorView.js";
@@ -57,6 +57,7 @@ type Props = {
   getPos: () => number;
   siblingsRef: MutableRefObject<ViewDesc[]>;
   parentRef: MutableRefObject<ViewDesc | undefined>;
+  findCompositionDOM: () => void;
   decorations: readonly Decoration[];
   registerEventListener<EventType extends keyof DOMEventMap>(
     eventType: EventType,
@@ -68,11 +69,15 @@ type Props = {
   ): void;
 };
 
+function createMutRef<T>(): MutableRefObject<T | null> {
+  return createRef();
+}
+
 export class TextNodeView extends Component<Props> {
-  viewDescRef: null | TextViewDesc | CompositionViewDesc = null;
-  renderRef: null | JSX.Element = null;
-  wasProtecting = false;
-  containsCompositionNodeText = true;
+  viewDescRef = createMutRef<TextViewDesc | CompositionViewDesc>();
+  renderRef = createMutRef<JSX.Element>();
+  wasProtecting = createMutRef<boolean>();
+  containsCompositionNodeText = createMutRef<boolean>();
 
   // This is basically NodeViewDesc.localCompositionInfo
   // from prosemirror-view. It's been slightly adjusted so that
@@ -99,7 +104,7 @@ export class TextNodeView extends Component<Props> {
       return false;
     }
 
-    return this.containsCompositionNodeText;
+    return !!this.containsCompositionNodeText.current;
   }
 
   handleCompositionEnd = () => {
@@ -158,6 +163,10 @@ export class TextNodeView extends Component<Props> {
     siblingsRef.current.push(viewDesc);
     siblingsRef.current.sort(sortViewDescs);
 
+    if (this.shouldProtect(this.props)) {
+      this.props.findCompositionDOM();
+    }
+
     return viewDesc;
   }
 
@@ -166,7 +175,7 @@ export class TextNodeView extends Component<Props> {
 
     if (!(view instanceof ReactEditorView)) return false;
 
-    const viewDesc = this.viewDescRef;
+    const viewDesc = this.viewDescRef.current;
     if (!viewDesc) return false;
 
     if (
@@ -190,7 +199,7 @@ export class TextNodeView extends Component<Props> {
   }
 
   destroy() {
-    const viewDesc = this.viewDescRef;
+    const viewDesc = this.viewDescRef.current;
     if (!viewDesc) return;
 
     viewDesc.destroy();
@@ -206,19 +215,19 @@ export class TextNodeView extends Component<Props> {
   updateEffect() {
     if (!this.update()) {
       this.destroy();
-      this.viewDescRef = this.create();
+      this.viewDescRef.current = this.create();
     }
 
     const { view, node } = this.props;
     if (!(view instanceof ReactEditorView)) {
-      this.containsCompositionNodeText = true;
+      this.containsCompositionNodeText.current = true;
       return;
     }
 
     const textNode = view.input.compositionNode;
 
     if (!textNode) {
-      this.containsCompositionNodeText = true;
+      this.containsCompositionNodeText.current = true;
       return;
     }
 
@@ -226,7 +235,7 @@ export class TextNodeView extends Component<Props> {
     const text = textNode.nodeValue!;
 
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    this.containsCompositionNodeText = node.text! === text;
+    this.containsCompositionNodeText.current = node.text! === text;
   }
 
   shouldComponentUpdate(nextProps: Props): boolean {
@@ -239,8 +248,20 @@ export class TextNodeView extends Component<Props> {
     return !shallowEqual(this.props, nextProps);
   }
 
+  constructor(props: Props) {
+    super(props);
+    this.viewDescRef.current = null;
+    this.renderRef.current = null;
+    this.wasProtecting.current = false;
+    this.containsCompositionNodeText.current = true;
+  }
+
   componentDidMount(): void {
-    this.viewDescRef = null;
+    this.viewDescRef.current = null;
+    this.renderRef.current = null;
+    this.wasProtecting.current = false;
+    this.containsCompositionNodeText.current = true;
+
     // After a composition, force an update so that we re-check whether we need
     // to be protecting our rendered content and allow React to re-sync with the
     // DOM.
@@ -270,17 +291,17 @@ export class TextNodeView extends Component<Props> {
     // we freeze the DOM of this element so that it doesn't
     // interrupt the composition
     if (this.shouldProtect(this.props)) {
-      this.wasProtecting = true;
-      return this.renderRef;
+      this.wasProtecting.current = true;
+      return this.renderRef.current;
     }
 
-    this.wasProtecting = false;
+    this.wasProtecting.current = false;
 
-    this.renderRef = decorations.reduce(
+    this.renderRef.current = decorations.reduce(
       wrapInDeco,
       node.text as unknown as JSX.Element
     );
 
-    return this.renderRef;
+    return this.renderRef.current;
   }
 }
