@@ -91,7 +91,7 @@ export function beforeInputPlugin(
           view.input.composing = true;
           compositionMarks = view.state.storedMarks;
 
-          const tr = view.state.tr.deleteSelection().setStoredMarks(null);
+          const tr = view.state.tr.setStoredMarks(null);
           view.dispatch(tr);
           handleGapCursorComposition(view);
 
