@@ -1,14 +1,7 @@
-import React, {
-  forwardRef,
-  useImperativeHandle,
-  useRef,
-  useState,
-} from "react";
+import React, { forwardRef, useImperativeHandle, useRef } from "react";
 
-import { browser } from "../browser.js";
 import { domIndex } from "../dom.js";
 import { useEditorEffect } from "../hooks/useEditorEffect.js";
-import { useEditorEventListener } from "../hooks/useEditorEventListener.js";
 
 import { WidgetViewComponentProps } from "./WidgetViewComponentProps.js";
 
@@ -16,7 +9,6 @@ export const CursorWrapper = forwardRef<
   HTMLImageElement,
   WidgetViewComponentProps
 >(function CursorWrapper({ widget, getPos, ...props }, ref) {
-  const [shouldRender, setShouldRender] = useState(true);
   const innerRef = useRef<HTMLImageElement | null>(null);
 
   useImperativeHandle<HTMLImageElement | null, HTMLImageElement | null>(
@@ -43,12 +35,7 @@ export const CursorWrapper = forwardRef<
     view.domObserver.connectSelection();
   }, []);
 
-  useEditorEventListener("input", () => {
-    if (browser.safari) return;
-    setShouldRender(false);
-  });
-
-  return shouldRender ? (
+  return (
     <img
       ref={innerRef}
       className="ProseMirror-separator"
@@ -57,5 +44,5 @@ export const CursorWrapper = forwardRef<
       alt=""
       {...props}
     />
-  ) : null;
+  );
 });
