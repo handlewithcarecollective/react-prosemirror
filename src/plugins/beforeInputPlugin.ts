@@ -89,13 +89,31 @@ export function beforeInputPlugin(
         compositionstart(view) {
           if (!(view instanceof ReactEditorView)) return false;
           view.compositionStarting = true;
+
+          const { state } = view;
+          const { selection } = state;
+
+          const isEmptyTr = state.tr.delete(selection.from, selection.to);
+
+          const $from = isEmptyTr.doc.resolve(
+            isEmptyTr.mapping.map(selection.from)
+          );
+          const isEmptyTextblock =
+            $from.parent.isTextblock && $from.parent.childCount === 0;
+
           compositionMarks = view.state.storedMarks;
+          // Render a CursorWrapper with empty marks if starting a composition in an
+          // empty textblock with no marks. This prevents the browser from adding a
+          // <br> to the text block when it becomes empty (either via canceling the
+          // composition with the escape key or deleting all composition text when
+          // the composition node is the only text node in the text block)
+          if (compositionMarks === null && isEmptyTextblock) {
+            compositionMarks = [];
+          }
 
           const tr = view.state.tr.setStoredMarks(null);
           view.dispatch(tr);
           handleGapCursorComposition(view);
-
-          const { state } = view;
 
           if (compositionMarks) {
             setCursorWrapper(
