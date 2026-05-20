@@ -8,10 +8,17 @@ import { EditorState, Transaction } from "prosemirror-state";
 import { columnResizing, tableEditing } from "prosemirror-tables";
 import "prosemirror-tables/style/tables.css";
 import "prosemirror-view/style/prosemirror.css";
-import React, { StrictMode, useCallback, useState } from "react";
+import React, { StrictMode, forwardRef, useCallback, useState } from "react";
 import { createRoot } from "react-dom/client";
 
-import { ProseMirror, ProseMirrorDoc, reactKeys } from "../src/index.js";
+import {
+  NodeViewComponentProps,
+  ProseMirror,
+  ProseMirrorDoc,
+  mergeDomRefs,
+  reactKeys,
+  useEditorStateSelector,
+} from "../src/index.js";
 
 import { LinkTooltip } from "./LinkTooltip.js";
 import Menu from "./Menu.js";
@@ -49,6 +56,18 @@ const plugins = [
 
 const nodeViews = {
   code_block: CodeBlock,
+  paragraph: forwardRef<HTMLParagraphElement, NodeViewComponentProps>(
+    function Paragraph({ nodeProps, children, ...props }, ref) {
+      const size = useEditorStateSelector((state) => state.doc.nodeSize);
+      console.log(size);
+
+      return (
+        <p ref={mergeDomRefs(ref, nodeProps.contentDOMRef)} {...props}>
+          {children}
+        </p>
+      );
+    }
+  ),
 };
 
 function DemoEditor() {

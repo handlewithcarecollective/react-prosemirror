@@ -9,6 +9,7 @@ export { useEditorEventCallback } from "./hooks/useEditorEventCallback.js";
 export { useEditorEventListener } from "./hooks/useEditorEventListener.js";
 export { useEditorState } from "./hooks/useEditorState.js";
 export { useNodePos } from "./hooks/useNodePos.js";
+export { useEditorStateSelector } from "./hooks/useEditorStateSelector.js";
 export { useStopEvent } from "./hooks/useStopEvent.js";
 export { useSelectNode } from "./hooks/useSelectNode.js";
 export { useIgnoreMutation } from "./hooks/useIgnoreMutation.js";
