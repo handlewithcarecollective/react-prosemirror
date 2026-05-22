@@ -104,7 +104,7 @@ export class TextNodeView extends Component<Props> {
   }
 
   handleCompositionEnd = () => {
-    if (!this.wasProtecting) return;
+    if (!this.wasProtecting.current) return;
     this.forceUpdate();
     return;
   };
@@ -238,7 +238,7 @@ export class TextNodeView extends Component<Props> {
     // When leaving the protected state, force a re-render so React's
     // virtual DOM resyncs with whatever the IME wrote into the real DOM
     // while we were returning a stale renderRef.
-    if (this.wasProtecting && !this.shouldProtect(nextProps)) {
+    if (this.wasProtecting.current && !this.shouldProtect(nextProps)) {
       return true;
     }
     return !shallowEqual(this.props, nextProps);
