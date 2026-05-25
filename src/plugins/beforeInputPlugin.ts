@@ -1,10 +1,12 @@
 import { Fragment, Mark, Slice } from "prosemirror-model";
 import { Plugin, TextSelection } from "prosemirror-state";
-import { Decoration, EditorView } from "prosemirror-view";
+import { EditorView } from "prosemirror-view";
 
 import { ReactEditorView } from "../ReactEditorView.js";
 import { CursorWrapper } from "../components/CursorWrapper.js";
 import { widget } from "../decorations/ReactWidgetType.js";
+
+import { reactKeysPluginKey } from "./reactKeys.js";
 
 function insertText(
   view: EditorView,
@@ -78,9 +80,7 @@ function handleGapCursorComposition(view: EditorView) {
   view.dispatch(tr);
 }
 
-export function beforeInputPlugin(
-  setCursorWrapper: (deco: Decoration | null) => void
-) {
+export function beforeInputPlugin() {
   let compositionMarks: readonly Mark[] | null = null;
 
   return new Plugin({
@@ -116,12 +116,14 @@ export function beforeInputPlugin(
           handleGapCursorComposition(view);
 
           if (compositionMarks) {
-            setCursorWrapper(
-              widget(state.selection.from, CursorWrapper, {
-                key: "cursor-wrapper",
-                marks: compositionMarks,
-                side: 0,
-                raw: true,
+            view.dispatch(
+              view.state.tr.setMeta(reactKeysPluginKey, {
+                cursorWrapper: widget(state.selection.from, CursorWrapper, {
+                  key: "cursor-wrapper",
+                  marks: compositionMarks,
+                  side: 0,
+                  raw: true,
+                }),
               })
             );
           }
@@ -145,7 +147,13 @@ export function beforeInputPlugin(
           view.input.composing = false;
 
           compositionMarks = null;
-          setCursorWrapper(null);
+
+          view.dispatch(
+            view.state.tr.setMeta(reactKeysPluginKey, {
+              cursorWrapper: null,
+            })
+          );
+
           if (
             view.input.compositionNode &&
             !view.input.compositionNode.pmViewDesc

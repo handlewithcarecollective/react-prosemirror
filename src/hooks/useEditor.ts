@@ -1,5 +1,5 @@
 import { EditorState, Plugin, Transaction } from "prosemirror-state";
-import { Decoration, EditorProps, EditorView } from "prosemirror-view";
+import { EditorProps, EditorView } from "prosemirror-view";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 
@@ -55,7 +55,6 @@ export function useEditor<T extends HTMLElement = HTMLElement>(
     }
   }
   const flushSyncRef = useRef(true);
-  const [cursorWrapper, _setCursorWrapper] = useState<Decoration | null>(null);
   const forceUpdate = useForceUpdate();
 
   const defaultState = options.defaultState ?? EMPTY_STATE;
@@ -65,15 +64,9 @@ export function useEditor<T extends HTMLElement = HTMLElement>(
   const { handleDOMEvents, registerEventListener, unregisterEventListener } =
     useComponentEventListeners(options.handleDOMEvents);
 
-  const setCursorWrapper = useCallback((deco: Decoration | null) => {
-    flushSync(() => {
-      _setCursorWrapper(deco);
-    });
-  }, []);
-
   const plugins = useMemo(
-    () => [...(options.plugins ?? []), beforeInputPlugin(setCursorWrapper)],
-    [options.plugins, setCursorWrapper]
+    () => [...(options.plugins ?? []), beforeInputPlugin()],
+    [options.plugins]
   );
 
   const dispatchTransaction = useCallback(
@@ -154,5 +147,5 @@ export function useEditor<T extends HTMLElement = HTMLElement>(
     [options.static, registerEventListener, unregisterEventListener, view]
   );
 
-  return { editor, cursorWrapper, state };
+  return { editor, state };
 }

@@ -562,12 +562,6 @@ export const ChildNodeViews = memo(function ChildNodeViews({
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       /\n$/.test(lastChild.node.text!)
     ) {
-      // if (
-      //   !(
-      //     lastChild?.type === "widget" &&
-      //     lastChild.widget.type.Component === CursorWrapper
-      //   )
-      // ) {
       children.push(
         {
           type: "hack",
@@ -586,7 +580,6 @@ export const ChildNodeViews = memo(function ChildNodeViews({
           key: "trailing-hack-br",
         }
       );
-      // }
     }
   }
 
