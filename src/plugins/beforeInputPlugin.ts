@@ -121,6 +121,7 @@ export function beforeInputPlugin(
                 key: "cursor-wrapper",
                 marks: compositionMarks,
                 side: 0,
+                raw: true,
               })
             );
           }
