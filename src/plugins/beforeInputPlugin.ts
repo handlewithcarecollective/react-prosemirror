@@ -126,6 +126,27 @@ export function beforeInputPlugin() {
                 }),
               })
             );
+            // Pin the DOM cursor to PM's canonical position before the IME
+            // captures wherever the browser happened to leave it. Without this,
+            // a cursor at a mark boundary lands in either the left or right text
+            // node depending on the user's last navigation direction, and the
+            // IME composes into whichever one it found.
+          } else if (view.state.selection.empty) {
+            // @ts-expect-error internal method
+            view.domObserver.disconnectSelection();
+            try {
+              view.docView.setSelection(
+                view.state.selection.anchor,
+                view.state.selection.head,
+                view,
+                true // force — skip the isEquivalentPosition early-return
+              );
+            } finally {
+              // @ts-expect-error internal method
+              view.domObserver.setCurSelection();
+              // @ts-expect-error internal method
+              view.domObserver.connectSelection();
+            }
           }
 
           view.compositionStarting = false;
@@ -250,6 +271,33 @@ export function beforeInputPlugin() {
                 tr.insertText(event.data, start, end);
               } else {
                 tr.delete(start, end);
+              }
+
+              // When updating a composition within an existing text node,
+              // we need to avoid remounting it. If the composition is at
+              // the very beginning of the text node, the start position of
+              // that node will either be mapped forward (if inserting new
+              // content) or deleted (if replacing existing content).
+              //
+              // This will cause the reactKeys plugin to mint a new key for
+              // that node, which triggers a remount. So we check to see whether
+              // we're working on a composition at the very beginning of a text
+              // node, and if so, tell the react keys plugin not to change the
+              // key for that node.
+              //
+              // We need to check that the marks are the same — if they're not,
+              // then we're inserting text _before_ this text node, not at the
+              // start of it, so we actually _do_ want to map the exsting node
+              // forward.
+              const $start = view.state.doc.resolve(start);
+              const marks = compositionMarks ?? $start.marks();
+              if (
+                $start.textOffset === 0 &&
+                $start.nodeAfter?.marks.every((m) => m.isInSet(marks))
+              ) {
+                tr.setMeta(reactKeysPluginKey, {
+                  overrides: { [start]: start },
+                });
               }
 
               view.dom.addEventListener(

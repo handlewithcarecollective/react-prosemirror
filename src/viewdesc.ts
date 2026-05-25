@@ -546,7 +546,7 @@ export class ViewDesc {
     }
 
     if (
-      (browser.safari && view.composing) ||
+      view.composing ||
       (!(force || (brKludge && browser.safari)) &&
         isEquivalentPosition(
           anchorDOM.node,

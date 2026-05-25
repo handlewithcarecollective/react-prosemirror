@@ -101,9 +101,7 @@ export function reactKeys() {
 
           const { pos: newPos, deleted } =
             override === undefined
-              ? // Map with assoc: -1 so that we don't create new keys whenever
-                // someone is typing at the beginning of an existing node
-                tr.mapping.mapResult(pos, -1)
+              ? tr.mapping.mapResult(pos)
               : { pos: override, deleted: false };
           if (deleted) continue;
 
