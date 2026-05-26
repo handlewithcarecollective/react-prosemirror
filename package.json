@@ -107,6 +107,7 @@
     "prosemirror-test-builder": "^1.1.1",
     "prosemirror-transform": "^1.12.0",
     "prosemirror-view": "1.41.7",
+    "puppeteer-core": "^25.0.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-reconciler": "^0.29.0",

@@ -5,6 +5,7 @@ import { EditorView } from "prosemirror-view";
 import { ReactEditorView } from "../ReactEditorView.js";
 import { CursorWrapper } from "../components/CursorWrapper.js";
 import { widget } from "../decorations/ReactWidgetType.js";
+import { sortViewDescs } from "../viewdesc.js";
 
 import { reactKeysPluginKey } from "./reactKeys.js";
 
@@ -169,6 +170,27 @@ export function beforeInputPlugin() {
 
           compositionMarks = null;
 
+          for (const displaced of view.displacedNodes) {
+            // Put the displaced TextViewDesc back into its parent's child list.
+            const parent = displaced.parent;
+            if (parent && !parent.children.includes(displaced)) {
+              parent.children.push(displaced);
+              parent.children.sort(sortViewDescs);
+            }
+
+            // Restore pmViewDesc claim on the text node.
+            displaced.dom.pmViewDesc = displaced;
+
+            // Truncate the IME text node back to what the displaced PM node says it
+            // is. The composed content lives in PM state; the next React render will
+            // mount a sibling TextNodeView that inserts its own DOM (e.g.
+            // `<span class="word">k</span>`) right after this node.
+            const claimedText = displaced.node.text ?? "";
+            if (displaced.nodeDOM.nodeValue !== claimedText) {
+              displaced.nodeDOM.nodeValue = claimedText;
+            }
+          }
+
           view.dispatch(
             view.state.tr.setMeta(reactKeysPluginKey, {
               cursorWrapper: null,
@@ -184,6 +206,7 @@ export function beforeInputPlugin() {
 
           view.input.compositionEndedAt = event.timeStamp;
           view.input.compositionNode = null;
+          view.input.compositionNodes = [];
           view.input.compositionID++;
 
           return true;
@@ -253,6 +276,17 @@ export function beforeInputPlugin() {
               // There's always a range on insertCompositionText beforeinput events
               // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
               const range = event.getTargetRanges()[0]!;
+
+              const textNode =
+                range.endContainer instanceof Text
+                  ? range.endContainer
+                  : range.startContainer instanceof Text
+                  ? range.startContainer
+                  : null;
+
+              if (textNode) {
+                view.input.compositionNode = textNode;
+              }
 
               const start = view.posAtDOM(
                 range.startContainer,

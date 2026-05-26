@@ -1,6 +1,7 @@
 import "@wdio/types";
 
 import viteConfig from "./vite.config.js";
+import CdpService from "./wdio.cdp-service.js";
 
 const mobileSpecs = [
   "file:///src/components/__tests__/ProseMirror.mobile.test.tsx",
@@ -67,11 +68,11 @@ export const config: WebdriverIO.Config = {
   //
   capabilities: [
     // {
-    //   browserName: "chrome",
+    //   browserName: "firefox",
     //   "wdio:exclude": mobileSpecs,
     // },
     {
-      browserName: "firefox",
+      browserName: "chrome",
       "wdio:exclude": mobileSpecs,
     },
     // {
@@ -132,7 +133,7 @@ export const config: WebdriverIO.Config = {
   // Services take over a specific job you don't want to take care of. They enhance
   // your test setup with almost no effort. Unlike plugins, they don't add new
   // commands. Instead, they hook themselves up into the test process.
-  // services: [],
+  services: [[CdpService, {}]],
   //
   framework: "mocha",
 

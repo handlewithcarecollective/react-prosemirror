@@ -44,7 +44,17 @@ export type ViewMutationRecord =
 export function sortViewDescs(a: ViewDesc, b: ViewDesc) {
   if (a instanceof TrailingHackViewDesc) return 1;
   if (b instanceof TrailingHackViewDesc) return -1;
-  return a.getPos() - b.getPos();
+  const posDiff = a.getPos() - b.getPos();
+  if (posDiff !== 0) return posDiff;
+  // When two descs share the same PM position (e.g. a zero-width widget
+  // and a text node that starts at the same position), fall back to DOM
+  // order so that the viewdesc children match the actual DOM layout.
+  // Without this, position computations like `posBeforeChild` can return
+  // the wrong PM position for the widget's container.
+  const cmp = a.dom.compareDocumentPosition(b.dom);
+  if (cmp & 4 /* DOCUMENT_POSITION_FOLLOWING */) return -1;
+  if (cmp & 2 /* DOCUMENT_POSITION_PRECEDING */) return 1;
+  return 0;
 }
 
 const NOT_DIRTY = 0,
@@ -1178,4 +1188,48 @@ export function sameOuterDeco(
   // @ts-expect-error ...
   for (let i = 0; i < a.length; i++) if (!a[i].type.eq(b[i].type)) return false;
   return true;
+}
+
+// Find a piece of text in an inline fragment, overlapping from-to.
+// Ported from prosemirror-view's findTextInFragment.
+export function findTextInFragment(
+  frag: Fragment,
+  text: string,
+  from: number,
+  to: number
+): number {
+  for (let i = 0, pos = 0; i < frag.childCount && pos <= to; ) {
+    const child = frag.child(i++);
+    const childStart = pos;
+    pos += child.nodeSize;
+    if (!child.isText) continue;
+    let str = child.text!;
+    while (i < frag.childCount) {
+      const next = frag.child(i++);
+      pos += next.nodeSize;
+      if (!next.isText) break;
+      str += next.text;
+    }
+    if (pos >= from) {
+      if (
+        pos >= to &&
+        str.slice(to - text.length - childStart, to - childStart) === text
+      ) {
+        return to - text.length;
+      }
+      const found =
+        childStart < to ? str.lastIndexOf(text, to - childStart - 1) : -1;
+      if (found >= 0 && found + text.length + childStart >= from) {
+        return childStart + found;
+      }
+      if (
+        from === to &&
+        str.length >= to + text.length - childStart &&
+        str.slice(to - childStart, to - childStart + text.length) === text
+      ) {
+        return to;
+      }
+    }
+  }
+  return -1;
 }

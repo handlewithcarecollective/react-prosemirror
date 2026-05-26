@@ -4,9 +4,10 @@ import "prosemirror-gapcursor/style/gapcursor.css";
 import { history, redo, undo } from "prosemirror-history";
 import { inputRules, wrappingInputRule } from "prosemirror-inputrules";
 import { keymap } from "prosemirror-keymap";
-import { EditorState, Transaction } from "prosemirror-state";
+import { EditorState, Plugin, Transaction } from "prosemirror-state";
 import { columnResizing, tableEditing } from "prosemirror-tables";
 import "prosemirror-tables/style/tables.css";
+import { Decoration, DecorationSet, EditorView } from "prosemirror-view";
 import "prosemirror-view/style/prosemirror.css";
 import React, { StrictMode, useCallback, useState } from "react";
 import { createRoot } from "react-dom/client";
@@ -19,6 +20,25 @@ import { doc } from "./doc.js";
 import "./main.css";
 import { CodeBlock } from "./nodeViews/CodeBlock.js";
 import { schema } from "./schema.js";
+
+function wordDeco(state: EditorState) {
+  const re = /\p{L}+/gu,
+    deco: Decoration[] = [];
+  state.doc.descendants((node, pos) => {
+    if (node.isText)
+      for (let m; (m = re.exec(node.text!)); )
+        deco.push(
+          Decoration.inline(pos + m.index, pos + m.index + m[0].length, {
+            class: "word",
+          })
+        );
+  });
+  return DecorationSet.create(state.doc, deco);
+}
+
+const wordHighlighter = new Plugin({
+  props: { decorations: wordDeco },
+});
 
 const editorState = EditorState.create({
   schema,
@@ -45,6 +65,7 @@ const plugins = [
     "Mod-y": redo,
   }),
   gapCursor(),
+  // wordHighlighter,
 ];
 
 const nodeViews = {
@@ -85,9 +106,13 @@ root.render(
     <DemoEditor />
   </StrictMode>
 );
-//
+
 // const root = document.getElementById("root")!;
+
+// const view = new EditorView(root, { state: editorState, plugins });
 // root.addEventListener("beforeinput", (e) => {
-//   console.log(e);
-//   console.log(e.getTargetRanges());
+//   console.log("beforeinput", view.dom.innerHTML);
+// });
+// root.addEventListener("beforeinput", (e) => {
+//   console.log("input", view.dom.innerHTML);
 // });

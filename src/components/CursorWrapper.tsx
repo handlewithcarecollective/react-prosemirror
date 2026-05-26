@@ -25,7 +25,8 @@ export const CursorWrapper = forwardRef<
     // @ts-expect-error Internal property - domObserver
     view.domObserver.disconnectSelection();
     // @ts-expect-error Internal property - domSelection
-    const domSel = view.domSelection();
+    const domSel = view.domSelection() as Selection;
+    if (!domSel.isCollapsed) return;
     const node = innerRef.current;
 
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

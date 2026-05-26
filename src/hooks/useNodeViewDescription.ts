@@ -10,6 +10,7 @@ import {
   CompositionViewDesc,
   NodeViewDesc,
   ReactNodeViewDesc,
+  TextViewDesc,
   ViewDesc,
   sortViewDescs,
 } from "../viewdesc.js";
@@ -221,7 +222,47 @@ export function useNodeViewDescription(
         }
       }
 
-      if (!compositionTopDOM) return;
+      if (!compositionTopDOM) {
+        // Otherwise the IME extended an existing tracked text node. Take it over.
+        const reactView = view as ReactEditorView;
+        const imeTextNode = reactView.input.compositionNode;
+        if (
+          !imeTextNode ||
+          !viewDescRef.current.contentDOM.contains(imeTextNode.parentNode)
+        ) {
+          return;
+        }
+
+        const claimedDesc = imeTextNode.pmViewDesc;
+        if (!(claimedDesc instanceof TextViewDesc)) return;
+        if (claimedDesc.node.text === imeTextNode.nodeValue) return; // not extended
+
+        // Walk up to the direct child of contentDOM that contains the IME text node
+        // (could be the text node itself, could be wrapped in a mark span).
+        let topDOM: ChildNode = imeTextNode;
+        while (topDOM.parentNode !== viewDescRef.current.contentDOM) {
+          const next = topDOM.parentNode as ChildNode | null;
+          if (!next) return;
+          topDOM = next;
+        }
+
+        // Detach the displaced TextViewDesc from the sibling list so sibling-size
+        // accounting (used by posBeforeChild) doesn't double-count this text node.
+        const displacedIdx = children.indexOf(claimedDesc);
+        if (displacedIdx >= 0) children.splice(displacedIdx, 1);
+        reactView.displacedNodes.push(claimedDesc);
+
+        compositionViewDesc.dom = topDOM;
+        compositionViewDesc.textDOM = imeTextNode;
+        compositionViewDesc.text = imeTextNode.data;
+        imeTextNode.pmViewDesc = compositionViewDesc;
+        (
+          compositionViewDesc as { _displacedDesc?: TextViewDesc }
+        )._displacedDesc = claimedDesc;
+
+        reactView.input.compositionNodes.push(compositionViewDesc);
+        return;
+      }
 
       let textDOM = compositionTopDOM;
       while (textDOM.firstChild) {

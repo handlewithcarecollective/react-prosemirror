@@ -9,7 +9,7 @@ import {
 import { AbstractEditorView, NodeViewSet } from "./AbstractEditorView.js";
 import { EMPTY_STATE } from "./constants.js";
 import { DOMNode, DOMSelection, DOMSelectionRange } from "./dom.js";
-import { NodeViewDesc, ViewDesc } from "./viewdesc.js";
+import { NodeViewDesc, TextViewDesc, ViewDesc } from "./viewdesc.js";
 
 function buildNodeViews(view: ReactEditorView) {
   const result: NodeViewSet = Object.create(null);
@@ -108,6 +108,8 @@ export class ReactEditorView extends EditorView implements AbstractEditorView {
   // whether it was mounted during a compositionstart event handler
   public compositionStarting: boolean;
 
+  public displacedNodes: TextViewDesc[];
+
   constructor(place: { mount: HTMLElement }, props: DirectEditorProps) {
     // Prevent the base class from destroying the React-managed nodes.
     // Restore them below after invoking the base class constructor.
@@ -161,6 +163,7 @@ export class ReactEditorView extends EditorView implements AbstractEditorView {
     this.docView = null;
     this._destroyed = false;
     this.compositionStarting = false;
+    this.displacedNodes = [];
   }
 
   get props() {

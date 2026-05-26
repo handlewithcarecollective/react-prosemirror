@@ -11,6 +11,7 @@ import {
   CompositionViewDesc,
   TextViewDesc,
   ViewDesc,
+  findTextInFragment,
   sortViewDescs,
 } from "../viewdesc.js";
 
@@ -88,16 +89,29 @@ export class TextNodeView extends Component<Props> {
       return false;
     }
 
-    const pos = getPos();
+    const viewDesc = this.viewDescRef.current;
+    // If our DOM text node IS the IME's composition node, protect regardless
+    // of where the PM selection currently is. The IME may have replaced a
+    // selection that included us — moving the PM selection past us — but our
+    // DOM is still part of the in-progress composition. Until another
+    // TextNodeView's findCompositionDOM displaces us into a comp desc, only
+    // our own protect/no-update is preventing React from rewriting the IME's
+    // text. (When we *are* displaced, viewDesc is already a CompositionViewDesc
+    // and the existing position-based logic doesn't apply anyway.)
+    const ownsCompositionNode =
+      viewDesc instanceof TextViewDesc &&
+      viewDesc.nodeDOM === view.input.compositionNode;
 
-    const { from, to } = view.state.selection;
-
-    if (
-      !(view.state.selection instanceof TextSelection) ||
-      from <= pos ||
-      to > pos + node.nodeSize
-    ) {
-      return false;
+    if (!ownsCompositionNode) {
+      const pos = getPos();
+      const { from, to } = view.state.selection;
+      if (
+        !(view.state.selection instanceof TextSelection) ||
+        from <= pos ||
+        to > pos + node.nodeSize
+      ) {
+        return false;
+      }
     }
 
     return !!this.containsCompositionNodeText.current;
@@ -174,9 +188,19 @@ export class TextNodeView extends Component<Props> {
     const viewDesc = this.viewDescRef.current;
     if (!viewDesc) return false;
 
+    // Don't force destroy/recreate just because we transitioned into protect
+    // mode. If our DOM text node is the IME's composition node, we want to
+    // keep the TextViewDesc alive so the new composition-text TextNodeView's
+    // findCompositionDOM second pass can find us, validate the size mismatch,
+    // and displace us into a properly-sized CompositionViewDesc. If we
+    // destroyed here, create() would put a wrong-size CompositionViewDesc on
+    // T and pre-empt that displacement.
+    const ownsCompositionNode =
+      viewDesc instanceof TextViewDesc &&
+      viewDesc.nodeDOM === view.input.compositionNode;
     if (
-      this.shouldProtect(this.props) !==
-      viewDesc instanceof CompositionViewDesc
+      !ownsCompositionNode &&
+      this.shouldProtect(this.props) !== viewDesc instanceof CompositionViewDesc
     ) {
       return false;
     }
@@ -214,7 +238,7 @@ export class TextNodeView extends Component<Props> {
       this.viewDescRef.current = this.create();
     }
 
-    const { view, node } = this.props;
+    const { view } = this.props;
     if (!(view instanceof ReactEditorView)) {
       this.containsCompositionNodeText.current = true;
       return;
@@ -227,11 +251,29 @@ export class TextNodeView extends Component<Props> {
       return;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const text = textNode.nodeValue!;
-
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    this.containsCompositionNodeText.current = node.text! === text;
+    // Resolve the parent textblock containing this text node and ask
+    // findTextInFragment whether the IME text node's *current* content can be
+    // placed somewhere in the textblock's PM content overlapping the
+    // selection. If it can, the composition is still consistent with PM state
+    // and we should protect. If it can't (e.g. a remote change overwrote the
+    // composing region), PM and the DOM have diverged — abandon protection
+    // so the re-render can rewrite the DOM and cancel the composition.
+    const $pos = view.state.doc.resolve(this.props.getPos());
+    const parent = $pos.parent;
+    if (!parent.inlineContent) {
+      this.containsCompositionNodeText.current = false;
+      return;
+    }
+    const parentStart = $pos.start();
+    const { from, to } = view.state.selection;
+    const textPos = findTextInFragment(
+      parent.content,
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      textNode.nodeValue!,
+      from - parentStart,
+      to - parentStart
+    );
+    this.containsCompositionNodeText.current = textPos >= 0;
   }
 
   shouldComponentUpdate(nextProps: Props): boolean {
