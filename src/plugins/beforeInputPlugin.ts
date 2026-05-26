@@ -5,7 +5,7 @@ import { EditorView } from "prosemirror-view";
 import { ReactEditorView } from "../ReactEditorView.js";
 import { CursorWrapper } from "../components/CursorWrapper.js";
 import { widget } from "../decorations/ReactWidgetType.js";
-import { sortViewDescs } from "../viewdesc.js";
+import { TextViewDesc, sortViewDescs } from "../viewdesc.js";
 
 import { reactKeysPluginKey } from "./reactKeys.js";
 
@@ -199,7 +199,7 @@ export function beforeInputPlugin() {
 
           if (
             view.input.compositionNode &&
-            !view.input.compositionNode.pmViewDesc
+            isCompositionNodeOrphaned(view.input.compositionNode)
           ) {
             view.input.compositionNode.remove();
           }
@@ -277,17 +277,6 @@ export function beforeInputPlugin() {
               // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
               const range = event.getTargetRanges()[0]!;
 
-              const textNode =
-                range.endContainer instanceof Text
-                  ? range.endContainer
-                  : range.startContainer instanceof Text
-                  ? range.startContainer
-                  : null;
-
-              if (textNode) {
-                view.input.compositionNode = textNode;
-              }
-
               const start = view.posAtDOM(
                 range.startContainer,
                 range.startOffset
@@ -324,10 +313,11 @@ export function beforeInputPlugin() {
               // start of it, so we actually _do_ want to map the exsting node
               // forward.
               const $start = view.state.doc.resolve(start);
-              const marks = compositionMarks ?? $start.marks();
+              const $end = view.state.doc.resolve(end);
+              const marks = compositionMarks ?? $start.marksAcross($end) ?? [];
               if (
                 $start.textOffset === 0 &&
-                $start.nodeAfter?.marks.every((m) => m.isInSet(marks))
+                $end.nodeAfter?.marks.every((m) => m.isInSet(marks))
               ) {
                 tr.setMeta(reactKeysPluginKey, {
                   overrides: { [start]: start },
@@ -337,6 +327,10 @@ export function beforeInputPlugin() {
               view.dom.addEventListener(
                 "input",
                 () => {
+                  const sel = view.domSelectionRange();
+                  if (sel.focusNode && sel.focusNode.nodeType === 3) {
+                    view.input.compositionNode = sel.focusNode as Text;
+                  }
                   view.dispatch(tr);
                 },
                 { once: true }
@@ -381,4 +375,16 @@ export function beforeInputPlugin() {
       },
     },
   });
+}
+function isCompositionNodeOrphaned(tn: Text): boolean {
+  if (tn.pmViewDesc) return false;
+  for (
+    let parent: Node | null = tn.parentNode;
+    parent;
+    parent = parent.parentNode
+  ) {
+    const desc = parent.pmViewDesc;
+    if (desc instanceof TextViewDesc && desc.nodeDOM === tn) return false;
+  }
+  return true;
 }

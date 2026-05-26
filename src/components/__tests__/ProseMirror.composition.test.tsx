@@ -21,8 +21,10 @@ declare global {
     interface Browser {
       imeSetComposition(params: {
         text: string;
-        selectionStart: number;
-        selectionEnd: number;
+        selectionStart?: number;
+        selectionEnd?: number;
+        replacementStart?: number;
+        replacementEnd?: number;
       }): Promise<void>;
       imeInsertText(params: { text: string }): Promise<void>;
     }
@@ -344,38 +346,89 @@ describe("EditorView composition", () => {
     expect(pm.state.doc).toEqualNode(doc(p("foo hi")));
   });
 
-  // it("works inside highlighted text", () => {
-  //   const { view: pm } = tempEditor({
-  //     doc: doc(p("one<a> two")),
-  //     plugins: [wordHighlighter],
-  //   });
-  //   compose(
-  //     pm,
-  //     () => edit(findTextNode(pm.dom, "one")!, "x"),
-  //     [(n) => edit(n, "y"), (n) => edit(n, ".")],
-  //     "xy."
-  //   );
-  //   expect(pm.state.doc).toEqualNode(doc(p("onexy. two")));
-  // });
+  it.skip("works inside highlighted text", async () => {
+    const { view: pm } = tempEditor({
+      doc: doc(p("one<a> two")),
+      plugins: [wordHighlighter],
+    });
 
-  // it("can handle compositions spanning multiple nodes", () => {
-  //   const { view: pm } = requireFocus(
-  //     tempEditor({ doc: doc(p("one two")), plugins: [wordHighlighter] })
-  //   );
-  //   compose(
-  //     pm,
-  //     () => edit(findTextNode(pm.dom, "two")!, "a"),
-  //     [(n) => edit(n, "b"), (n) => edit(n, "c")],
-  //     {
-  //       end: (n: Text) => {
-  //         n.parentNode!.previousSibling!.remove();
-  //         n.parentNode!.previousSibling!.remove();
-  //         return edit(n, "xyzone ", 0);
-  //       },
-  //     }
-  //   );
-  //   ist(pm.state.doc, doc(p("xyzone twoabc")), eq);
-  // });
+    pm.focus();
+
+    await browser.imeSetComposition({
+      text: "x",
+      selectionStart: 1,
+      selectionEnd: 1,
+    });
+    await browser.imeSetComposition({
+      text: "xy",
+      selectionStart: 2,
+      selectionEnd: 2,
+    });
+    await browser.imeSetComposition({
+      text: "xy.",
+      selectionStart: 3,
+      selectionEnd: 3,
+    });
+
+    await browser.imeInsertText({
+      text: "xy.",
+    });
+
+    expect(pm.state.doc).toEqualNode(doc(p("onexy. two")));
+  });
+
+  it.skip("can handle compositions spanning multiple nodes", async () => {
+    const { view: pm } = tempEditor({
+      doc: doc(p("one two<a>")),
+      plugins: [wordHighlighter],
+    });
+
+    pm.focus();
+
+    await browser.imeSetComposition({
+      text: "one twoa",
+      selectionStart: 8,
+      selectionEnd: 8,
+      replacementStart: -7,
+      replacementEnd: 0,
+    });
+
+    await browser.imeSetComposition({
+      text: "one twoab",
+      selectionStart: 9,
+      selectionEnd: 9,
+    });
+
+    await browser.imeSetComposition({
+      text: "one twoabc",
+      selectionStart: 10,
+      selectionEnd: 10,
+    });
+
+    await browser.imeSetComposition({
+      text: "xone twoabc",
+      selectionStart: 0,
+      selectionEnd: 0,
+    });
+
+    await browser.imeSetComposition({
+      text: "xyone twoabc",
+      selectionStart: 0,
+      selectionEnd: 0,
+    });
+
+    await browser.imeSetComposition({
+      text: "xyzone twoabc",
+      selectionStart: 0,
+      selectionEnd: 0,
+    });
+
+    await browser.imeInsertText({
+      text: "xyzone twoabc",
+    });
+
+    expect(pm.state.doc).toEqualNode(doc(p("xyzone twoabc")));
+  });
 
   // it("doesn't overwrite widgets next to the composition", () => {
   //   const { view: pm } = tempEditor({

@@ -65,7 +65,7 @@ const plugins = [
     "Mod-y": redo,
   }),
   gapCursor(),
-  // wordHighlighter,
+  wordHighlighter,
 ];
 
 const nodeViews = {

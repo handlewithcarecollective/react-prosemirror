@@ -1,7 +1,12 @@
 import { Node } from "prosemirror-model";
 import { TextSelection } from "prosemirror-state";
 import { DOMEventMap, Decoration, DecorationSet } from "prosemirror-view";
-import { Component, MutableRefObject, createRef } from "react";
+import React, {
+  Component,
+  MutableRefObject,
+  createRef,
+  useReducer,
+} from "react";
 
 import { AbstractEditorView } from "../AbstractEditorView.js";
 import { ReactEditorView } from "../ReactEditorView.js";
@@ -59,6 +64,7 @@ type Props = {
   siblingsRef: MutableRefObject<ViewDesc[]>;
   parentRef: MutableRefObject<ViewDesc | undefined>;
   findCompositionDOM: (compositionViewDesc: CompositionViewDesc) => void;
+  forceRemount: () => void;
   decorations: readonly Decoration[];
   registerEventListener<EventType extends keyof DOMEventMap>(
     eventType: EventType,
@@ -119,8 +125,23 @@ export class TextNodeView extends Component<Props> {
 
   handleCompositionEnd = () => {
     if (!this.wasProtecting.current) return;
-    this.forceUpdate();
-    return;
+
+    const { view } = this.props;
+    if (!(view instanceof ReactEditorView)) return;
+
+    // If the IME detached our DOM during composition, React's fiber is now
+    // wired to a detached node and will silently send all subsequent updates
+    // into the void. Re-attach the orphan (so the upcoming unmount's
+    // removeChild has something to remove), then ask our wrapper to mint a
+    // new key — that forces React to drop this fiber and mount a fresh one
+    // whose stateNode it creates from the current render output.
+    const dom = findDOMNode(this);
+    if (dom instanceof HTMLElement && !view.dom.contains(dom)) {
+      this.reattachAtCorrectPosition(dom);
+      this.props.forceRemount();
+    } else {
+      this.forceUpdate();
+    }
   };
 
   create() {
@@ -309,6 +330,28 @@ export class TextNodeView extends Component<Props> {
 
   componentDidUpdate(): void {
     this.updateEffect();
+    const { view } = this.props;
+    if (!(view instanceof ReactEditorView)) return;
+  }
+
+  private reattachAtCorrectPosition(dom: HTMLElement) {
+    const viewDesc = this.viewDescRef.current;
+    if (!viewDesc) return;
+    let host: ViewDesc | undefined = viewDesc.parent;
+    while (host && !host.contentDOM) host = host.parent;
+    if (!host?.contentDOM) return;
+
+    const siblings = viewDesc.parent?.children ?? [];
+    const idx = siblings.indexOf(viewDesc);
+    let nextDom: ChildNode | null = null;
+    for (let i = idx + 1; i < siblings.length; i++) {
+      const sib = siblings[i];
+      if (sib?.dom && sib.dom.parentNode === host.contentDOM) {
+        nextDom = sib.dom as ChildNode;
+        break;
+      }
+    }
+    host.contentDOM.insertBefore(dom, nextDom);
   }
 
   componentWillUnmount(): void {
@@ -349,4 +392,10 @@ export class TextNodeView extends Component<Props> {
  */
 function createMutRef<T>(): MutableRefObject<T | null> {
   return createRef();
+}
+
+export function RemountableTextNodeView(props: Omit<Props, "forceRemount">) {
+  const [key, forceRemount] = useReducer((x) => x + 1, 0);
+
+  return <TextNodeView key={key} forceRemount={forceRemount} {...props} />;
 }

@@ -103,6 +103,7 @@ export function reactKeys() {
             override === undefined
               ? tr.mapping.mapResult(pos)
               : { pos: override, deleted: false };
+
           if (deleted) continue;
 
           next.posToKey.set(newPos, key);

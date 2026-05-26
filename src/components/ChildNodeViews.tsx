@@ -22,7 +22,7 @@ import { sameOuterDeco } from "../viewdesc.js";
 
 import { NativeWidgetView } from "./NativeWidgetView.js";
 import { SeparatorHackView } from "./SeparatorHackView.js";
-import { TextNodeView } from "./TextNodeView.js";
+import { RemountableTextNodeView } from "./TextNodeView.js";
 import { TrailingHackView } from "./TrailingHackView.js";
 import { WidgetView } from "./WidgetView.js";
 import { MarkView } from "./marks/MarkView.js";
@@ -138,7 +138,7 @@ const ChildView = memo(function ChildView({
       {({ siblingsRef, parentRef, findCompositionDOM }) => (
         <EditorContext.Consumer>
           {({ registerEventListener, unregisterEventListener }) => (
-            <TextNodeView
+            <RemountableTextNodeView
               view={view}
               node={child.node}
               getPos={getPos}
