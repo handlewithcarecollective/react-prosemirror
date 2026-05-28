@@ -35,12 +35,23 @@ function changedNodeViews(a: NodeViewSet, b: NodeViewSet) {
   return nA != nB;
 }
 
+interface SelectionState {
+  anchorNode: Node | null;
+  anchorOffset: number;
+  focusNode: Node | null;
+  focusOffset: number;
+  eq(domSel: DOMSelectionRange): boolean;
+  set(domSel: DOMSelectionRange): void;
+}
+
 interface DOMObserver {
   observer: MutationObserver | null;
   queue: MutationRecord[];
+  currentSelection: SelectionState;
   start(): void;
   stop(): void;
   onSelectionChange(): void;
+  setCurSelection(): void;
 }
 
 interface InputState {
@@ -63,7 +74,7 @@ interface InputState {
   mouseDown: {
     allowDefault: boolean;
     delayedSelectionSync: boolean;
-  };
+  } | null;
 }
 
 /**
@@ -282,7 +293,39 @@ export class ReactEditorView extends EditorView implements AbstractEditorView {
     // node view selection callbacks.
     this.docView.markDirty(-1, -1);
 
-    super.update(this.nextProps);
+    // If an update comes in after a DOM selection change but before the corresponding
+    // "selectionchange" event, don't call selectionToDOM yet.
+    //
+    // prosemirror-view already guards against this in updateStateInner for drag events.
+    // We want to restore those guard conditions when the browser's selection has
+    // advanced past what view.state.selection knows about
+    const domSel = this.domSelectionRange();
+
+    const selectionBehindDOM =
+      !this.composing &&
+      !this.input.mouseDown &&
+      !this.domObserver.currentSelection.eq(domSel);
+
+    if (selectionBehindDOM) {
+      const savedFocusNode = this.domObserver.currentSelection.focusNode;
+      const savedFocusOffset = this.domObserver.currentSelection.focusOffset;
+
+      this.domObserver.setCurSelection();
+      this.input.mouseDown = {
+        allowDefault: false,
+        delayedSelectionSync: false,
+      };
+
+      try {
+        super.update(this.nextProps);
+      } finally {
+        this.input.mouseDown = null;
+        this.domObserver.currentSelection.focusNode = savedFocusNode;
+        this.domObserver.currentSelection.focusOffset = savedFocusOffset;
+      }
+    } else {
+      super.update(this.nextProps);
+    }
 
     // Store the new previous state.
     this.prevState = this.state;
