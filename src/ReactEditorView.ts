@@ -35,19 +35,9 @@ function changedNodeViews(a: NodeViewSet, b: NodeViewSet) {
   return nA != nB;
 }
 
-interface SelectionState {
-  anchorNode: Node | null;
-  anchorOffset: number;
-  focusNode: Node | null;
-  focusOffset: number;
-  eq(domSel: DOMSelectionRange): boolean;
-  set(domSel: DOMSelectionRange): void;
-}
-
 interface DOMObserver {
   observer: MutationObserver | null;
   queue: MutationRecord[];
-  currentSelection: SelectionState;
   start(): void;
   stop(): void;
   onSelectionChange(): void;
