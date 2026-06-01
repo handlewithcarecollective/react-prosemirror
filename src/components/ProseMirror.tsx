@@ -4,6 +4,7 @@ import {
   ChildDescriptionsContext,
   ChildDescriptionsContextValue,
 } from "../contexts/ChildDescriptionsContext.js";
+import { CompositionContext } from "../contexts/CompositionContext.js";
 import { EditorContext } from "../contexts/EditorContext.js";
 import { EditorStateContext } from "../contexts/EditorStateContext.js";
 import {
@@ -13,6 +14,7 @@ import {
 import { computeDocDeco } from "../decorations/computeDocDeco.js";
 import { viewDecorations } from "../decorations/viewDecorations.js";
 import { UseEditorOptions, useEditor } from "../hooks/useEditor.js";
+import { reactKeysPluginKey } from "../plugins/reactKeys.js";
 
 import { LayoutGroup } from "./LayoutGroup.js";
 import { DocNodeViewContext } from "./ProseMirrorDoc.js";
@@ -28,8 +30,6 @@ const rootChildDescriptionsContextValue = {
   siblingsRef: {
     current: [],
   },
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
-  findCompositionDOM: () => {},
 } satisfies ChildDescriptionsContextValue;
 
 export type Props = UseEditorOptions & {
@@ -74,6 +74,15 @@ function ProseMirrorInner({
     [node, decorations, innerDecorations]
   );
 
+  const freezeFrom = reactKeysPluginKey.getState(state)?.freezeFrom ?? null;
+
+  const compositionContextValue = useMemo(
+    () => ({
+      freezeFrom,
+    }),
+    [freezeFrom]
+  );
+
   return (
     <EditorContext.Provider value={editor}>
       <EditorStateContext.Provider value={state}>
@@ -81,9 +90,11 @@ function ProseMirrorInner({
           <ChildDescriptionsContext.Provider
             value={rootChildDescriptionsContextValue}
           >
-            <DocNodeViewContext.Provider value={docNodeViewContextValue}>
-              {children}
-            </DocNodeViewContext.Provider>
+            <CompositionContext.Provider value={compositionContextValue}>
+              <DocNodeViewContext.Provider value={docNodeViewContextValue}>
+                {children}
+              </DocNodeViewContext.Provider>
+            </CompositionContext.Provider>
           </ChildDescriptionsContext.Provider>
         </NodeViewContext.Provider>
       </EditorStateContext.Provider>

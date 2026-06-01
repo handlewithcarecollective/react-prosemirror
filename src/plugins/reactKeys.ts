@@ -12,6 +12,7 @@ interface ReactKeysPluginState {
   posToKey: Map<number, string>;
   keyToPos: Map<string, number>;
   cursorWrapper: Decoration | null;
+  freezeFrom: number | null;
 }
 
 export const reactKeysPluginKey = new PluginKey<ReactKeysPluginState>(
@@ -20,9 +21,10 @@ export const reactKeysPluginKey = new PluginKey<ReactKeysPluginState>(
 
 export type ReactKeysPluginMeta =
   | {
-      overrides: Record<number, number>;
+      overrides?: Record<number, number>;
+      cursorWrapper?: Decoration | null;
+      freezeFrom?: number | null;
     }
-  | { cursorWrapper: Decoration | null }
   | undefined;
 
 /**
@@ -41,6 +43,7 @@ export function reactKeys() {
           posToKey: new Map<number, string>(),
           keyToPos: new Map<string, number>(),
           cursorWrapper: null,
+          freezeFrom: null,
         };
         state.doc.descendants((_, pos) => {
           const key = createNodeKey();
@@ -67,6 +70,9 @@ export function reactKeys() {
         const cursorWrapper =
           meta && "cursorWrapper" in meta ? meta.cursorWrapper : undefined;
 
+        const freezeFrom =
+          meta && "freezeFrom" in meta ? meta.freezeFrom : undefined;
+
         const next = {
           posToKey: new Map<number, string>(),
           keyToPos: new Map<string, number>(),
@@ -84,6 +90,12 @@ export function reactKeys() {
                   )
                 : null
               : cursorWrapper,
+          freezeFrom:
+            freezeFrom === undefined
+              ? value.freezeFrom
+                ? tr.mapping.map(value.freezeFrom, -1)
+                : null
+              : freezeFrom,
         };
 
         if (!tr.docChanged) {

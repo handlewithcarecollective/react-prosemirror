@@ -7,10 +7,8 @@ import { ChildDescriptionsContext } from "../contexts/ChildDescriptionsContext.j
 import { EditorContext } from "../contexts/EditorContext.js";
 import { DOMNode } from "../dom.js";
 import {
-  CompositionViewDesc,
   NodeViewDesc,
   ReactNodeViewDesc,
-  TextViewDesc,
   ViewDesc,
   sortViewDescs,
 } from "../viewdesc.js";
@@ -203,97 +201,12 @@ export function useNodeViewDescription(
     }
   });
 
-  const findCompositionDOM = useCallback(
-    (compositionViewDesc: CompositionViewDesc) => {
-      if (!props.node.isTextblock) return;
-
-      const children = childrenRef.current;
-
-      // Because TextNodeViews can't locate the DOM nodes
-      // for compositions, we need to override them here
-      if (!viewDescRef.current?.contentDOM) return;
-
-      let compositionTopDOM: ChildNode | null = null;
-
-      for (const childNode of viewDescRef.current.contentDOM.childNodes) {
-        if (children.every((child) => child.dom !== childNode)) {
-          compositionTopDOM = childNode;
-          break;
-        }
-      }
-
-      if (!compositionTopDOM) {
-        // Otherwise the IME extended an existing tracked text node. Take it over.
-        const reactView = view as ReactEditorView;
-        const imeTextNode = reactView.input.compositionNode;
-        if (
-          !imeTextNode ||
-          !viewDescRef.current.contentDOM.contains(imeTextNode.parentNode)
-        ) {
-          return;
-        }
-
-        const claimedDesc = imeTextNode.pmViewDesc;
-        if (!(claimedDesc instanceof TextViewDesc)) return;
-        if (claimedDesc.node.text === imeTextNode.nodeValue) return; // not extended
-
-        // Walk up to the direct child of contentDOM that contains the IME text node
-        // (could be the text node itself, could be wrapped in a mark span).
-        let topDOM: ChildNode = imeTextNode;
-        while (topDOM.parentNode !== viewDescRef.current.contentDOM) {
-          const next = topDOM.parentNode as ChildNode | null;
-          if (!next) return;
-          topDOM = next;
-        }
-
-        // Detach the displaced TextViewDesc from the sibling list so sibling-size
-        // accounting (used by posBeforeChild) doesn't double-count this text node.
-        const displacedIdx = children.indexOf(claimedDesc);
-        if (displacedIdx >= 0) children.splice(displacedIdx, 1);
-        reactView.displacedNodes.push(claimedDesc);
-
-        compositionViewDesc.dom = topDOM;
-        compositionViewDesc.textDOM = imeTextNode;
-        compositionViewDesc.text = imeTextNode.data;
-        imeTextNode.pmViewDesc = compositionViewDesc;
-        (
-          compositionViewDesc as { _displacedDesc?: TextViewDesc }
-        )._displacedDesc = claimedDesc;
-
-        reactView.input.compositionNodes.push(compositionViewDesc);
-        return;
-      }
-
-      let textDOM = compositionTopDOM;
-      while (textDOM.firstChild) {
-        textDOM = textDOM.firstChild as Element | Text;
-      }
-
-      if (!textDOM || !(textDOM instanceof Text)) {
-        console.error(compositionTopDOM, textDOM);
-        throw new Error(
-          `Started a composition but couldn't find the text node it belongs to.`
-        );
-      }
-      compositionViewDesc.dom = compositionTopDOM;
-      compositionViewDesc.textDOM = textDOM;
-      compositionViewDesc.text = textDOM.data;
-      compositionViewDesc.textDOM.pmViewDesc = compositionViewDesc;
-
-      (view as ReactEditorView).input.compositionNodes.push(
-        compositionViewDesc
-      );
-    },
-    [props.node.isTextblock, view]
-  );
-
   const childContextValue = useMemo(
     () => ({
       parentRef: viewDescRef,
       siblingsRef: childrenRef,
-      findCompositionDOM,
     }),
-    [findCompositionDOM]
+    []
   );
 
   return {

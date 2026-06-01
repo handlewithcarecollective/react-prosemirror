@@ -1,11 +1,10 @@
 import { MutableRefObject, createContext } from "react";
 
-import { CompositionViewDesc, ViewDesc } from "../viewdesc.js";
+import { ViewDesc } from "../viewdesc.js";
 
 export type ChildDescriptionsContextValue = {
   parentRef: MutableRefObject<ViewDesc | undefined>;
   siblingsRef: MutableRefObject<ViewDesc[]>;
-  findCompositionDOM: (compositionViewDesc: CompositionViewDesc) => void;
 };
 
 export const ChildDescriptionsContext =
@@ -14,6 +13,4 @@ export const ChildDescriptionsContext =
     siblingsRef: {
       current: [],
     },
-    // eslint-disable-next-line @typescript-eslint/no-empty-function
-    findCompositionDOM: () => {},
   });

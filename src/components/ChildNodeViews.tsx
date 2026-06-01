@@ -22,11 +22,11 @@ import { sameOuterDeco } from "../viewdesc.js";
 
 import { NativeWidgetView } from "./NativeWidgetView.js";
 import { SeparatorHackView } from "./SeparatorHackView.js";
-import { RemountableTextNodeView } from "./TextNodeView.js";
+import { TextNodeView } from "./TextNodeView.js";
 import { TrailingHackView } from "./TrailingHackView.js";
 import { WidgetView } from "./WidgetView.js";
 import { MarkView } from "./marks/MarkView.js";
-import { NodeView } from "./nodes/NodeView.js";
+import { RemountableNodeView } from "./nodes/NodeView.js";
 
 export function wrapInDeco(reactNode: JSX.Element | string, deco: Decoration) {
   const {
@@ -135,26 +135,19 @@ const ChildView = memo(function ChildView({
     <child.component key={child.key} getPos={getPos} />
   ) : child.node.isText ? (
     <ChildDescriptionsContext.Consumer key={child.key}>
-      {({ siblingsRef, parentRef, findCompositionDOM }) => (
-        <EditorContext.Consumer>
-          {({ registerEventListener, unregisterEventListener }) => (
-            <RemountableTextNodeView
-              view={view}
-              node={child.node}
-              getPos={getPos}
-              siblingsRef={siblingsRef}
-              parentRef={parentRef}
-              findCompositionDOM={findCompositionDOM}
-              decorations={child.outerDeco}
-              registerEventListener={registerEventListener}
-              unregisterEventListener={unregisterEventListener}
-            />
-          )}
-        </EditorContext.Consumer>
+      {({ siblingsRef, parentRef }) => (
+        <TextNodeView
+          view={view}
+          node={child.node}
+          getPos={getPos}
+          siblingsRef={siblingsRef}
+          parentRef={parentRef}
+          decorations={child.outerDeco}
+        />
       )}
     </ChildDescriptionsContext.Consumer>
   ) : (
-    <NodeView
+    <RemountableNodeView
       key={child.key}
       node={child.node}
       getPos={getPos}
@@ -370,7 +363,7 @@ const ChildElement = memo(
             {element}
           </MarkView>
         ),
-        <NodeView
+        <RemountableNodeView
           key={child.key}
           outerDeco={child.outerDeco}
           node={child.node}

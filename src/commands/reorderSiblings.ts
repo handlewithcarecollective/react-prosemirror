@@ -52,7 +52,9 @@ export function reorderSiblingsOnTransaction(
 
   tr.replaceWith(pos, $pos.parent.content.size + pos, reordered);
 
-  const meta: ReactKeysPluginMeta = { overrides: {} };
+  const meta: { overrides: Record<number, number> } = {
+    overrides: {},
+  } satisfies ReactKeysPluginMeta;
 
   const oldPositions: number[] = [];
   let start = pos;

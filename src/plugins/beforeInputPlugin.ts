@@ -5,7 +5,6 @@ import { EditorView } from "prosemirror-view";
 import { ReactEditorView } from "../ReactEditorView.js";
 import { CursorWrapper } from "../components/CursorWrapper.js";
 import { widget } from "../decorations/ReactWidgetType.js";
-import { TextViewDesc, sortViewDescs } from "../viewdesc.js";
 
 import { reactKeysPluginKey } from "./reactKeys.js";
 
@@ -89,7 +88,6 @@ export function beforeInputPlugin() {
       handleDOMEvents: {
         compositionstart(view) {
           if (!(view instanceof ReactEditorView)) return false;
-          view.compositionStarting = true;
 
           const { state } = view;
           const { selection } = state;
@@ -150,12 +148,21 @@ export function beforeInputPlugin() {
             }
           }
 
-          view.compositionStarting = false;
           // We set composing to true after creating the cursor wrapper
           // so that no existing text nodes try to protect themselves
           // while we're creating the cursor wrapper, which may need
           // to split a text node.
           view.input.composing = true;
+
+          // TODO: properly determine the shared-depth ancestore between
+          // from and to
+          const freezeFrom = view.state.selection.$from.before();
+
+          view.dispatch(
+            view.state.tr.setMeta(reactKeysPluginKey, {
+              freezeFrom,
+            })
+          );
 
           return true;
         },
@@ -170,39 +177,12 @@ export function beforeInputPlugin() {
 
           compositionMarks = null;
 
-          for (const displaced of view.displacedNodes) {
-            // Put the displaced TextViewDesc back into its parent's child list.
-            const parent = displaced.parent;
-            if (parent && !parent.children.includes(displaced)) {
-              parent.children.push(displaced);
-              parent.children.sort(sortViewDescs);
-            }
-
-            // Restore pmViewDesc claim on the text node.
-            displaced.dom.pmViewDesc = displaced;
-
-            // Truncate the IME text node back to what the displaced PM node says it
-            // is. The composed content lives in PM state; the next React render will
-            // mount a sibling TextNodeView that inserts its own DOM (e.g.
-            // `<span class="word">k</span>`) right after this node.
-            const claimedText = displaced.node.text ?? "";
-            if (displaced.nodeDOM.nodeValue !== claimedText) {
-              displaced.nodeDOM.nodeValue = claimedText;
-            }
-          }
-
           view.dispatch(
             view.state.tr.setMeta(reactKeysPluginKey, {
               cursorWrapper: null,
+              freezeFrom: null,
             })
           );
-
-          if (
-            view.input.compositionNode &&
-            isCompositionNodeOrphaned(view.input.compositionNode)
-          ) {
-            view.input.compositionNode.remove();
-          }
 
           view.input.compositionEndedAt = event.timeStamp;
           view.input.compositionNode = null;
@@ -266,78 +246,6 @@ export function beforeInputPlugin() {
               insertText(view, event.data);
               break;
             }
-            case "insertCompositionText":
-            case "deleteCompositionText":
-            case "insertFromComposition": {
-              if (!(view instanceof ReactEditorView)) break;
-
-              const { tr } = view.state;
-
-              // There's always a range on insertCompositionText beforeinput events
-              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-              const range = event.getTargetRanges()[0]!;
-
-              const start = view.posAtDOM(
-                range.startContainer,
-                range.startOffset
-              );
-              const end = view.posAtDOM(range.endContainer, range.endOffset, 1);
-
-              if (
-                view.state.doc.textBetween(start, end, "**", "*") === event.data
-              ) {
-                return;
-              }
-
-              if (event.data) {
-                if (compositionMarks) tr.ensureMarks(compositionMarks);
-                tr.insertText(event.data, start, end);
-              } else {
-                tr.delete(start, end);
-              }
-
-              // When updating a composition within an existing text node,
-              // we need to avoid remounting it. If the composition is at
-              // the very beginning of the text node, the start position of
-              // that node will either be mapped forward (if inserting new
-              // content) or deleted (if replacing existing content).
-              //
-              // This will cause the reactKeys plugin to mint a new key for
-              // that node, which triggers a remount. So we check to see whether
-              // we're working on a composition at the very beginning of a text
-              // node, and if so, tell the react keys plugin not to change the
-              // key for that node.
-              //
-              // We need to check that the marks are the same — if they're not,
-              // then we're inserting text _before_ this text node, not at the
-              // start of it, so we actually _do_ want to map the exsting node
-              // forward.
-              const $start = view.state.doc.resolve(start);
-              const $end = view.state.doc.resolve(end);
-              const marks = compositionMarks ?? $start.marksAcross($end) ?? [];
-              if (
-                $start.textOffset === 0 &&
-                $end.nodeAfter?.marks.every((m) => m.isInSet(marks))
-              ) {
-                tr.setMeta(reactKeysPluginKey, {
-                  overrides: { [start]: start },
-                });
-              }
-
-              view.dom.addEventListener(
-                "input",
-                () => {
-                  const sel = view.domSelectionRange();
-                  if (sel.focusNode && sel.focusNode.nodeType === 3) {
-                    view.input.compositionNode = sel.focusNode as Text;
-                  }
-                  view.dispatch(tr);
-                },
-                { once: true }
-              );
-
-              break;
-            }
             case "deleteWordBackward":
             case "deleteHardLineBackward":
             case "deleteSoftLineBackward":
@@ -375,16 +283,4 @@ export function beforeInputPlugin() {
       },
     },
   });
-}
-function isCompositionNodeOrphaned(tn: Text): boolean {
-  if (tn.pmViewDesc) return false;
-  for (
-    let parent: Node | null = tn.parentNode;
-    parent;
-    parent = parent.parentNode
-  ) {
-    const desc = parent.pmViewDesc;
-    if (desc instanceof TextViewDesc && desc.nodeDOM === tn) return false;
-  }
-  return true;
 }
