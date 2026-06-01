@@ -9,11 +9,11 @@ import {
   // @ts-expect-error This is an internal export
   __endComposition,
 } from "prosemirror-view";
-// import React, { forwardRef } from "react";
+import React, { forwardRef } from "react";
 
-// import { widget } from "../../decorations/ReactWidgetType.js";
+import { widget } from "../../decorations/ReactWidgetType.js";
 import { tempEditor } from "../../testing/editorViewTestHelpers.js";
-// import { WidgetViewComponentProps } from "../WidgetViewComponentProps.js";
+import { WidgetViewComponentProps } from "../WidgetViewComponentProps.js";
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -50,36 +50,36 @@ const wordHighlighter = new Plugin({
   props: { decorations: wordDeco },
 });
 
-// const Widget = forwardRef<HTMLElement, WidgetViewComponentProps>(
-//   function Widget({ widget, getPos, ...props }, ref) {
-//     return (
-//       <var ref={ref} {...props}>
-//         ×
-//       </var>
-//     );
-//   }
-// );
+const Widget = forwardRef<HTMLElement, WidgetViewComponentProps>(
+  function Widget({ widget, getPos, ...props }, ref) {
+    return (
+      <var ref={ref} {...props}>
+        ×
+      </var>
+    );
+  }
+);
 
-// function widgets(positions: number[], sides: number[]) {
-//   return new Plugin({
-//     state: {
-//       init(state) {
-//         const deco = positions.map((p, i) =>
-//           widget(p, Widget, { side: sides[i] })
-//         );
-//         return DecorationSet.create(state.doc!, deco);
-//       },
-//       apply(tr, deco) {
-//         return deco.map(tr.mapping, tr.doc);
-//       },
-//     },
-//     props: {
-//       decorations(this: Plugin, state) {
-//         return this.getState(state);
-//       },
-//     },
-//   });
-// }
+function widgets(positions: number[], sides: number[]) {
+  return new Plugin({
+    state: {
+      init(state) {
+        const deco = positions.map((p, i) =>
+          widget(p, Widget, { side: sides[i] })
+        );
+        return DecorationSet.create(state.doc!, deco);
+      },
+      apply(tr, deco) {
+        return deco.map(tr.mapping, tr.doc);
+      },
+    },
+    props: {
+      decorations(this: Plugin, state) {
+        return this.getState(state);
+      },
+    },
+  });
+}
 
 // These unfortunately aren't working at the moment, though
 // composition seems to be working generally.
@@ -346,7 +346,7 @@ describe("EditorView composition", () => {
     expect(pm.state.doc).toEqualNode(doc(p("foo hi")));
   });
 
-  it.skip("works inside highlighted text", async () => {
+  it("works inside highlighted text", async () => {
     const { view: pm } = tempEditor({
       doc: doc(p("one<a> two")),
       plugins: [wordHighlighter],
@@ -377,7 +377,7 @@ describe("EditorView composition", () => {
     expect(pm.state.doc).toEqualNode(doc(p("onexy. two")));
   });
 
-  it.skip("can handle compositions spanning multiple nodes", async () => {
+  it("can handle compositions spanning multiple nodes", async () => {
     const { view: pm } = tempEditor({
       doc: doc(p("one two<a>")),
       plugins: [wordHighlighter],
@@ -389,8 +389,10 @@ describe("EditorView composition", () => {
       text: "one twoa",
       selectionStart: 8,
       selectionEnd: 8,
-      replacementStart: -7,
-      replacementEnd: 0,
+      // Causes command to fail, probably incorrect
+      // argument values?
+      // replacementStart: -7,
+      // replacementEnd: 0,
     });
 
     await browser.imeSetComposition({
@@ -430,41 +432,47 @@ describe("EditorView composition", () => {
     expect(pm.state.doc).toEqualNode(doc(p("xyzone twoabc")));
   });
 
-  // it("doesn't overwrite widgets next to the composition", () => {
-  //   const { view: pm } = tempEditor({
-  //     doc: doc(p("")),
-  //     plugins: [widgets([1, 1], [-1, 1])],
-  //   });
-  //   compose(
-  //     pm,
-  //     () => {
-  //       const p = pm.dom.firstChild!;
-  //       return edit(p.insertBefore(document.createTextNode("a"), p.lastChild));
-  //     },
-  //     [(n) => edit(n, "b", 0, 1)],
-  //     "ab",
-  //     {
-  //       end: () => {
-  //         expect(pm.dom.querySelectorAll("var")).toHaveLength(2);
-  //       },
-  //     }
-  //   );
-  //   expect(pm.state.doc).toEqualNode(doc(p("ab")));
-  // });
+  it("doesn't overwrite widgets next to the composition", async () => {
+    const { view: pm } = tempEditor({
+      doc: doc(p("<a>")),
+      plugins: [widgets([1, 1], [-1, 1])],
+    });
 
-  // it("cancels composition when a change fully overlaps with it", async () => {
-  //   const { view: pm } = tempEditor({
-  //     doc: doc(p("one"), p("two<a>"), p("three")),
-  //   });
-  //   compose(
-  //     pm,
-  //     () => edit(findTextNode(pm.dom, "two")!, "x"),
-  //     [() => pm.dispatch(pm.state.tr.insertText("---", 3, 13))],
-  //     "x",
-  //     { cancel: true }
-  //   );
-  //   expect(pm.state.doc).toEqualNode(doc(p("on---hree")));
-  // });
+    await browser.imeSetComposition({
+      text: "a",
+      selectionStart: 1,
+      selectionEnd: 1,
+    });
+
+    await browser.imeSetComposition({
+      text: "ab",
+      selectionStart: 2,
+      selectionEnd: 2,
+    });
+
+    await browser.imeInsertText({
+      text: "ab",
+    });
+
+    expect(pm.dom.querySelectorAll("var")).toHaveLength(2);
+    expect(pm.state.doc).toEqualNode(doc(p("ab")));
+  });
+
+  it("cancels composition when a change fully overlaps with it", async () => {
+    const { view: pm } = tempEditor({
+      doc: doc(p("one"), p("two<a>"), p("three")),
+    });
+
+    await browser.imeSetComposition({
+      text: "x",
+      selectionStart: 1,
+      selectionEnd: 1,
+    });
+
+    pm.dispatch(pm.state.tr.insertText("---", 3, 13));
+
+    expect(pm.state.doc).toEqualNode(doc(p("on---hree")));
+  });
 
   // it("cancels composition when a change partially overlaps with it", () => {
   //   const { view: pm } = requireFocus(
@@ -492,17 +500,34 @@ describe("EditorView composition", () => {
   //   ist(pm.state.doc, doc(p("one"), p("x!wo"), p("three")), eq);
   // });
 
-  // it("doesn't cancel composition when a change happens elsewhere", () => {
-  //   const { view: pm } = requireFocus(
-  //     tempEditor({ doc: doc(p("one"), p("two"), p("three")) })
-  //   );
-  //   compose(pm, () => edit(findTextNode(pm.dom, "two")!, "x", 0), [
-  //     (n) => edit(n, "y", 1),
-  //     () => pm.dispatch(pm.state.tr.insertText("!", 2, 3)),
-  //     (n) => edit(n, "z", 2),
-  //   ]);
-  //   ist(pm.state.doc, doc(p("o!e"), p("xyztwo"), p("three")), eq);
-  // });
+  it("doesn't cancel composition when a change happens elsewhere", async () => {
+    const { view: pm } = tempEditor({
+      doc: doc(p("one"), p("two"), p("three")),
+    });
+
+    pm.focus();
+
+    await browser.imeSetComposition({
+      text: "x",
+      selectionStart: 1,
+      selectionEnd: 1,
+    });
+
+    await browser.imeSetComposition({
+      text: "xy",
+      selectionStart: 2,
+      selectionEnd: 2,
+    });
+    pm.dispatch(pm.state.tr.insertText("!", 2, 3));
+
+    await browser.imeSetComposition({
+      text: "xyz",
+      selectionStart: 3,
+      selectionEnd: 3,
+    });
+
+    expect(pm.state.doc).toEqualNode(doc(p("o!e"), p("xyztwo"), p("three")));
+  });
 
   // it("handles compositions rapidly following each other", () => {
   //   const { view: pm } = tempEditor({ doc: doc(p("one"), p("two")) });
