@@ -43,6 +43,7 @@ interface DOMObserver {
   onSelectionChange(): void;
   setCurSelection(): void;
   flush(): void;
+  lastChangedTextNode: Text | null;
 }
 
 interface InputState {
@@ -105,6 +106,8 @@ export class ReactEditorView extends EditorView implements AbstractEditorView {
 
   private _destroyed: boolean;
 
+  public cursorWrapped: boolean;
+
   constructor(place: { mount: HTMLElement }, props: DirectEditorProps) {
     // Prevent the base class from destroying the React-managed nodes.
     // Restore them below after invoking the base class constructor.
@@ -157,6 +160,7 @@ export class ReactEditorView extends EditorView implements AbstractEditorView {
     // @ts-expect-error this violates the typing but class does it, too.
     this.docView = null;
     this._destroyed = false;
+    this.cursorWrapped = false;
   }
 
   get props() {

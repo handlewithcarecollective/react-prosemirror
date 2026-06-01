@@ -8,7 +8,7 @@ export function createNodeKey() {
   return key;
 }
 
-interface ReactKeysPluginState {
+export interface ReactKeysPluginState {
   posToKey: Map<number, string>;
   keyToPos: Map<string, number>;
   cursorWrapper: Decoration | null;

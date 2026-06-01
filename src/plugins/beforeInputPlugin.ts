@@ -5,6 +5,11 @@ import { EditorView } from "prosemirror-view";
 import { ReactEditorView } from "../ReactEditorView.js";
 import { CursorWrapper } from "../components/CursorWrapper.js";
 import { widget } from "../decorations/ReactWidgetType.js";
+import {
+  CompositionViewDesc,
+  TextViewDesc,
+  findTextInFragment,
+} from "../viewdesc.js";
 
 import { reactKeysPluginKey } from "./reactKeys.js";
 
@@ -119,8 +124,6 @@ export function beforeInputPlugin() {
             compositionMarks = [];
           }
 
-          const tr = view.state.tr.setStoredMarks(null);
-          view.dispatch(tr);
           handleGapCursorComposition(view);
 
           if (compositionMarks) {
@@ -157,12 +160,6 @@ export function beforeInputPlugin() {
             }
           }
 
-          // We set composing to true after creating the cursor wrapper
-          // so that no existing text nodes try to protect themselves
-          // while we're creating the cursor wrapper, which may need
-          // to split a text node.
-          view.input.composing = true;
-
           // TODO: properly determine the shared-depth ancestore between
           // from and to
           const freezeFrom = view.state.selection.$from.before();
@@ -175,7 +172,6 @@ export function beforeInputPlugin() {
 
           const frozenDom = view.nodeDOM(freezeFrom);
           if (!frozenDom) {
-            view.input.composing = false;
             view.dispatch(
               view.state.tr.setMeta(reactKeysPluginKey, {
                 cursorWrapper: null,
@@ -185,9 +181,12 @@ export function beforeInputPlugin() {
             return false;
           }
 
+          view.input.composing = true;
+
           observer = new MutationObserver((records) => {
             view.domObserver.queue.push(...records);
             view.domObserver.flush();
+            syncCompositionViewDescs(view);
           });
 
           observer.observe(frozenDom, observeOptions);
@@ -318,4 +317,78 @@ export function beforeInputPlugin() {
       },
     },
   });
+}
+
+function syncCompositionViewDescs(view: ReactEditorView) {
+  const compositionNode = view.domObserver.lastChangedTextNode;
+  if (!compositionNode) return;
+
+  const freezeFrom = reactKeysPluginKey.getState(view.state)?.freezeFrom;
+  if (freezeFrom == null) return;
+
+  const compositionBlock = view.state.doc.nodeAt(freezeFrom);
+  if (!compositionBlock) return;
+
+  const compositionBlockDesc = view.docView.descAt(freezeFrom);
+  if (!compositionBlockDesc) return;
+
+  const desc = compositionNode?.pmViewDesc;
+
+  compositionBlockDesc.node = compositionBlock;
+
+  if (desc instanceof TextViewDesc) {
+    if (
+      compositionNode?.nodeValue != null &&
+      desc.node.text !== compositionNode.nodeValue
+    ) {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      desc.node = view.state.doc.resolve(desc.posBefore).nodeAfter!;
+      desc.nodeDOM = compositionNode;
+      compositionNode.pmViewDesc = desc;
+    }
+    return;
+  }
+
+  if (desc instanceof CompositionViewDesc) {
+    if (
+      compositionNode?.nodeValue != null &&
+      desc.text !== compositionNode.nodeValue
+    ) {
+      desc.dom = compositionNode;
+      desc.textDOM = compositionNode;
+      desc.text = compositionNode.nodeValue;
+      compositionNode.pmViewDesc = desc;
+    }
+    return;
+  }
+
+  const contentStart = freezeFrom + 1;
+
+  const { from, to } = view.state.selection;
+
+  const textPos = findTextInFragment(
+    compositionBlock.content,
+    compositionNode.nodeValue ?? "",
+    from - contentStart,
+    to - contentStart
+  );
+
+  if (textPos < 0) return;
+
+  const startPos = contentStart + textPos;
+
+  const prevSiblingIndex = compositionBlockDesc.children.findLastIndex(
+    (desc) => desc.posBefore <= startPos
+  );
+  compositionBlockDesc.children.splice(
+    prevSiblingIndex + 1,
+    0,
+    new CompositionViewDesc(
+      compositionBlockDesc,
+      () => startPos,
+      compositionNode,
+      compositionNode,
+      compositionNode.nodeValue ?? ""
+    )
+  );
 }

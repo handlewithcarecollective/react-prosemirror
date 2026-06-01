@@ -98,6 +98,8 @@ export const GetPosContext = createContext<() => number>(
 );
 
 export function RemountableNodeView(props: Omit<Props, "forceRemount">) {
-  const [, forceRemount] = useReducer((x) => x + 1, 0);
-  return <NodeView {...props} forceRemount={forceRemount} />;
+  const [key, forceRemount] = useReducer((x) => x + 1, 0);
+  return (
+    <NodeView key={key.toString()} {...props} forceRemount={forceRemount} />
+  );
 }
