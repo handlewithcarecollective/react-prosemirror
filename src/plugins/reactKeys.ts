@@ -62,7 +62,7 @@ export function reactKeys() {
        * and assign its key to that new position, dropping it if the
        * node was deleted.
        */
-      apply(tr, value, _, newState) {
+      apply(tr, value, oldState, newState) {
         const meta = tr.getMeta(reactKeysPluginKey) as ReactKeysPluginMeta;
 
         const overrides = meta && "overrides" in meta ? meta.overrides : {};
@@ -97,6 +97,19 @@ export function reactKeys() {
                 : null
               : freezeFrom,
         };
+
+        if (
+          value.freezeFrom !== null &&
+          next.freezeFrom !== null &&
+          tr.getMeta("composition") == null
+        ) {
+          const oldBlock = oldState.doc.nodeAt(value.freezeFrom);
+          const newBlock = newState.doc.nodeAt(next.freezeFrom);
+          if (newBlock && !oldBlock?.eq(newBlock)) {
+            next.freezeFrom = null;
+            next.cursorWrapper = null;
+          }
+        }
 
         if (!tr.docChanged) {
           return {

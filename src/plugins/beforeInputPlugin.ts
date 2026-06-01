@@ -5,9 +5,11 @@ import { EditorView } from "prosemirror-view";
 import { ReactEditorView } from "../ReactEditorView.js";
 import { CursorWrapper } from "../components/CursorWrapper.js";
 import { widget } from "../decorations/ReactWidgetType.js";
+import { DOMNode } from "../dom.js";
 import {
   CompositionViewDesc,
   TextViewDesc,
+  ViewDesc,
   findTextInFragment,
 } from "../viewdesc.js";
 
@@ -97,7 +99,60 @@ const observeOptions = {
 export function beforeInputPlugin() {
   let compositionMarks: readonly Mark[] | null = null;
   let observer: MutationObserver | null = null;
+  let preCompositionSnapshot: Fragment | null = null;
+
+  function teardownComposition(view: ReactEditorView, endedAt: number) {
+    view.input.composing = false;
+
+    compositionMarks = null;
+
+    if (observer) {
+      if (
+        view.input.compositionNode &&
+        view.dom.contains(view.input.compositionNode)
+      ) {
+        view.domObserver.queue.push(...observer.takeRecords());
+        view.domObserver.flush();
+      } else {
+        const freezeFrom = reactKeysPluginKey.getState(view.state)?.freezeFrom;
+        if (freezeFrom != null && preCompositionSnapshot) {
+          // This is a little hacky — it only works because we always abort
+          // compositions if the node after freezeFrom changes, so we can
+          // be sure that if a composition was canceled by the user/browser,
+          // the content hasn't changed since the composition started
+          view.dispatch(
+            view.state.tr.replaceWith(
+              freezeFrom + 1,
+              freezeFrom + 1 + view.state.doc.nodeAt(freezeFrom)!.content.size,
+              preCompositionSnapshot
+            )
+          );
+        }
+      }
+      observer.disconnect();
+      observer = null;
+    }
+
+    view.input.compositionEndedAt = endedAt;
+    view.input.compositionNode = null;
+    view.input.compositionNodes = [];
+    view.input.compositionID++;
+  }
+
   return new Plugin({
+    view() {
+      return {
+        update(view) {
+          if (!(view instanceof ReactEditorView)) return;
+          const frozen =
+            reactKeysPluginKey.getState(view.state)?.freezeFrom != null;
+
+          if (observer && view.composing && !frozen) {
+            teardownComposition(view, Date.now());
+          }
+        },
+      };
+    },
     props: {
       handleDOMEvents: {
         compositionstart(view) {
@@ -181,48 +236,17 @@ export function beforeInputPlugin() {
             return false;
           }
 
+          preCompositionSnapshot =
+            view.state.doc.nodeAt(freezeFrom)?.content ?? null;
+
           view.input.composing = true;
 
           observer = new MutationObserver((records) => {
-            view.domObserver.queue.push(...records);
-            try {
-              view.domObserver.flush();
-            } catch (e) {
-              const n = view.domObserver.lastChangedTextNode;
-              const d = n && (n as any).pmViewDesc;
-              const ff = reactKeysPluginKey.getState(view.state)?.freezeFrom;
-              const block = ff != null ? view.docView.descAt(ff) : null;
-              const safe = (fn: () => unknown) => {
-                try {
-                  return fn();
-                } catch {
-                  return "THROW";
-                }
-              };
-              throw new Error(
-                `FLUSH FAIL docSize=${view.state.doc.content.size} freezeFrom=${ff}` +
-                  ` imeNode=${JSON.stringify(n?.nodeValue)} descType=${
-                    d?.constructor?.name
-                  }` +
-                  ` posStart=${safe(() => d?.posAtStart)} posEnd=${safe(
-                    () => d?.posAtEnd
-                  )}` +
-                  ` blockChildren=${JSON.stringify(
-                    (block as any)?.children?.map((c: any) => ({
-                      t: c.constructor.name,
-                      size: c.size,
-                      text: c.node?.text ?? c.text,
-                    }))
-                  )}` +
-                  ` records=${JSON.stringify(
-                    records.map((r) => ({
-                      t: r.type,
-                      v: (r.target as any)?.nodeValue,
-                    }))
-                  )}` +
-                  ` || ${(e as Error).message}`
-              );
+            if (reactKeysPluginKey.getState(view.state)?.freezeFrom == null) {
+              return;
             }
+            view.domObserver.queue.push(...records);
+            view.domObserver.flush();
             syncCompositionViewDescs(view);
           });
 
@@ -237,28 +261,14 @@ export function beforeInputPlugin() {
           if (!(view instanceof ReactEditorView)) return false;
 
           if (!view.composing) return false;
-          view.input.composing = false;
 
-          compositionMarks = null;
-
-          if (observer) {
-            view.domObserver.queue.push(...observer.takeRecords());
-            observer.disconnect();
-            observer = null;
-            view.domObserver.flush();
-          }
-
+          teardownComposition(view, event.timeStamp);
           view.dispatch(
             view.state.tr.setMeta(reactKeysPluginKey, {
               cursorWrapper: null,
               freezeFrom: null,
             })
           );
-
-          view.input.compositionEndedAt = event.timeStamp;
-          view.input.compositionNode = null;
-          view.input.compositionNodes = [];
-          view.input.compositionID++;
 
           return true;
         },
@@ -356,6 +366,22 @@ export function beforeInputPlugin() {
   });
 }
 
+// Walk up from a DOM node to the nearest desc that can hold children (has a
+// contentDOM) — i.e. the desc whose content the node lives in. For a bare
+// composition that's the block's NodeViewDesc; for a composition inside a
+// cursor wrapper's mark, it's that MarkViewDesc.
+function containerDescFor(
+  view: ReactEditorView,
+  node: DOMNode
+): ViewDesc | undefined {
+  for (let dom: DOMNode | null = node.parentNode; dom; dom = dom.parentNode) {
+    const desc = (dom as DOMNode & { pmViewDesc?: ViewDesc }).pmViewDesc;
+    if (desc?.contentDOM) return desc;
+    if (dom === view.dom) break;
+  }
+  return undefined;
+}
+
 function syncCompositionViewDescs(view: ReactEditorView) {
   const compositionNode = view.domObserver.lastChangedTextNode;
   if (!compositionNode) return;
@@ -369,13 +395,13 @@ function syncCompositionViewDescs(view: ReactEditorView) {
   const compositionBlockDesc = view.docView.descAt(freezeFrom);
   if (!compositionBlockDesc) return;
 
-  const desc = compositionNode?.pmViewDesc;
+  const desc = compositionNode.pmViewDesc;
 
   compositionBlockDesc.node = compositionBlock;
 
   if (desc instanceof TextViewDesc) {
     if (
-      compositionNode?.nodeValue &&
+      compositionNode.nodeValue &&
       desc.node.text !== compositionNode.nodeValue
     ) {
       desc.node = view.state.schema.text(
@@ -390,7 +416,7 @@ function syncCompositionViewDescs(view: ReactEditorView) {
 
   if (desc instanceof CompositionViewDesc) {
     if (
-      compositionNode?.nodeValue != null &&
+      compositionNode.nodeValue != null &&
       desc.text !== compositionNode.nodeValue
     ) {
       desc.dom = compositionNode;
@@ -401,40 +427,43 @@ function syncCompositionViewDescs(view: ReactEditorView) {
     return;
   }
 
-  const replaced = compositionBlockDesc.children.findIndex((c) => {
+  const parentDesc =
+    containerDescFor(view, compositionNode) ?? compositionBlockDesc;
+  if (!parentDesc.contentDOM) return;
+  const children = parentDesc.children;
+
+  const displacedIndex = children.findIndex((c) => {
     if (!(c instanceof TextViewDesc)) return false;
     const dom = c.nodeDOM ?? c.dom;
-
-    return dom && !view.dom.contains(dom);
+    return dom != null && !view.dom.contains(dom);
   });
-
-  compositionBlockDesc.children.splice(replaced, 1);
+  if (displacedIndex >= 0) children.splice(displacedIndex, 1);
 
   const contentStart = freezeFrom + 1;
-
   const { from, to } = view.state.selection;
-
   const textPos = findTextInFragment(
     compositionBlock.content,
     compositionNode.nodeValue ?? "",
     from - contentStart,
     to - contentStart
   );
-
   if (textPos < 0) return;
-
   const startPos = contentStart + textPos;
 
-  const prevSiblingIndex = compositionBlockDesc.children.findLastIndex(
-    (desc) => desc.posBefore <= startPos
-  );
-  compositionBlockDesc.children.splice(
-    prevSiblingIndex + 1,
+  let topDOM: DOMNode = compositionNode;
+  while (topDOM.parentNode && topDOM.parentNode !== parentDesc.contentDOM) {
+    topDOM = topDOM.parentNode;
+  }
+
+  const insertIndex =
+    children.findLastIndex((c) => c.posBefore <= startPos) + 1;
+  children.splice(
+    insertIndex,
     0,
     new CompositionViewDesc(
-      compositionBlockDesc,
+      parentDesc,
       () => startPos,
-      compositionNode,
+      topDOM,
       compositionNode,
       compositionNode.nodeValue ?? ""
     )
