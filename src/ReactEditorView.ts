@@ -42,6 +42,7 @@ interface DOMObserver {
   stop(): void;
   onSelectionChange(): void;
   setCurSelection(): void;
+  flush(): void;
 }
 
 interface InputState {

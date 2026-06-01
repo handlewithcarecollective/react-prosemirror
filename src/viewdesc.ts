@@ -1048,6 +1048,10 @@ export class TextViewDesc extends NodeViewDesc {
   isText(text: string) {
     return this.node.text == text;
   }
+
+  ignoreMutation(mutation: ViewMutationRecord): boolean {
+    return mutation.type !== "characterData" && mutation.type !== "selection";
+  }
 }
 
 // A dummy desc used to tag trailing BR or IMG nodes created to work

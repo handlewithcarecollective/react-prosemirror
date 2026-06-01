@@ -80,9 +80,18 @@ function handleGapCursorComposition(view: EditorView) {
   view.dispatch(tr);
 }
 
+const observeOptions = {
+  childList: true,
+  characterData: true,
+  characterDataOldValue: true,
+  attributes: true,
+  attributeOldValue: true,
+  subtree: true,
+};
+
 export function beforeInputPlugin() {
   let compositionMarks: readonly Mark[] | null = null;
-
+  let observer: MutationObserver | null = null;
   return new Plugin({
     props: {
       handleDOMEvents: {
@@ -164,6 +173,25 @@ export function beforeInputPlugin() {
             })
           );
 
+          const frozenDom = view.nodeDOM(freezeFrom);
+          if (!frozenDom) {
+            view.input.composing = false;
+            view.dispatch(
+              view.state.tr.setMeta(reactKeysPluginKey, {
+                cursorWrapper: null,
+                freezeFrom: null,
+              })
+            );
+            return false;
+          }
+
+          observer = new MutationObserver((records) => {
+            view.domObserver.queue.push(...records);
+            view.domObserver.flush();
+          });
+
+          observer.observe(frozenDom, observeOptions);
+
           return true;
         },
         compositionupdate() {
@@ -176,6 +204,13 @@ export function beforeInputPlugin() {
           view.input.composing = false;
 
           compositionMarks = null;
+
+          if (observer) {
+            view.domObserver.queue.push(...observer.takeRecords());
+            observer.disconnect();
+            observer = null;
+            view.domObserver.flush();
+          }
 
           view.dispatch(
             view.state.tr.setMeta(reactKeysPluginKey, {

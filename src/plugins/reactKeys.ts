@@ -92,7 +92,7 @@ export function reactKeys() {
               : cursorWrapper,
           freezeFrom:
             freezeFrom === undefined
-              ? value.freezeFrom
+              ? value.freezeFrom !== null
                 ? tr.mapping.map(value.freezeFrom, -1)
                 : null
               : freezeFrom,
@@ -102,6 +102,7 @@ export function reactKeys() {
           return {
             ...value,
             cursorWrapper: next.cursorWrapper,
+            freezeFrom: next.freezeFrom,
           };
         }
 
