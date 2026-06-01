@@ -185,7 +185,44 @@ export function beforeInputPlugin() {
 
           observer = new MutationObserver((records) => {
             view.domObserver.queue.push(...records);
-            view.domObserver.flush();
+            try {
+              view.domObserver.flush();
+            } catch (e) {
+              const n = view.domObserver.lastChangedTextNode;
+              const d = n && (n as any).pmViewDesc;
+              const ff = reactKeysPluginKey.getState(view.state)?.freezeFrom;
+              const block = ff != null ? view.docView.descAt(ff) : null;
+              const safe = (fn: () => unknown) => {
+                try {
+                  return fn();
+                } catch {
+                  return "THROW";
+                }
+              };
+              throw new Error(
+                `FLUSH FAIL docSize=${view.state.doc.content.size} freezeFrom=${ff}` +
+                  ` imeNode=${JSON.stringify(n?.nodeValue)} descType=${
+                    d?.constructor?.name
+                  }` +
+                  ` posStart=${safe(() => d?.posAtStart)} posEnd=${safe(
+                    () => d?.posAtEnd
+                  )}` +
+                  ` blockChildren=${JSON.stringify(
+                    (block as any)?.children?.map((c: any) => ({
+                      t: c.constructor.name,
+                      size: c.size,
+                      text: c.node?.text ?? c.text,
+                    }))
+                  )}` +
+                  ` records=${JSON.stringify(
+                    records.map((r) => ({
+                      t: r.type,
+                      v: (r.target as any)?.nodeValue,
+                    }))
+                  )}` +
+                  ` || ${(e as Error).message}`
+              );
+            }
             syncCompositionViewDescs(view);
           });
 
@@ -338,11 +375,13 @@ function syncCompositionViewDescs(view: ReactEditorView) {
 
   if (desc instanceof TextViewDesc) {
     if (
-      compositionNode?.nodeValue != null &&
+      compositionNode?.nodeValue &&
       desc.node.text !== compositionNode.nodeValue
     ) {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      desc.node = view.state.doc.resolve(desc.posBefore).nodeAfter!;
+      desc.node = view.state.schema.text(
+        compositionNode.nodeValue,
+        desc.node.marks
+      );
       desc.nodeDOM = compositionNode;
       compositionNode.pmViewDesc = desc;
     }
@@ -361,6 +400,15 @@ function syncCompositionViewDescs(view: ReactEditorView) {
     }
     return;
   }
+
+  const replaced = compositionBlockDesc.children.findIndex((c) => {
+    if (!(c instanceof TextViewDesc)) return false;
+    const dom = c.nodeDOM ?? c.dom;
+
+    return dom && !view.dom.contains(dom);
+  });
+
+  compositionBlockDesc.children.splice(replaced, 1);
 
   const contentStart = freezeFrom + 1;
 
