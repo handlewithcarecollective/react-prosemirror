@@ -41,6 +41,7 @@ interface DOMObserver {
   start(): void;
   stop(): void;
   onSelectionChange(): void;
+  setCurSelection(): void;
 }
 
 interface InputState {
@@ -63,7 +64,7 @@ interface InputState {
   mouseDown: {
     allowDefault: boolean;
     delayedSelectionSync: boolean;
-  };
+  } | null;
 }
 
 /**
@@ -282,7 +283,24 @@ export class ReactEditorView extends EditorView implements AbstractEditorView {
     // node view selection callbacks.
     this.docView.markDirty(-1, -1);
 
-    super.update(this.nextProps);
+    const selectionChanged = !this.state.selection.eq(this.prevState.selection);
+    if (selectionChanged) {
+      super.update(this.nextProps);
+    } else {
+      // If the selection hasn't changed between renders, force prosemirror-view to
+      // skip the selectionToDOM call. If a render happens after a DOM selection change
+      // but before the "selectionchange" event fired, calling selectionToDOM will cause
+      // the selection to be reset its the previous position.
+      this.domObserver.setCurSelection();
+      this.input.mouseDown = {
+        allowDefault: false,
+        delayedSelectionSync: false,
+      };
+
+      super.update(this.nextProps);
+
+      this.input.mouseDown = null;
+    }
 
     // Store the new previous state.
     this.prevState = this.state;
