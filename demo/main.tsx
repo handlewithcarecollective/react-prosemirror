@@ -21,28 +21,9 @@ import "./main.css";
 import { CodeBlock } from "./nodeViews/CodeBlock.js";
 import { schema } from "./schema.js";
 
-function wordDeco(state: EditorState) {
-  const re = /\p{L}+/gu,
-    deco: Decoration[] = [];
-  state.doc.descendants((node, pos) => {
-    if (node.isText)
-      for (let m; (m = re.exec(node.text!)); )
-        deco.push(
-          Decoration.inline(pos + m.index, pos + m.index + m[0].length, {
-            class: "word",
-          })
-        );
-  });
-  return DecorationSet.create(state.doc, deco);
-}
-
-const wordHighlighter = new Plugin({
-  props: { decorations: wordDeco },
-});
-
 const editorState = EditorState.create({
   schema,
-  // doc,
+  doc,
   plugins: [
     inputRules({
       rules: [wrappingInputRule(/^\s*([-+*])\s$/, schema.nodes.list)],
@@ -65,7 +46,6 @@ const plugins = [
     "Mod-y": redo,
   }),
   gapCursor(),
-  // wordHighlighter,
 ];
 
 const nodeViews = {
