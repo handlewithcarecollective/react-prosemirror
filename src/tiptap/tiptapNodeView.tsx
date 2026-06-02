@@ -54,7 +54,10 @@ export interface TiptapNodeViewProps {
       }) => boolean)
     | null;
   ignoreMutation?:
-    | ((props: { mutation: ViewMutationRecord }) => boolean)
+    | ((props: {
+        mutation: ViewMutationRecord;
+        defaultIgnoreMutation: (mutation: ViewMutationRecord) => boolean;
+      }) => boolean)
     | null;
   contentDOMElementTag?: ElementType | undefined;
 }
@@ -156,13 +159,6 @@ export function tiptapNodeView({
         });
 
         useIgnoreMutation(function (this: ViewDesc, _, mutation) {
-          if (ignoreMutation) {
-            return ignoreMutation.call(
-              { name: extension.name, editor, type: node.type },
-              { mutation }
-            );
-          }
-
           if (!editor || !(this.dom instanceof HTMLElement)) return false;
 
           const nodeView = new ReactProseMirrorNodeView(
@@ -181,6 +177,15 @@ export function tiptapNodeView({
             this.contentDOM
           );
 
+          if (ignoreMutation) {
+            return ignoreMutation.call(
+              { name: extension.name, editor, type: node.type },
+              {
+                mutation,
+                defaultIgnoreMutation: nodeView.ignoreMutation.bind(nodeView),
+              }
+            );
+          }
           return nodeView.ignoreMutation(mutation) ?? false;
         });
 

@@ -8,7 +8,7 @@ import {
 /**
  * Subclass of Tiptap's NodeView to be used in tiptapNodeView.
  *
- * Allows us to pass in an existing dom and contentODM from React ProseMirror's
+ * Allows us to pass in an existing dom and contentDOM from React ProseMirror's
  * ViewDesc, so that we can call Tiptap's default stopEvent and ignoreMutation
  * methods
  */
