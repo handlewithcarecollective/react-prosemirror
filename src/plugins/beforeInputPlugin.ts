@@ -211,8 +211,6 @@ export function beforeInputPlugin() {
             }
           }
 
-          // TODO: properly determine the shared-depth ancestore between
-          // from and to
           const freezeFrom = view.state.selection.$from.before();
 
           view.dispatch(
