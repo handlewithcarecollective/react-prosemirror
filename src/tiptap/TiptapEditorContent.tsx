@@ -1,6 +1,7 @@
 import { Editor, TiptapEditorHTMLElement } from "@tiptap/core";
 import { ReactRenderer } from "@tiptap/react";
 import React, {
+  ElementType,
   ForwardedRef,
   HTMLProps,
   ReactPortal,
@@ -88,8 +89,17 @@ function getInstance(): ContentComponent {
 
 interface Props extends Omit<HTMLProps<HTMLElement>, "as"> {
   editor: Editor;
+  as?: ElementType;
 }
 
+/**
+ * Renders the actual editable ProseMirror document.
+ *
+ * This **must** be passed as a child to the `TiptapEditorView`
+ * component. It may be wrapped in other components, and other
+ * childern may be passed before or after. It must be passed the
+ * same `editor` as is passed to the `TiptapEditorView`.
+ */
 export function TiptapEditorContent({ editor: editorProp, ...props }: Props) {
   const editor = editorProp as Editor & {
     contentComponent: ContentComponent | null;

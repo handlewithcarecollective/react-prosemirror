@@ -200,14 +200,142 @@ which allows you to drop the wrapping DOM nodes, follow the guide for writing
 
 ### `TiptapEditorView`
 
+```ts
+type TiptapEditorView = (props: {
+  editor: Editor;
+  nodeViewComponents?: Record<string, ComponentType<NodeViewComponentProps>;
+  markViewComponents: Record<string, ComponentType<MarkViewComponentProps>;
+  children?: ReactNode;
+  static?: boolean;
+}) => JSX.Element;
+```
+
+Render a Tiptap-compatible React ProseMirror editor.
+
 ### `TiptapEditorContent`
+
+```ts
+type TiptapEditorContent = HTMLProps<HTMLElement> & (props: {
+  editor: Editor;
+  as?: ElementType;
+}) => JSX.Element;
+```
+
+Renders the actual editable ProseMirror document.
+
+This **must** be passed as a child to the `TiptapEditorView` component. It may
+be wrapped in other components, and other childern may be passed before or
+after. It must be passed the same `editor` as is passed to the
+`TiptapEditorView`.
 
 ### `tiptapNodeView`
 
+```ts
+type tiptapNodeView = (options: {
+  component: ComponentType<ReactNodeViewProps>;
+  extension: ReactNodeViewProps["extension"];
+  className?: string | undefined;
+  attrs?:
+    | Record<string, string>
+    | ((props: {
+        node: ProseMirrorNode;
+        HTMLAttributes: Record<string, unknown>;
+      }) => Record<string, string>)
+    | undefined;
+  as?: ElementType | undefined;
+  stopEvent?:
+    | ((props: {
+        event: Event;
+        defaultStopEvent: (event: Event) => boolean;
+      }) => boolean)
+    | null;
+  ignoreMutation?:
+    | ((props: {
+        mutation: ViewMutationRecord;
+        defaultIgnoreMutation: (mutation: ViewMutationRecord) => boolean;
+      }) => boolean)
+    | null;
+  contentDOMElementTag?: ElementType | undefined;
+}) => ComponentType<NodeViewComponentProps>;
+```
+
+Convert a Tiptap node view component to a React ProseMirror node view component
+Given a Tiptap-compatible React component and a Tiptap extension, returns a
+React component that can be passed to React ProseMirror as a custom node view.
+
+Example:
+
+```tsx
+const nodeViews = {
+  codeBlock: nodeView({
+    component: function CodeBlock(nodeViewProps) {
+      return (
+        <pre>
+          <NodeViewContent as="code" />
+        </pre>
+      );
+    },
+    extension: CodeBlockExtension,
+  }),
+};
+```
+
 ### `useTiptapEditor`
+
+```ts
+type useTiptapEditor(
+  options: Omit<Parameters<typeof useEditor[0], 'element'>,
+  deps?: DependencyList
+) => Editor
+```
+
+Create a React ProseMirror integrated Tiptap Editor instance. Use instead of
+Tiptap’s `useEditor` hook.
 
 ### `useTiptapEditorEffect`
 
+```ts
+type useEditorEffect = (
+  effect: (editor: Editor | null) => void | (() => void),
+  dependencies?: React.DependencyList
+) => void;
+```
+
+Registers a layout effect to run after the EditorView has been updated with the
+latest EditorState and Decorations.
+
+Effects can take a Tiptap Editor instance as an argument. This hook should be
+used to execute layout effects that depend on the Editor, such as for
+positioning DOM nodes based on ProseMirror positions.
+
+Layout effects registered with this hook still fire synchronously after all DOM
+mutations, but they do so _after_ the Editor has been updated, even when the
+Editor lives in an ancestor component.
+
+This hook can only be used in a component that is mounted as a child of the
+TiptapEditorView component, including React node view components.
+
 ### `useTiptapEditorEventCallback`
 
+```tsx
+type useEditorEventCallback = <T extends unknown[]>(
+  callback: (editor: Editor | null, ...args: T) => void
+) => void;
+```
+
+Returns a stable function reference to be used as an event handler callback.
+
+The callback will be called with the Tiptap Editor instance as its first
+argument.
+
+This hook can only be used in a component that is mounted as a child of the
+TiptapEditorView component, including React node view components.
+
 ### `useIsInReactProsemirror`
+
+```ts
+type useIsInReactProseMirror = () => boolean;
+```
+
+Returns true if the hook is called in a component that's a descendant of the
+ProseMirror component

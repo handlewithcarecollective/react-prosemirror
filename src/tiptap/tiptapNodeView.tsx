@@ -75,11 +75,9 @@ export interface TiptapNodeViewProps {
  *   codeBlock: nodeView({
  *     component: function CodeBlock(nodeViewProps) {
  *       return (
- *         <AnnotatableNodeViewWrapper {...nodeViewProps}>
- *           <pre>
- *             <NodeViewContent as="code" />
- *           </pre>
- *         </AnnotatableNodeViewWrapper>
+ *         <pre>
+ *           <NodeViewContent as="code" />
+ *         </pre>
  *       )
  *     },
  *     extension: CodeBlockExtension,
