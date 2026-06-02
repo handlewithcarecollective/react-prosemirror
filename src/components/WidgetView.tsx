@@ -57,7 +57,7 @@ export function WidgetView({ widget, getPos }: Props) {
         ref={domRef}
         widget={widget}
         getPos={getPos}
-        contentEditable={false}
+        {...(!widget.type.spec.raw && { contentEditable: false })}
       />
     )
   );

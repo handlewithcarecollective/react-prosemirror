@@ -1,15 +1,11 @@
 import { Node } from "prosemirror-model";
 import { Decoration, DecorationSet } from "prosemirror-view";
-import { Component, MutableRefObject } from "react";
+import { Component, MutableRefObject, createRef } from "react";
 
 import { AbstractEditorView } from "../AbstractEditorView.js";
+import { ReactEditorView } from "../ReactEditorView.js";
 import { findDOMNode } from "../findDOMNode.js";
-import {
-  CompositionViewDesc,
-  TextViewDesc,
-  ViewDesc,
-  sortViewDescs,
-} from "../viewdesc.js";
+import { TextViewDesc, ViewDesc, sortViewDescs } from "../viewdesc.js";
 
 import { wrapInDeco } from "./ChildNodeViews.js";
 
@@ -58,114 +54,119 @@ type Props = {
 };
 
 export class TextNodeView extends Component<Props> {
-  private viewDescRef: null | TextViewDesc | CompositionViewDesc = null;
-  private renderRef: null | JSX.Element = null;
+  viewDescRef = createMutRef<TextViewDesc>();
 
-  updateEffect() {
+  create() {
     const { view, decorations, siblingsRef, parentRef, getPos, node } =
       this.props;
-    // There simply is no other way to ref a text node
-    // eslint-disable-next-line react/no-find-dom-node
     const dom = findDOMNode(this);
 
-    // We only need to explicitly create a CompositionViewDesc
-    // when a composition was started that produces a new text node.
-    // Otherwise we just rely on re-rendering the renderRef
-    if (!dom) {
-      if (!view.composing) return;
+    if (!dom && !view.composing) return null;
 
-      this.viewDescRef = new CompositionViewDesc(
-        parentRef.current,
-        getPos,
-        // These are just placeholders/dummies. We can't
-        // actually find the correct DOM nodes from here,
-        // so we let our parent do it.
-        // Passing a valid element here just so that the
-        // ViewDesc constructor doesn't blow up.
-        document.createElement("div"),
-        document.createTextNode(node.text ?? ""),
-        node.text ?? ""
-      );
-
-      return;
+    let textNode: ChildNode | null = dom;
+    while (textNode?.firstChild) {
+      textNode = textNode.firstChild;
     }
 
-    let textNode = dom;
-    while (textNode.firstChild) {
-      textNode = textNode.firstChild as Element | Text;
+    if (!(textNode instanceof Text)) {
+      textNode = null;
     }
 
-    if (!this.viewDescRef || this.viewDescRef instanceof CompositionViewDesc) {
-      this.viewDescRef = new TextViewDesc(
-        undefined,
-        [],
-        getPos,
-        node,
-        decorations,
-        DecorationSet.empty,
-        dom,
-        textNode
-      );
-    } else {
-      this.viewDescRef.parent = parentRef.current;
-      this.viewDescRef.children = [];
-      this.viewDescRef.node = node;
-      this.viewDescRef.outerDeco = decorations;
-      this.viewDescRef.innerDeco = DecorationSet.empty;
-      this.viewDescRef.dom = dom;
-      this.viewDescRef.dom.pmViewDesc = this.viewDescRef;
-      this.viewDescRef.nodeDOM = textNode;
-    }
+    if (!dom || !textNode) return null;
 
-    if (!siblingsRef.current.includes(this.viewDescRef)) {
-      siblingsRef.current.push(this.viewDescRef);
-    }
+    const viewDesc = new TextViewDesc(
+      parentRef.current,
+      [],
+      getPos,
+      node,
+      decorations,
+      DecorationSet.empty,
+      dom,
+      textNode
+    );
 
+    siblingsRef.current.push(viewDesc);
     siblingsRef.current.sort(sortViewDescs);
+
+    return viewDesc;
+  }
+
+  update() {
+    const { view, node, decorations } = this.props;
+
+    if (!(view instanceof ReactEditorView)) return false;
+
+    const viewDesc = this.viewDescRef.current;
+    if (!viewDesc) return false;
+
+    const dom = findDOMNode(this);
+    if (!dom || dom !== viewDesc.dom) return false;
+
+    if (!dom.contains(viewDesc.nodeDOM)) return false;
+
+    return (
+      viewDesc.matchesNode(node, decorations, DecorationSet.empty) ||
+      viewDesc.update(node, decorations, DecorationSet.empty, view)
+    );
+  }
+
+  destroy() {
+    const viewDesc = this.viewDescRef.current;
+    if (!viewDesc) return;
+
+    viewDesc.destroy();
+
+    const siblings = this.props.siblingsRef.current;
+
+    if (siblings.includes(viewDesc)) {
+      const index = siblings.indexOf(viewDesc);
+      siblings.splice(index, 1);
+    }
+  }
+
+  updateEffect() {
+    if (!this.update()) {
+      this.destroy();
+      this.viewDescRef.current = this.create();
+    }
   }
 
   shouldComponentUpdate(nextProps: Props): boolean {
     return !shallowEqual(this.props, nextProps);
   }
 
+  constructor(props: Props) {
+    super(props);
+    this.viewDescRef.current = null;
+  }
+
   componentDidMount(): void {
+    this.viewDescRef.current = this.create();
     this.updateEffect();
   }
 
   componentDidUpdate(): void {
     this.updateEffect();
+    const { view } = this.props;
+    if (!(view instanceof ReactEditorView)) return;
   }
 
   componentWillUnmount(): void {
-    const { siblingsRef } = this.props;
-    if (!this.viewDescRef) return;
-    if (siblingsRef.current.includes(this.viewDescRef)) {
-      const index = siblingsRef.current.indexOf(this.viewDescRef);
-      siblingsRef.current.splice(index, 1);
-    }
+    this.destroy();
   }
 
   render() {
-    const { view, getPos, node, decorations } = this.props;
+    const { node, decorations } = this.props;
 
-    // During a composition, it's crucial that we don't try to
-    // update the DOM that the user is working in. If there's
-    // an active composition and the selection is in this node,
-    // we freeze the DOM of this element so that it doesn't
-    // interrupt the composition
-    if (
-      view.composing &&
-      view.state.selection.from >= getPos() &&
-      view.state.selection.from <= getPos() + node.nodeSize
-    ) {
-      return this.renderRef;
-    }
-
-    this.renderRef = decorations.reduce(
-      wrapInDeco,
-      node.text as unknown as JSX.Element
-    );
-
-    return this.renderRef;
+    return decorations.reduce(wrapInDeco, node.text as unknown as JSX.Element);
   }
+}
+
+/**
+ * createRef returns a RefObject, even though the docs
+ * say that it's acceptible to manage the ref's value
+ * yourself.
+ */
+function createMutRef<T>(): MutableRefObject<T | null> {
+  return createRef();
 }

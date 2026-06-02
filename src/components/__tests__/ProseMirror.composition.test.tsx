@@ -1,95 +1,34 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
+import "@wdio/types";
 import { EditorState, Plugin, TextSelection } from "prosemirror-state";
 import { code, doc, em, p, schema, strong } from "prosemirror-test-builder";
 import {
   Decoration,
   DecorationSet,
-  EditorView,
   // @ts-expect-error This is an internal export
   __endComposition,
 } from "prosemirror-view";
 import React, { forwardRef } from "react";
 
 import { widget } from "../../decorations/ReactWidgetType.js";
-import {
-  findTextNode,
-  tempEditor,
-} from "../../testing/editorViewTestHelpers.js";
+import { tempEditor } from "../../testing/editorViewTestHelpers.js";
 import { WidgetViewComponentProps } from "../WidgetViewComponentProps.js";
 
-function endComposition(view: EditorView, forceUpdate?: boolean) {
-  __endComposition(view, forceUpdate);
-}
-
-function event(pm: EditorView, type: string, data?: string) {
-  pm.dom.dispatchEvent(
-    new CompositionEvent(type, data === undefined ? data : { data })
-  );
-}
-
-function edit(node: Text, text = "", from = node.nodeValue!.length, to = from) {
-  const val = node.nodeValue!;
-  node.nodeValue = val.slice(0, from) + text + val.slice(to);
-  document.getSelection()!.collapse(node, from + text.length);
-  return node;
-}
-
-function hasCompositionNode(_pm: EditorView) {
-  let { focusNode } = document.getSelection()!;
-  while (focusNode && !focusNode.pmViewDesc) focusNode = focusNode.parentNode;
-  return (
-    focusNode && focusNode.pmViewDesc!.constructor.name == "CompositionViewDesc"
-  );
-}
-
-function compose(
-  pm: EditorView,
-  start: () => Text,
-  update: ((node: Text) => void)[],
-  endData?: string,
-  options: any = {}
-) {
-  event(pm, "compositionstart");
-  expect(pm.composing).toBeTruthy();
-  let node: Text | undefined = undefined;
-  // const sel = document.getSelection()!;
-  for (let i = -1; i < update.length; i++) {
-    if (i < 0) node = start();
-    else update[i]!(node!);
-    // const { focusNode, focusOffset } = sel;
-    // @ts-expect-error Internal property
-    pm.domObserver.flush();
-
-    if (options.cancel && i == update.length - 1) {
-      expect(hasCompositionNode(pm)).toBeFalsy();
-    } else {
-      expect(
-        node!.parentNode! && pm.dom.contains(node!.parentNode!)
-      ).toBeTruthy();
-      // SKIP: ProseMirror View seems to expect that the DOM selection
-      // will have been updated to be within the text node. This doesn't
-      // seem to be the case for us, at least in this test, but as
-      // best I can tell the selection does work as expected in the
-      // actual editor.
-      // expect(sel.focusNode === focusNode).toBeTruthy();
-      // expect(sel.focusOffset === focusOffset).toBeTruthy();
-      // SKIP: We don't always create a CompositionViewDesc, because
-      // our memoized TextNodeView component already protects the
-      // composition text node from changing. We only use a CompositionViewDesc
-      // if change comes in _during_ a composition.
-      // if (options.node) expect(hasCompositionNode(pm)).toBeTruthy();
+declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace WebdriverIO {
+    interface Browser {
+      imeSetComposition(params: {
+        text: string;
+        selectionStart?: number;
+        selectionEnd?: number;
+        replacementStart?: number;
+        replacementEnd?: number;
+      }): Promise<void>;
+      imeInsertText(params: { text: string }): Promise<void>;
     }
   }
-  event(pm, "compositionend", endData);
-  if (options.end) {
-    options.end(node!);
-    // @ts-expect-error Internal property
-    pm.domObserver.flush();
-  }
-  endComposition(pm);
-  expect(pm.composing).toBeFalsy();
-  expect(hasCompositionNode(pm)).toBeFalsy();
 }
 
 function wordDeco(state: EditorState) {
@@ -147,86 +86,76 @@ function widgets(positions: number[], sides: number[]) {
 describe("EditorView composition", () => {
   it("supports composition in an empty block", async () => {
     const { view: pm } = tempEditor({ doc: doc(p("<a>")) });
-    compose(
-      pm,
-      () => edit(pm.dom.firstChild!.appendChild(document.createTextNode("a"))),
-      [(n) => edit(n, "b"), (n) => edit(n, "c")],
-      "abc",
-      { node: true }
-    );
+
+    pm.focus();
+
+    await browser.imeSetComposition({
+      text: "a",
+      selectionStart: 1,
+      selectionEnd: 1,
+    });
+    await browser.imeSetComposition({
+      text: "ab",
+      selectionStart: 2,
+      selectionEnd: 2,
+    });
+    await browser.imeSetComposition({
+      text: "abc",
+      selectionStart: 3,
+      selectionEnd: 3,
+    });
+    await browser.imeInsertText({ text: "abc" });
+
     expect(pm.state.doc).toEqualNode(doc(p("abc")));
   });
 
   it("supports composition at end of block", async () => {
-    const { view: pm } = tempEditor({ doc: doc(p("foo")) });
-    compose(
-      pm,
-      () => edit(findTextNode(pm.dom, "foo")!),
-      [(n) => edit(n, "!"), (n) => edit(n, "?")],
-      "!?"
-    );
-    expect(pm.state.doc).toEqualNode(doc(p("foo!?")));
-  });
+    const { view: pm } = tempEditor({ doc: doc(p("foo<a>")) });
 
-  it("supports composition at end of block in a new node", () => {
-    const { view: pm } = tempEditor({ doc: doc(p("foo")) });
-    compose(
-      pm,
-      () => edit(pm.dom.firstChild!.appendChild(document.createTextNode("!"))),
-      [(n) => edit(n, "?")],
-      "!?",
-      // $$FORK: We don't use composition view descriptors except for in initially empty nodes
-      { node: false }
-    );
-    expect(pm.state.doc).toEqualNode(doc(p("foo!?")));
-  });
+    pm.focus();
 
-  it("supports composition at start of block in a new node", () => {
-    const { view: pm } = tempEditor({ doc: doc(p("foo")) });
-    compose(
-      pm,
-      () => {
-        const p = pm.dom.firstChild!;
-        return edit(p.insertBefore(document.createTextNode("!"), p.firstChild));
-      },
-      [(n) => edit(n, "?")],
-      "!?",
-      // $$FORK: We don't use composition view descriptors except for in initially empty nodes
-      { node: false }
-    );
-    expect(pm.state.doc).toEqualNode(doc(p("!?foo")));
+    await browser.imeSetComposition({
+      text: "!",
+      selectionStart: 1,
+      selectionEnd: 1,
+    });
+
+    await browser.imeSetComposition({
+      text: "!?",
+      selectionStart: 2,
+      selectionEnd: 2,
+    });
+
+    await browser.imeInsertText({ text: "!?" });
+
+    expect(pm.state.doc).toEqualNode(doc(p("foo!?")));
   });
 
   it("supports composition inside existing text", async () => {
     const { view: pm } = tempEditor({ doc: doc(p("f<a>oo")) });
-    compose(
-      pm,
-      () => edit(findTextNode(pm.dom, "f")!),
-      [(n) => edit(n, "x"), (n) => edit(n, "y"), (n) => edit(n, "z")],
-      "xyz"
-    );
-    expect(pm.state.doc).toEqualNode(doc(p("fxyzoo")));
-  });
+    pm.focus();
 
-  // TODO: Offset out of bound
-  // eslint-disable-next-line jest/no-disabled-tests
-  it.skip("can deal with Android-style newline-after-composition", () => {
-    const { view: pm } = tempEditor({ doc: doc(p("abcdef")) });
-    compose(
-      pm,
-      () => edit(findTextNode(pm.dom, "abcdef")!),
-      [(n) => edit(n, "x", 3), (n) => edit(n, "y", 4)],
-      "xy",
-      {
-        end: (n: Text) => {
-          const line = pm.dom.appendChild(document.createElement("div"));
-          line.textContent = "def";
-          n.nodeValue = "abcxy";
-          document.getSelection()!.collapse(line, 0);
-        },
-      }
-    );
-    expect(pm.state.doc).toEqualNode(doc(p("abcxy"), p("def")));
+    await browser.imeSetComposition({
+      text: "x",
+      selectionStart: 1,
+      selectionEnd: 1,
+    });
+
+    await browser.imeSetComposition({
+      text: "xy",
+      selectionStart: 2,
+      selectionEnd: 2,
+    });
+
+    await browser.imeSetComposition({
+      text: "xyz",
+      selectionStart: 3,
+      selectionEnd: 3,
+    });
+
+    await browser.imeInsertText({ text: "xyz" });
+
+    expect(pm.state.doc).toEqualNode(doc(p("fxyzoo")));
   });
 
   it("handles replacement of existing words", async () => {
@@ -238,23 +167,57 @@ describe("EditorView composition", () => {
         startDoc.resolve(startDoc.tag!.b!)
       ),
     });
-    compose(
-      pm,
-      () => edit(findTextNode(pm.dom, "one ")!, "five"),
-      [(n) => edit(n, "seven", 4, 8), (n) => edit(n, "zero", 5, 9)],
-      "zero"
-    );
+
+    pm.focus();
+
+    await browser.imeSetComposition({
+      text: "five",
+      selectionStart: 4,
+      selectionEnd: 4,
+    });
+
+    await browser.imeSetComposition({
+      text: "seven",
+      selectionStart: 5,
+      selectionEnd: 5,
+    });
+
+    await browser.imeSetComposition({
+      text: "zero",
+      selectionStart: 4,
+      selectionEnd: 4,
+    });
+
+    await browser.imeInsertText({ text: "zero" });
+
     expect(pm.state.doc).toEqualNode(doc(p("one zero three")));
   });
 
-  it("handles composition inside marks", () => {
+  it("handles composition inside marks", async () => {
     const { view: pm } = tempEditor({ doc: doc(p("one ", em("two<a>"))) });
-    compose(
-      pm,
-      () => edit(findTextNode(pm.dom, "two")!, "o"),
-      [(n) => edit(n, "o"), (n) => edit(n, "w")],
-      "oow"
-    );
+
+    pm.focus();
+
+    await browser.imeSetComposition({
+      text: "o",
+      selectionStart: 1,
+      selectionEnd: 1,
+    });
+
+    await browser.imeSetComposition({
+      text: "oo",
+      selectionStart: 2,
+      selectionEnd: 2,
+    });
+
+    await browser.imeSetComposition({
+      text: "oow",
+      selectionStart: 3,
+      selectionEnd: 3,
+    });
+
+    await browser.imeInsertText({ text: "oow" });
+
     expect(pm.state.doc).toEqualNode(doc(p("one ", em("twooow"))));
   });
 
@@ -262,57 +225,92 @@ describe("EditorView composition", () => {
     const { view: pm } = tempEditor({
       doc: doc(p("one ", em("two<a>", strong(" three")))),
     });
-    compose(
-      pm,
-      () => edit(findTextNode(pm.dom, "two")!, "o"),
-      [
-        (n) => edit(n, "o"),
-        (n) => edit(n, "w"),
-        // Assert that the interim text node has the
-        // correct value/marks
-        (n) => expect(n.nodeValue).toBe("twooow"),
-      ],
-      "oow"
-    );
+
+    pm.focus();
+
+    await browser.imeSetComposition({
+      text: "o",
+      selectionStart: 1,
+      selectionEnd: 1,
+    });
+
+    await browser.imeSetComposition({
+      text: "oo",
+      selectionStart: 2,
+      selectionEnd: 2,
+    });
+
+    await browser.imeSetComposition({
+      text: "oow",
+      selectionStart: 3,
+      selectionEnd: 3,
+    });
+
+    await browser.imeInsertText({ text: "oow" });
+
     expect(pm.state.doc).toEqualNode(
       doc(p("one ", em("twooow", strong(" three"))))
     );
   });
 
-  it("supports composition in a cursor wrapper", () => {
+  it("supports composition in a cursor wrapper", async () => {
     const { view: pm } = tempEditor({ doc: doc(p("<a>")) });
+
     pm.dispatch(pm.state.tr.addStoredMark(schema.marks.em!.create()));
-    compose(
-      pm,
-      () =>
-        edit(pm.dom.firstChild!.appendChild(document.createTextNode("")), "a"),
-      [(n) => edit(n, "b"), (n) => edit(n, "c")],
-      "abc",
-      { node: true }
-    );
+
+    pm.focus();
+
+    await browser.imeSetComposition({
+      text: "a",
+      selectionStart: 1,
+      selectionEnd: 1,
+    });
+
+    await browser.imeSetComposition({
+      text: "ab",
+      selectionStart: 2,
+      selectionEnd: 2,
+    });
+
+    await browser.imeSetComposition({
+      text: "abc",
+      selectionStart: 3,
+      selectionEnd: 3,
+    });
+
+    await browser.imeInsertText({ text: "abc" });
+
     expect(pm.state.doc).toEqualNode(doc(p(em("abc"))));
   });
 
-  it("handles composition in a multi-child mark with a cursor wrapper", () => {
+  it("handles composition in a multi-child mark with a cursor wrapper", async () => {
     const { view: pm } = tempEditor({
       doc: doc(p("one ", em("two<a>", strong(" three")))),
     });
     pm.dispatch(pm.state.tr.addStoredMark(schema.marks.code!.create()));
-    const emNode = pm.dom.querySelector("em")!;
-    compose(
-      pm,
-      () =>
-        edit(
-          emNode.insertBefore(
-            document.createTextNode(""),
-            emNode.querySelector("strong")
-          ),
-          "o"
-        ),
-      [(n) => edit(n, "o"), (n) => edit(n, "w")],
-      "oow",
-      { node: true }
-    );
+
+    pm.focus();
+
+    await browser.imeSetComposition({
+      text: "o",
+      selectionStart: 1,
+      selectionEnd: 1,
+    });
+
+    await browser.imeSetComposition({
+      text: "oo",
+      selectionStart: 2,
+      selectionEnd: 2,
+    });
+
+    await browser.imeSetComposition({
+      text: "oow",
+      selectionStart: 3,
+      selectionEnd: 3,
+    });
+
+    await browser.imeInsertText({ text: "oow" });
+
     expect(pm.state.doc).toEqualNode(
       doc(p("one ", em("two", code("oow"), strong(" three"))))
     );
@@ -328,98 +326,178 @@ describe("EditorView composition", () => {
       ),
       plugins: [wordHighlighter],
     });
-    compose(
-      pm,
-      () => edit(findTextNode(pm.dom, " ")!),
-      [(n) => edit(n, "hi", 1, 4)],
-      "hi"
-    );
+
+    pm.focus();
+
+    await browser.imeSetComposition({
+      text: "h",
+      selectionStart: 1,
+      selectionEnd: 1,
+    });
+
+    await browser.imeSetComposition({
+      text: "hi",
+      selectionStart: 2,
+      selectionEnd: 2,
+    });
+
+    await browser.imeInsertText({ text: "hi" });
+
     expect(pm.state.doc).toEqualNode(doc(p("foo hi")));
   });
 
-  it("works inside highlighted text", () => {
+  it("works inside highlighted text", async () => {
     const { view: pm } = tempEditor({
       doc: doc(p("one<a> two")),
       plugins: [wordHighlighter],
     });
-    compose(
-      pm,
-      () => edit(findTextNode(pm.dom, "one")!, "x"),
-      [(n) => edit(n, "y"), (n) => edit(n, ".")],
-      "xy."
-    );
+
+    pm.focus();
+
+    await browser.imeSetComposition({
+      text: "x",
+      selectionStart: 1,
+      selectionEnd: 1,
+    });
+    await browser.imeSetComposition({
+      text: "xy",
+      selectionStart: 2,
+      selectionEnd: 2,
+    });
+    await browser.imeSetComposition({
+      text: "xy.",
+      selectionStart: 3,
+      selectionEnd: 3,
+    });
+
+    await browser.imeInsertText({
+      text: "xy.",
+    });
+
     expect(pm.state.doc).toEqualNode(doc(p("onexy. two")));
   });
 
-  // it("can handle compositions spanning multiple nodes", () => {
-  //   const { view: pm } = requireFocus(
-  //     tempEditor({ doc: doc(p("one two")), plugins: [wordHighlighter] })
-  //   );
-  //   compose(
-  //     pm,
-  //     () => edit(findTextNode(pm.dom, "two")!, "a"),
-  //     [(n) => edit(n, "b"), (n) => edit(n, "c")],
-  //     {
-  //       end: (n: Text) => {
-  //         n.parentNode!.previousSibling!.remove();
-  //         n.parentNode!.previousSibling!.remove();
-  //         return edit(n, "xyzone ", 0);
-  //       },
-  //     }
-  //   );
-  //   ist(pm.state.doc, doc(p("xyzone twoabc")), eq);
-  // });
-
-  it("doesn't overwrite widgets next to the composition", () => {
+  // TODO: Figure out how to properly represent this with wdio/Input.imeSetComposition
+  // eslint-disable-next-line jest/no-disabled-tests
+  it.skip("can handle compositions spanning multiple nodes", async () => {
     const { view: pm } = tempEditor({
-      doc: doc(p("")),
+      doc: doc(p("one two<a>")),
+      plugins: [wordHighlighter],
+    });
+
+    pm.focus();
+
+    await browser.imeSetComposition({
+      text: "one twoa",
+      selectionStart: 8,
+      selectionEnd: 8,
+      // Causes command to fail, probably incorrect
+      // argument values?
+      // replacementStart: -7,
+      // replacementEnd: 0,
+    });
+
+    await browser.imeSetComposition({
+      text: "one twoab",
+      selectionStart: 9,
+      selectionEnd: 9,
+    });
+
+    await browser.imeSetComposition({
+      text: "one twoabc",
+      selectionStart: 10,
+      selectionEnd: 10,
+    });
+
+    await browser.imeSetComposition({
+      text: "xone twoabc",
+      selectionStart: 0,
+      selectionEnd: 0,
+    });
+
+    await browser.imeSetComposition({
+      text: "xyone twoabc",
+      selectionStart: 0,
+      selectionEnd: 0,
+    });
+
+    await browser.imeSetComposition({
+      text: "xyzone twoabc",
+      selectionStart: 0,
+      selectionEnd: 0,
+    });
+
+    await browser.imeInsertText({
+      text: "xyzone twoabc",
+    });
+
+    expect(pm.state.doc).toEqualNode(doc(p("xyzone twoabc")));
+  });
+
+  it("doesn't overwrite widgets next to the composition", async () => {
+    const { view: pm } = tempEditor({
+      doc: doc(p("<a>")),
       plugins: [widgets([1, 1], [-1, 1])],
     });
-    compose(
-      pm,
-      () => {
-        const p = pm.dom.firstChild!;
-        return edit(p.insertBefore(document.createTextNode("a"), p.lastChild));
-      },
-      [(n) => edit(n, "b", 0, 1)],
-      "ab",
-      {
-        end: () => {
-          expect(pm.dom.querySelectorAll("var")).toHaveLength(2);
-        },
-      }
-    );
+
+    pm.focus();
+
+    await browser.imeSetComposition({
+      text: "a",
+      selectionStart: 1,
+      selectionEnd: 1,
+    });
+
+    await browser.imeSetComposition({
+      text: "ab",
+      selectionStart: 2,
+      selectionEnd: 2,
+    });
+
+    await browser.imeInsertText({
+      text: "ab",
+    });
+
+    expect(pm.dom.querySelectorAll("var")).toHaveLength(2);
     expect(pm.state.doc).toEqualNode(doc(p("ab")));
   });
 
-  // it("cancels composition when a change fully overlaps with it", () => {
+  it("cancels composition when a change fully overlaps with it", async () => {
+    const { view: pm } = tempEditor({
+      doc: doc(p("one"), p("two<a>"), p("three")),
+    });
+
+    pm.focus();
+
+    await browser.imeSetComposition({
+      text: "x",
+      selectionStart: 1,
+      selectionEnd: 1,
+    });
+
+    pm.dispatch(pm.state.tr.insertText("---", 3, 13));
+
+    expect(pm.state.doc).toEqualNode(doc(p("on---hree")));
+  });
+
+  // it.skip("cancels composition when a change partially overlaps with it", async () => {
   //   const { view: pm } = tempEditor({
-  //     doc: doc(p("one"), p("two"), p("three")),
+  //     doc: doc(p("one"), p("<a>two"), p("three")),
   //   });
-  //   compose(
-  //     pm,
-  //     () => edit(findTextNode(pm.dom, "two")!, "x"),
-  //     [() => pm.dispatch(pm.state.tr.insertText("---", 3, 13))],
-  //     "x",
-  //     { cancel: true }
-  //   );
-  //   expect(pm.state.doc).toEqualNode(doc(p("on---hree")));
+  //   pm.focus();
+
+  //   await browser.imeSetComposition({
+  //     text: "x",
+  //     selectionStart: 1,
+  //     selectionEnd: 1,
+  //   });
+
+  //   pm.dispatch(pm.state.tr.insertText("---", 7, 15));
+
+  //   expect(pm.state.doc).toEqualNode(doc(p("one"), p("x---ee")));
   // });
 
-  // it("cancels composition when a change partially overlaps with it", () => {
-  //   const { view: pm } = requireFocus(
-  //     tempEditor({ doc: doc(p("one"), p("two"), p("three")) })
-  //   );
-  //   compose(
-  //     pm,
-  //     () => edit(findTextNode(pm.dom, "two")!, "x", 0),
-  //     [() => pm.dispatch(pm.state.tr.insertText("---", 7, 15))],
-  //     { cancel: true }
-  //   );
-  //   ist(pm.state.doc, doc(p("one"), p("x---ee")), eq);
-  // });
-
-  // it("cancels composition when a change happens inside of it", () => {
+  // it.skip("cancels composition when a change happens inside of it", () => {
   //   const { view: pm } = requireFocus(
   //     tempEditor({ doc: doc(p("one"), p("two"), p("three")) })
   //   );
@@ -432,16 +510,33 @@ describe("EditorView composition", () => {
   //   ist(pm.state.doc, doc(p("one"), p("x!wo"), p("three")), eq);
   // });
 
-  // it("doesn't cancel composition when a change happens elsewhere", () => {
-  //   const { view: pm } = requireFocus(
-  //     tempEditor({ doc: doc(p("one"), p("two"), p("three")) })
-  //   );
-  //   compose(pm, () => edit(findTextNode(pm.dom, "two")!, "x", 0), [
-  //     (n) => edit(n, "y", 1),
-  //     () => pm.dispatch(pm.state.tr.insertText("!", 2, 3)),
-  //     (n) => edit(n, "z", 2),
-  //   ]);
-  //   ist(pm.state.doc, doc(p("o!e"), p("xyztwo"), p("three")), eq);
+  // it("doesn't cancel composition when a change happens elsewhere", async () => {
+  //   const { view: pm } = tempEditor({
+  //     doc: doc(p("one"), p("two"), p("three")),
+  //   });
+
+  //   pm.focus();
+
+  //   await browser.imeSetComposition({
+  //     text: "x",
+  //     selectionStart: 1,
+  //     selectionEnd: 1,
+  //   });
+
+  //   await browser.imeSetComposition({
+  //     text: "xy",
+  //     selectionStart: 2,
+  //     selectionEnd: 2,
+  //   });
+  //   pm.dispatch(pm.state.tr.insertText("!", 2, 3));
+
+  //   await browser.imeSetComposition({
+  //     text: "xyz",
+  //     selectionStart: 3,
+  //     selectionEnd: 3,
+  //   });
+
+  //   expect(pm.state.doc).toEqualNode(doc(p("o!e"), p("xyztwo"), p("three")));
   // });
 
   // it("handles compositions rapidly following each other", () => {
@@ -466,27 +561,38 @@ describe("EditorView composition", () => {
   //   ist(pm.state.doc, doc(p("one!!"), p("two.")), eq);
   // });
 
-  // function crossParagraph(first = false) {
-  //   const { view: pm } = requireFocus(
-  //     tempEditor({ doc: doc(p("one <a>two"), p("three"), p("four<b> five")) })
-  //   );
-  //   compose(
-  //     pm,
-  //     () => {
-  //       for (let i = 0; i < 2; i++)
-  //         pm.dom.removeChild(first ? pm.dom.lastChild! : pm.dom.firstChild!);
-  //       const target = pm.dom.firstChild!.firstChild as Text;
-  //       target.nodeValue = "one A five";
-  //       document.getSelection()!.collapse(target, 4);
-  //       return target;
-  //     },
-  //     [(n) => edit(n, "B", 4, 5), (n) => edit(n, "C", 4, 5)]
-  //   );
-  //   ist(pm.state.doc, doc(p("one C five")), eq);
-  // }
+  it("can handle cross-paragraph compositions", async () => {
+    const startDoc = doc(p("one <a>two"), p("three"), p("four<b> five"));
+    const { view: pm } = tempEditor({
+      doc: startDoc,
+      selection: TextSelection.between(
+        startDoc.resolve(startDoc.tag!.a!),
+        startDoc.resolve(startDoc.tag!.b!)
+      ),
+    });
 
-  // it("can handle cross-paragraph compositions", () => crossParagraph(true));
+    pm.focus();
 
-  // it("can handle cross-paragraph compositions (keeping the last paragraph)", () =>
-  //   crossParagraph(false));
+    await browser.imeSetComposition({
+      text: "A",
+      selectionStart: 1,
+      selectionEnd: 1,
+    });
+
+    await browser.imeSetComposition({
+      text: "B",
+      selectionStart: 1,
+      selectionEnd: 1,
+    });
+
+    await browser.imeSetComposition({
+      text: "C",
+      selectionStart: 1,
+      selectionEnd: 1,
+    });
+
+    await browser.imeInsertText({ text: "C" });
+
+    expect(pm.state.doc).toEqualNode(doc(p("one C five")));
+  });
 });

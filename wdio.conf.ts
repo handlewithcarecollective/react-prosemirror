@@ -1,9 +1,12 @@
 import "@wdio/types";
 
 import viteConfig from "./vite.config.js";
+import CdpService from "./wdio.cdp-service.js";
 
-const mobileSpecs = [
-  "file:///src/components/__tests__/ProseMirror.mobile.test.tsx",
+const mobileSpecs = ["./src/components/__tests__/ProseMirror.mobile.test.tsx"];
+
+const compositionSpecs = [
+  "./src/components/__tests__/ProseMirror.composition.test.tsx",
 ];
 
 export const config: WebdriverIO.Config = {
@@ -12,7 +15,7 @@ export const config: WebdriverIO.Config = {
   // Runner Configuration
   // ====================
   // WebdriverIO supports running e2e tests as well as unit and component tests.
-  runner: ["browser", { viteConfig }],
+  runner: ["browser", { viteConfig, mockHoisting: false }],
   tsConfigPath: "./tsconfig.json",
 
   //
@@ -67,11 +70,11 @@ export const config: WebdriverIO.Config = {
   //
   capabilities: [
     {
-      browserName: "chrome",
-      "wdio:exclude": mobileSpecs,
+      browserName: "firefox",
+      "wdio:exclude": [...mobileSpecs, ...compositionSpecs],
     },
     {
-      browserName: "firefox",
+      browserName: "chrome",
       "wdio:exclude": mobileSpecs,
     },
     {
@@ -132,7 +135,7 @@ export const config: WebdriverIO.Config = {
   // Services take over a specific job you don't want to take care of. They enhance
   // your test setup with almost no effort. Unlike plugins, they don't add new
   // commands. Instead, they hook themselves up into the test process.
-  // services: [],
+  services: [[CdpService, {}]],
   //
   framework: "mocha",
 

@@ -26,7 +26,7 @@ import { TextNodeView } from "./TextNodeView.js";
 import { TrailingHackView } from "./TrailingHackView.js";
 import { WidgetView } from "./WidgetView.js";
 import { MarkView } from "./marks/MarkView.js";
-import { NodeView } from "./nodes/NodeView.js";
+import { RemountableNodeView } from "./nodes/NodeView.js";
 
 export function wrapInDeco(reactNode: JSX.Element | string, deco: Decoration) {
   const {
@@ -147,7 +147,7 @@ const ChildView = memo(function ChildView({
       )}
     </ChildDescriptionsContext.Consumer>
   ) : (
-    <NodeView
+    <RemountableNodeView
       key={child.key}
       node={child.node}
       getPos={getPos}
@@ -363,7 +363,7 @@ const ChildElement = memo(
             {element}
           </MarkView>
         ),
-        <NodeView
+        <RemountableNodeView
           key={child.key}
           outerDeco={child.outerDeco}
           node={child.node}
@@ -561,7 +561,7 @@ export const ChildNodeViews = memo(function ChildNodeViews({
           component: SeparatorHackView,
           marks: [],
           offset: lastChild?.offset ?? 0,
-          index: (lastChild?.index ?? 0) + 2,
+          index: (lastChild?.index ?? 0) + 1,
           key: "trailing-hack-img",
         },
         {
@@ -569,7 +569,7 @@ export const ChildNodeViews = memo(function ChildNodeViews({
           component: TrailingHackView,
           marks: [],
           offset: lastChild?.offset ?? 0,
-          index: (lastChild?.index ?? 0) + 1,
+          index: (lastChild?.index ?? 0) + 2,
           key: "trailing-hack-br",
         }
       );

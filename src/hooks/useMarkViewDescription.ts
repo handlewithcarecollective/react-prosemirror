@@ -167,7 +167,7 @@ export function useMarkViewDescription(
       parentRef: viewDescRef,
       siblingsRef: childrenRef,
     }),
-    [childrenRef, viewDescRef]
+    []
   );
 
   return {

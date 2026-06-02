@@ -85,3 +85,13 @@ root.render(
     <DemoEditor />
   </StrictMode>
 );
+
+// const root = document.getElementById("root")!;
+
+// const view = new EditorView(root, { state: editorState, plugins });
+// root.addEventListener("beforeinput", (e) => {
+//   console.log("beforeinput", view.dom.innerHTML);
+// });
+// root.addEventListener("beforeinput", (e) => {
+//   console.log("input", view.dom.innerHTML);
+// });

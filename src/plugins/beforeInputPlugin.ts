@@ -1,11 +1,18 @@
 import { Fragment, Mark, Slice } from "prosemirror-model";
 import { Plugin, TextSelection } from "prosemirror-state";
-import { Decoration, EditorView } from "prosemirror-view";
+import { EditorView } from "prosemirror-view";
 
 import { ReactEditorView } from "../ReactEditorView.js";
 import { CursorWrapper } from "../components/CursorWrapper.js";
 import { widget } from "../decorations/ReactWidgetType.js";
 import { DOMNode } from "../dom.js";
+import {
+  CompositionViewDesc,
+  TextViewDesc,
+  findTextInFragment,
+} from "../viewdesc.js";
+
+import { reactKeysPluginKey } from "./reactKeys.js";
 
 function insertText(
   view: EditorView,
@@ -79,93 +86,190 @@ function handleGapCursorComposition(view: EditorView) {
   view.dispatch(tr);
 }
 
-export function beforeInputPlugin(
-  setCursorWrapper: (deco: Decoration | null) => void
-) {
-  let compositionMarks: readonly Mark[] | null = null;
-  let precompositionSnapshot: DOMNode[] | null = null;
+const observeOptions = {
+  childList: true,
+  characterData: true,
+  characterDataOldValue: true,
+  attributes: true,
+  attributeOldValue: true,
+  subtree: true,
+};
+
+export function beforeInputPlugin() {
+  let observer: MutationObserver | null = null;
+  let preCompositionSnapshot: Fragment | null = null;
+
+  function teardownComposition(view: ReactEditorView, endedAt: number) {
+    view.input.composing = false;
+
+    if (observer) {
+      if (
+        view.input.compositionNode &&
+        view.dom.contains(view.input.compositionNode)
+      ) {
+        view.domObserver.queue.push(...observer.takeRecords());
+        view.domObserver.flush();
+      } else {
+        const freezeFrom = reactKeysPluginKey.getState(view.state)?.freezeFrom;
+        const frozenNode =
+          freezeFrom == null ? null : view.state.doc.nodeAt(freezeFrom);
+
+        if (
+          freezeFrom != null &&
+          frozenNode != null &&
+          preCompositionSnapshot
+        ) {
+          // This is a little hacky — it only works because we always abort
+          // compositions if the node after freezeFrom changes, so we can
+          // be sure that if a composition was canceled by the user/browser,
+          // the content hasn't changed since the composition started
+          view.dispatch(
+            view.state.tr.replaceWith(
+              freezeFrom + 1,
+              freezeFrom + 1 + frozenNode.content.size,
+              preCompositionSnapshot
+            )
+          );
+        }
+      }
+      observer.disconnect();
+      observer = null;
+    }
+
+    view.input.compositionEndedAt = endedAt;
+    view.input.compositionNode = null;
+    view.input.compositionNodes = [];
+    view.input.compositionID++;
+  }
+
   return new Plugin({
+    view() {
+      return {
+        update(view) {
+          if (!(view instanceof ReactEditorView)) return;
+          const frozen =
+            reactKeysPluginKey.getState(view.state)?.freezeFrom != null;
+
+          if (observer && view.composing && !frozen) {
+            teardownComposition(view, Date.now());
+          }
+        },
+      };
+    },
     props: {
       handleDOMEvents: {
         compositionstart(view) {
-          compositionMarks =
-            view.state.storedMarks ?? view.state.selection.$from.marks();
+          if (!(view instanceof ReactEditorView)) return false;
 
-          view.dispatch(view.state.tr.deleteSelection());
+          const storedMarks = view.state.selection.empty
+            ? view.state.storedMarks
+            : view.state.storedMarks ??
+              (view.state.selection instanceof TextSelection
+                ? view.state.selection.$from.marksAcross(
+                    view.state.selection.$to
+                  )
+                : null);
+
+          view.dispatch(
+            view.state.tr.deleteSelection().setStoredMarks(storedMarks)
+          );
+
           handleGapCursorComposition(view);
 
-          const { state } = view;
-          const $pos = state.selection.$from;
-
-          if (compositionMarks) {
-            setCursorWrapper(
-              widget(state.selection.from, CursorWrapper, {
-                key: "cursor-wrapper",
-                marks: compositionMarks,
+          if (storedMarks) {
+            view.dispatch(
+              view.state.tr.setMeta(reactKeysPluginKey, {
+                cursorWrapper: widget(
+                  view.state.selection.from,
+                  CursorWrapper,
+                  {
+                    key: "cursor-wrapper",
+                    marks: storedMarks,
+                    side: 0,
+                    raw: true,
+                  }
+                ),
               })
             );
+            // Pin the DOM cursor to PM's canonical position before the IME
+            // captures wherever the browser happened to leave it. Without this,
+            // a cursor at a mark boundary lands in either the left or right text
+            // node depending on the user's last navigation direction, and the
+            // IME composes into whichever one it found.
+          } else if (view.state.selection.empty) {
+            view.domObserver.disconnectSelection();
+            try {
+              view.docView.setSelection(
+                view.state.selection.anchor,
+                view.state.selection.head,
+                view,
+                true // force — skip the isEquivalentPosition early-return
+              );
+            } finally {
+              view.domObserver.setCurSelection();
+              view.domObserver.connectSelection();
+            }
           }
 
-          // Snapshot the siblings of the node that contains the
-          // current cursor. We'll restore this later, so that React
-          // doesn't panic about unknown DOM nodes.
-          const { node: parent } = view.domAtPos($pos.pos);
-          precompositionSnapshot = [];
-          for (const node of parent.childNodes) {
-            precompositionSnapshot.push(node);
+          const freezeFrom = view.state.selection.$from.before();
+
+          view.dispatch(
+            view.state.tr.setMeta(reactKeysPluginKey, {
+              freezeFrom,
+            })
+          );
+
+          const frozenDom = view.nodeDOM(freezeFrom);
+          if (!frozenDom) {
+            view.dispatch(
+              view.state.tr.setMeta(reactKeysPluginKey, {
+                cursorWrapper: null,
+                freezeFrom: null,
+              })
+            );
+            return false;
           }
 
-          // @ts-expect-error Internal property - input
+          preCompositionSnapshot =
+            view.state.doc.nodeAt(freezeFrom)?.content ?? null;
+
           view.input.composing = true;
+
+          observer = new MutationObserver((records) => {
+            if (reactKeysPluginKey.getState(view.state)?.freezeFrom == null) {
+              return;
+            }
+            view.domObserver.queue.push(...records);
+            view.domObserver.flush();
+            syncCompositionViewDescs(view);
+          });
+
+          observer.observe(frozenDom, observeOptions);
+
           return true;
         },
         compositionupdate() {
           return true;
         },
         compositionend(view, event) {
-          // @ts-expect-error Internal property - input
-          view.input.composing = false;
+          if (!(view instanceof ReactEditorView)) return false;
 
-          const { state } = view;
-          const { node: parent } = view.domAtPos(state.selection.from);
+          if (!view.composing) return false;
 
-          if (precompositionSnapshot) {
-            // Restore the snapshot of the parent node's children
-            // from before the composition started. This gives us a
-            // clean slate from which to dispatch our transaction
-            // and trigger a React update.
-            precompositionSnapshot.forEach((prevNode, i) => {
-              if (parent.childNodes.length <= i) {
-                parent.appendChild(prevNode);
-                return;
-              }
-              parent.replaceChild(prevNode, parent.childNodes.item(i));
-            });
+          teardownComposition(view, event.timeStamp);
+          view.dispatch(
+            view.state.tr.setMeta(reactKeysPluginKey, {
+              cursorWrapper: null,
+              freezeFrom: null,
+            })
+          );
 
-            if (parent.childNodes.length > precompositionSnapshot.length) {
-              for (
-                let i = precompositionSnapshot.length;
-                i < parent.childNodes.length;
-                i++
-              ) {
-                parent.removeChild(parent.childNodes.item(i));
-              }
-            }
-          }
-
-          if (event.data) {
-            insertText(view, event.data, {
-              marks: compositionMarks,
-            });
-          }
-
-          compositionMarks = null;
-          precompositionSnapshot = null;
-          setCursorWrapper(null);
           return true;
         },
         beforeinput(view, event) {
-          event.preventDefault();
+          if (event.inputType !== "insertFromComposition") {
+            event.preventDefault();
+          }
           switch (event.inputType) {
             case "insertParagraph":
             case "insertLineBreak": {
@@ -254,4 +358,99 @@ export function beforeInputPlugin(
       },
     },
   });
+}
+
+function syncCompositionViewDescs(view: ReactEditorView) {
+  const compositionNode = view.domObserver.lastChangedTextNode;
+  if (!compositionNode) return;
+
+  const freezeFrom = reactKeysPluginKey.getState(view.state)?.freezeFrom;
+  if (freezeFrom == null) return;
+
+  const compositionBlock = view.state.doc.nodeAt(freezeFrom);
+  if (!compositionBlock) return;
+
+  const compositionBlockDesc = view.docView.descAt(freezeFrom);
+  if (!compositionBlockDesc) return;
+
+  const desc = view.docView.nearestDesc(compositionNode);
+
+  compositionBlockDesc.node = compositionBlock;
+
+  if (desc instanceof TextViewDesc) {
+    if (
+      compositionNode.nodeValue &&
+      desc.node.text !== compositionNode.nodeValue
+    ) {
+      desc.node = view.state.schema.text(
+        compositionNode.nodeValue,
+        desc.node.marks
+      );
+      desc.nodeDOM = compositionNode;
+      compositionNode.pmViewDesc = desc;
+    }
+    return;
+  }
+
+  if (desc instanceof CompositionViewDesc) {
+    if (
+      compositionNode.nodeValue != null &&
+      desc.text !== compositionNode.nodeValue
+    ) {
+      desc.dom = compositionNode;
+      desc.textDOM = compositionNode;
+      desc.text = compositionNode.nodeValue;
+      compositionNode.pmViewDesc = desc;
+    }
+    return;
+  }
+
+  const parentDesc = desc?.contentDOM ? desc : compositionBlockDesc;
+
+  const children = parentDesc.children;
+
+  // Drop any text or composition desc in this container whose DOM the
+  // IME has detached. This covers two cases: a TextViewDesc the IME subsumed
+  // into the composition node, and (on Safari, which replaces the whole text
+  // node on each composition update) any orphaned composition view
+  // desc(s) left over from the previous composition steps.
+  for (let i = children.length - 1; i >= 0; i--) {
+    const c = children[i];
+    if (!(c instanceof TextViewDesc) && !(c instanceof CompositionViewDesc)) {
+      continue;
+    }
+    const dom = c.dom;
+    if (view.dom.contains(dom)) continue;
+    children.splice(i, 1);
+  }
+
+  const contentStart = freezeFrom + 1;
+  const { from, to } = view.state.selection;
+  const textPos = findTextInFragment(
+    compositionBlock.content,
+    compositionNode.nodeValue ?? "",
+    from - contentStart,
+    to - contentStart
+  );
+  if (textPos < 0) return;
+  const startPos = contentStart + textPos;
+
+  let topDOM: DOMNode = compositionNode;
+  while (topDOM.parentNode && topDOM.parentNode !== parentDesc.contentDOM) {
+    topDOM = topDOM.parentNode;
+  }
+
+  const insertIndex =
+    children.findLastIndex((c) => c.posBefore <= startPos) + 1;
+  children.splice(
+    insertIndex,
+    0,
+    new CompositionViewDesc(
+      parentDesc,
+      () => startPos,
+      topDOM,
+      compositionNode,
+      compositionNode.nodeValue ?? ""
+    )
+  );
 }

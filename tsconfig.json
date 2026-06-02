@@ -1,10 +1,9 @@
 /* Copyright (c) The New York Times Company */
-
 {
   "$schema": "https://json.schemastore.org/tsconfig",
   "include": ["src/**/*", "src/**/*.json"],
   "compilerOptions": {
-    "lib": ["DOM", "ES2022", "DOM.Iterable"],
+    "lib": ["DOM", "ES2023", "DOM.Iterable"],
     "target": "ES2015",
     /* Input/output paths */
     "outDir": "dist/types",
@@ -13,7 +12,8 @@
     "declaration": true,
     "noEmit": true,
     /* Module Resolution Options */
-    "moduleResolution": "node",
+    "moduleResolution": "nodenext",
+    "module": "nodenext",
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "preserveSymlinks": true,

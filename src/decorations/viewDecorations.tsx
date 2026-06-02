@@ -192,18 +192,12 @@ const ViewDecorationsCache = new WeakMap<
  * This makes it safe to call in a React render function, even
  * if its result is used in a dependencies array for a hook.
  */
-export function viewDecorations(
-  view: AbstractEditorView,
-  cursorWrapper: Decoration | null
-): DecorationSource {
+export function viewDecorations(view: AbstractEditorView): DecorationSource {
   const found: DecorationSource[] = [];
   view.someProp("decorations", (f) => {
     const result = f(view.state);
     if (result && result != empty) found.push(result);
   });
-  if (cursorWrapper) {
-    found.push(DecorationSet.create(view.state.doc, [cursorWrapper]));
-  }
   const previous = ViewDecorationsCache.get(view);
   if (!previous) {
     const result = DecorationGroup.from(found);
