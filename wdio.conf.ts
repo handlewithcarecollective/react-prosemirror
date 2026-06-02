@@ -7,6 +7,10 @@ const mobileSpecs = [
   "file:///src/components/__tests__/ProseMirror.mobile.test.tsx",
 ];
 
+const compositionSpecs = [
+  "file:///src/components/__tests__/ProseMirror.composition.test.tsx",
+];
+
 export const config: WebdriverIO.Config = {
   //
   // ====================
@@ -69,7 +73,7 @@ export const config: WebdriverIO.Config = {
   capabilities: [
     {
       browserName: "firefox",
-      "wdio:exclude": mobileSpecs,
+      "wdio:exclude": [...mobileSpecs, ...compositionSpecs],
     },
     {
       browserName: "chrome",
