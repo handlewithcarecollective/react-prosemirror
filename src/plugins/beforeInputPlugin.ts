@@ -96,14 +96,11 @@ const observeOptions = {
 };
 
 export function beforeInputPlugin() {
-  let compositionMarks: readonly Mark[] | null = null;
   let observer: MutationObserver | null = null;
   let preCompositionSnapshot: Fragment | null = null;
 
   function teardownComposition(view: ReactEditorView, endedAt: number) {
     view.input.composing = false;
-
-    compositionMarks = null;
 
     if (observer) {
       if (
@@ -164,38 +161,34 @@ export function beforeInputPlugin() {
         compositionstart(view) {
           if (!(view instanceof ReactEditorView)) return false;
 
-          const { state } = view;
-          const { selection } = state;
+          const storedMarks = view.state.selection.empty
+            ? view.state.storedMarks
+            : view.state.storedMarks ??
+              (view.state.selection instanceof TextSelection
+                ? view.state.selection.$from.marksAcross(
+                    view.state.selection.$to
+                  )
+                : null);
 
-          const isEmptyTr = state.tr.delete(selection.from, selection.to);
-
-          const $from = isEmptyTr.doc.resolve(
-            isEmptyTr.mapping.map(selection.from)
+          view.dispatch(
+            view.state.tr.deleteSelection().setStoredMarks(storedMarks)
           );
-          const isEmptyTextblock =
-            $from.parent.isTextblock && $from.parent.childCount === 0;
-
-          compositionMarks = view.state.storedMarks;
-          // Render a CursorWrapper with empty marks if starting a composition in an
-          // empty textblock with no marks. This prevents the browser from adding a
-          // <br> to the text block when it becomes empty (either via canceling the
-          // composition with the escape key or deleting all composition text when
-          // the composition node is the only text node in the text block)
-          if (compositionMarks === null && isEmptyTextblock) {
-            compositionMarks = [];
-          }
 
           handleGapCursorComposition(view);
 
-          if (compositionMarks) {
+          if (storedMarks) {
             view.dispatch(
               view.state.tr.setMeta(reactKeysPluginKey, {
-                cursorWrapper: widget(state.selection.from, CursorWrapper, {
-                  key: "cursor-wrapper",
-                  marks: compositionMarks,
-                  side: 0,
-                  raw: true,
-                }),
+                cursorWrapper: widget(
+                  view.state.selection.from,
+                  CursorWrapper,
+                  {
+                    key: "cursor-wrapper",
+                    marks: storedMarks,
+                    side: 0,
+                    raw: true,
+                  }
+                ),
               })
             );
             // Pin the DOM cursor to PM's canonical position before the IME

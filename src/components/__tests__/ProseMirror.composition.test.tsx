@@ -377,6 +377,8 @@ describe("EditorView composition", () => {
     expect(pm.state.doc).toEqualNode(doc(p("onexy. two")));
   });
 
+  // TODO: Figure out how to properly represent this with wdio/Input.imeSetComposition
+  // eslint-disable-next-line jest/no-disabled-tests
   it.skip("can handle compositions spanning multiple nodes", async () => {
     const { view: pm } = tempEditor({
       doc: doc(p("one two<a>")),
@@ -460,10 +462,29 @@ describe("EditorView composition", () => {
     expect(pm.state.doc).toEqualNode(doc(p("ab")));
   });
 
-  // it("cancels composition when a change fully overlaps with it", async () => {
+  it("cancels composition when a change fully overlaps with it", async () => {
+    const { view: pm } = tempEditor({
+      doc: doc(p("one"), p("two<a>"), p("three")),
+    });
+
+    pm.focus();
+
+    await browser.imeSetComposition({
+      text: "x",
+      selectionStart: 1,
+      selectionEnd: 1,
+    });
+
+    pm.dispatch(pm.state.tr.insertText("---", 3, 13));
+
+    expect(pm.state.doc).toEqualNode(doc(p("on---hree")));
+  });
+
+  // it.skip("cancels composition when a change partially overlaps with it", async () => {
   //   const { view: pm } = tempEditor({
-  //     doc: doc(p("one"), p("two<a>"), p("three")),
+  //     doc: doc(p("one"), p("<a>two"), p("three")),
   //   });
+  //   pm.focus();
 
   //   await browser.imeSetComposition({
   //     text: "x",
@@ -471,25 +492,12 @@ describe("EditorView composition", () => {
   //     selectionEnd: 1,
   //   });
 
-  //   pm.dispatch(pm.state.tr.insertText("---", 3, 13));
+  //   pm.dispatch(pm.state.tr.insertText("---", 7, 15));
 
-  //   expect(pm.state.doc).toEqualNode(doc(p("on---hree")));
+  //   expect(pm.state.doc).toEqualNode(doc(p("one"), p("x---ee")));
   // });
 
-  // it("cancels composition when a change partially overlaps with it", () => {
-  //   const { view: pm } = requireFocus(
-  //     tempEditor({ doc: doc(p("one"), p("two"), p("three")) })
-  //   );
-  //   compose(
-  //     pm,
-  //     () => edit(findTextNode(pm.dom, "two")!, "x", 0),
-  //     [() => pm.dispatch(pm.state.tr.insertText("---", 7, 15))],
-  //     { cancel: true }
-  //   );
-  //   ist(pm.state.doc, doc(p("one"), p("x---ee")), eq);
-  // });
-
-  // it("cancels composition when a change happens inside of it", () => {
+  // it.skip("cancels composition when a change happens inside of it", () => {
   //   const { view: pm } = requireFocus(
   //     tempEditor({ doc: doc(p("one"), p("two"), p("three")) })
   //   );
@@ -553,27 +561,38 @@ describe("EditorView composition", () => {
   //   ist(pm.state.doc, doc(p("one!!"), p("two.")), eq);
   // });
 
-  // function crossParagraph(first = false) {
-  //   const { view: pm } = requireFocus(
-  //     tempEditor({ doc: doc(p("one <a>two"), p("three"), p("four<b> five")) })
-  //   );
-  //   compose(
-  //     pm,
-  //     () => {
-  //       for (let i = 0; i < 2; i++)
-  //         pm.dom.removeChild(first ? pm.dom.lastChild! : pm.dom.firstChild!);
-  //       const target = pm.dom.firstChild!.firstChild as Text;
-  //       target.nodeValue = "one A five";
-  //       document.getSelection()!.collapse(target, 4);
-  //       return target;
-  //     },
-  //     [(n) => edit(n, "B", 4, 5), (n) => edit(n, "C", 4, 5)]
-  //   );
-  //   ist(pm.state.doc, doc(p("one C five")), eq);
-  // }
+  it("can handle cross-paragraph compositions", async () => {
+    const startDoc = doc(p("one <a>two"), p("three"), p("four<b> five"));
+    const { view: pm } = tempEditor({
+      doc: startDoc,
+      selection: TextSelection.between(
+        startDoc.resolve(startDoc.tag!.a!),
+        startDoc.resolve(startDoc.tag!.b!)
+      ),
+    });
 
-  // it("can handle cross-paragraph compositions", () => crossParagraph(true));
+    pm.focus();
 
-  // it("can handle cross-paragraph compositions (keeping the last paragraph)", () =>
-  //   crossParagraph(false));
+    await browser.imeSetComposition({
+      text: "A",
+      selectionStart: 1,
+      selectionEnd: 1,
+    });
+
+    await browser.imeSetComposition({
+      text: "B",
+      selectionStart: 1,
+      selectionEnd: 1,
+    });
+
+    await browser.imeSetComposition({
+      text: "C",
+      selectionStart: 1,
+      selectionEnd: 1,
+    });
+
+    await browser.imeInsertText({ text: "C" });
+
+    expect(pm.state.doc).toEqualNode(doc(p("one C five")));
+  });
 });
