@@ -67,23 +67,23 @@ export const config: WebdriverIO.Config = {
   // https://saucelabs.com/platform/platform-configurator
   //
   capabilities: [
-    // {
-    //   browserName: "firefox",
-    //   "wdio:exclude": mobileSpecs,
-    // },
+    {
+      browserName: "firefox",
+      "wdio:exclude": mobileSpecs,
+    },
     {
       browserName: "chrome",
       "wdio:exclude": mobileSpecs,
     },
-    // {
-    //   browserName: "chrome",
-    //   "wdio:specs": mobileSpecs,
-    //   "goog:chromeOptions": {
-    //     mobileEmulation: {
-    //       deviceName: "Pixel 7",
-    //     },
-    //   },
-    // },
+    {
+      browserName: "chrome",
+      "wdio:specs": mobileSpecs,
+      "goog:chromeOptions": {
+        mobileEmulation: {
+          deviceName: "Pixel 7",
+        },
+      },
+    },
   ],
 
   //
@@ -156,7 +156,7 @@ export const config: WebdriverIO.Config = {
   // See the full list at http://mochajs.org/
   mochaOpts: {
     ui: "bdd",
-    timeout: 6000000,
+    timeout: 60000,
   },
 
   //
