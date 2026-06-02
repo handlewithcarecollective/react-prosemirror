@@ -3,12 +3,10 @@ import "@wdio/types";
 import viteConfig from "./vite.config.js";
 import CdpService from "./wdio.cdp-service.js";
 
-const mobileSpecs = [
-  "file:///src/components/__tests__/ProseMirror.mobile.test.tsx",
-];
+const mobileSpecs = ["./src/components/__tests__/ProseMirror.mobile.test.tsx"];
 
 const compositionSpecs = [
-  "file:///src/components/__tests__/ProseMirror.composition.test.tsx",
+  "./src/components/__tests__/ProseMirror.composition.test.tsx",
 ];
 
 export const config: WebdriverIO.Config = {
