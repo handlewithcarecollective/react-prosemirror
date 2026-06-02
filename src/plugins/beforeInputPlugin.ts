@@ -9,7 +9,6 @@ import { DOMNode } from "../dom.js";
 import {
   CompositionViewDesc,
   TextViewDesc,
-  ViewDesc,
   findTextInFragment,
 } from "../viewdesc.js";
 
@@ -115,7 +114,14 @@ export function beforeInputPlugin() {
         view.domObserver.flush();
       } else {
         const freezeFrom = reactKeysPluginKey.getState(view.state)?.freezeFrom;
-        if (freezeFrom != null && preCompositionSnapshot) {
+        const frozenNode =
+          freezeFrom == null ? null : view.state.doc.nodeAt(freezeFrom);
+
+        if (
+          freezeFrom != null &&
+          frozenNode != null &&
+          preCompositionSnapshot
+        ) {
           // This is a little hacky — it only works because we always abort
           // compositions if the node after freezeFrom changes, so we can
           // be sure that if a composition was canceled by the user/browser,
@@ -123,7 +129,7 @@ export function beforeInputPlugin() {
           view.dispatch(
             view.state.tr.replaceWith(
               freezeFrom + 1,
-              freezeFrom + 1 + view.state.doc.nodeAt(freezeFrom)!.content.size,
+              freezeFrom + 1 + frozenNode.content.size,
               preCompositionSnapshot
             )
           );
@@ -366,22 +372,6 @@ export function beforeInputPlugin() {
   });
 }
 
-// Walk up from a DOM node to the nearest desc that can hold children (has a
-// contentDOM) — i.e. the desc whose content the node lives in. For a bare
-// composition that's the block's NodeViewDesc; for a composition inside a
-// cursor wrapper's mark, it's that MarkViewDesc.
-function containerDescFor(
-  view: ReactEditorView,
-  node: DOMNode
-): ViewDesc | undefined {
-  for (let dom: DOMNode | null = node.parentNode; dom; dom = dom.parentNode) {
-    const desc = (dom as DOMNode & { pmViewDesc?: ViewDesc }).pmViewDesc;
-    if (desc?.contentDOM) return desc;
-    if (dom === view.dom) break;
-  }
-  return undefined;
-}
-
 function syncCompositionViewDescs(view: ReactEditorView) {
   const compositionNode = view.domObserver.lastChangedTextNode;
   if (!compositionNode) return;
@@ -395,7 +385,7 @@ function syncCompositionViewDescs(view: ReactEditorView) {
   const compositionBlockDesc = view.docView.descAt(freezeFrom);
   if (!compositionBlockDesc) return;
 
-  const desc = compositionNode.pmViewDesc;
+  const desc = view.docView.nearestDesc(compositionNode);
 
   compositionBlockDesc.node = compositionBlock;
 
@@ -427,9 +417,8 @@ function syncCompositionViewDescs(view: ReactEditorView) {
     return;
   }
 
-  const parentDesc =
-    containerDescFor(view, compositionNode) ?? compositionBlockDesc;
-  if (!parentDesc.contentDOM) return;
+  const parentDesc = desc?.contentDOM ? desc : compositionBlockDesc;
+
   const children = parentDesc.children;
 
   const displacedIndex = children.findIndex((c) => {
