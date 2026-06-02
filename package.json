@@ -12,6 +12,11 @@
       "import": "./dist/esm/index.js",
       "require": "./dist/cjs/index.js"
     },
+    "./tiptap": {
+      "types": "./dist/types/tiptap/index.d.ts",
+      "import": "./dist/esm/tiptap/index.js",
+      "require": "./dist/cjs/tiptap/index.js"
+    },
     "./src": "./src/index.ts"
   },
   "files": [
@@ -58,6 +63,9 @@
     "@testing-library/dom": "^10.4.0",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
+    "@tiptap/core": "^3.15.3",
+    "@tiptap/pm": "^3.15.3",
+    "@tiptap/react": "^3.15.3",
     "@types/css-tree": "^2.3.10",
     "@types/jest": "^27.0.0",
     "@types/react": "^18.2.0",
@@ -100,7 +108,7 @@
     "prosemirror-history": "^1.5.0",
     "prosemirror-inputrules": "^1.5.1",
     "prosemirror-keymap": "^1.2.3",
-    "prosemirror-model": "^1.25.4",
+    "prosemirror-model": "^1.25.7",
     "prosemirror-schema-list": "^1.5.1",
     "prosemirror-state": "^1.4.4",
     "prosemirror-tables": "^1.8.5",
@@ -120,7 +128,13 @@
     "webdriver": "^9.18.0",
     "webdriverio": "^9.18.1"
   },
+  "resolutions": {
+    "prosemirror-view": "1.41.7"
+  },
   "peerDependencies": {
+    "@tiptap/core": "^3.15.3",
+    "@tiptap/pm": "^3.15.3",
+    "@tiptap/react": "^3.15.3",
     "prosemirror-model": "^1.0.0",
     "prosemirror-state": "^1.0.0",
     "prosemirror-view": "1.41.7",
@@ -131,6 +145,17 @@
   "packageManager": "yarn@4.11.0",
   "engines": {
     "node": ">=16.9"
+  },
+  "peerDependenciesMeta": {
+    "@tiptap/core": {
+      "optional": true
+    },
+    "@tiptap/pm": {
+      "optional": true
+    },
+    "@tiptap/react": {
+      "optional": true
+    }
   },
   "dependencies": {
     "classnames": "^2.5.1"

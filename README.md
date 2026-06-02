@@ -99,6 +99,9 @@ import "prosemirror-view/style/prosemirror.css";
 
 <!-- tocstop -->
 
+Already using Tiptap, and interesting in using React ProseMirror as the React
+integration? Check out [the Tiptap integration docs](./src/tiptap/README.md)!
+
 ## The Problem
 
 To make updates efficient, React separates updates into phases so that it can
