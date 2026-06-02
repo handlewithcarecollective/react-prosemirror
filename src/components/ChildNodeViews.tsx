@@ -16,7 +16,7 @@ import { EditorContext } from "../contexts/EditorContext.js";
 import { ReactWidgetDecoration } from "../decorations/ReactWidgetType.js";
 import { InternalDecorationSource } from "../decorations/internalTypes.js";
 import { iterDeco } from "../decorations/iterDeco.js";
-import { useReactKeys } from "../hooks/useReactKeys.js";
+import { reactKeysPluginKey } from "../plugins/reactKeys.js";
 import { htmlAttrsToReactProps, mergeReactProps } from "../props.js";
 import { sameOuterDeco } from "../viewdesc.js";
 
@@ -423,7 +423,7 @@ export const ChildNodeViews = memo(function ChildNodeViews({
   node: Node | undefined;
   innerDecorations: DecorationSource;
 }) {
-  const reactKeys = useReactKeys();
+  const { view } = useContext(EditorContext);
 
   const getInnerPos = useCallback(() => getPos() + 1, [getPos]);
 
@@ -440,6 +440,7 @@ export const ChildNodeViews = memo(function ChildNodeViews({
     node,
     innerDecorations,
     (widget, isNative, offset, index) => {
+      const posToKey = reactKeysPluginKey.getState(view.state)?.posToKey;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const widgetMarks = ((widget as any).type.spec.marks as Mark[]) ?? [];
       let key;
@@ -449,7 +450,7 @@ export const ChildNodeViews = memo(function ChildNodeViews({
           offset,
           index,
           "native-widget",
-          reactKeys?.posToKey,
+          posToKey,
           widget
         );
         const child = {
@@ -473,7 +474,7 @@ export const ChildNodeViews = memo(function ChildNodeViews({
           offset,
           index,
           "widget",
-          reactKeys?.posToKey,
+          posToKey,
           widget
         );
         const child = {
@@ -500,13 +501,8 @@ export const ChildNodeViews = memo(function ChildNodeViews({
       );
     },
     (childNode, outerDeco, innerDeco, offset, index) => {
-      const key = createKey(
-        getInnerPos(),
-        offset,
-        index,
-        "node",
-        reactKeys?.posToKey
-      );
+      const posToKey = reactKeysPluginKey.getState(view.state)?.posToKey;
+      const key = createKey(getInnerPos(), offset, index, "node", posToKey);
       const child = {
         type: "node",
         node: childNode,

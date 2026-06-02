@@ -23,11 +23,14 @@ const schema = new Schema({
   },
 });
 
-// Each transaction produces a new reactKeys plugin-state "generation". We hold a
-// WeakRef to every generation so that, after a forced GC, we can count how many
-// are still *reachable* (i.e. retained). The fix mutates a single shared object
-// in place, so only one generation ever exists; stock allocates a fresh object
-// per transaction, each pinned forever by a node view's memoized closure.
+// Each transaction produces a new reactKeys plugin-state "generation" (`apply`
+// allocates a fresh object every time). We hold a WeakRef to every generation so
+// that, after a forced GC, we can count how many are still *reachable* (i.e.
+// retained). The fix lets the consumer (`ChildNodeViews`) read the latest
+// reactKeys state off the view at call time instead of capturing it in a
+// retained closure, so stale generations become unreachable and get collected —
+// leaving ~1. Without it, each fresh generation is pinned forever by a node
+// view's memoized `getInnerPos` closure, so ~`created` survive.
 let generations: WeakRef<object>[] = [];
 let createdCount = 0;
 let live: { state: EditorState; dispatch: (tr: Transaction) => void } | null =
@@ -126,8 +129,9 @@ describe("reactKeys memory retention", () => {
     // Sanity: the grow loop produced a generation per transaction.
     expect(created).toBeGreaterThanOrEqual(GROW);
 
-    // The fix keeps a single shared plugin-state object alive (~1). Without it,
-    // every generation is pinned by a node view's fiber, so ~`created` survive.
+    // With the fix, stale generations are unreachable and get collected, leaving
+    // only the current one (~1). Without it, every generation is pinned by a node
+    // view's fiber, so ~`created` survive.
     expect(distinctAlive).toBeLessThan(5);
   });
 });
