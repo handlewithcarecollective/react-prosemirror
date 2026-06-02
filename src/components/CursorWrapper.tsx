@@ -23,7 +23,6 @@ export const CursorWrapper = forwardRef<
   useEditorEffect((view) => {
     if (!(view instanceof ReactEditorView) || !innerRef.current) return;
 
-    // @ts-expect-error Internal property - domObserver
     view.domObserver.disconnectSelection();
     const domSel = view.domSelection() as Selection;
     if (!domSel.isCollapsed) return;
@@ -34,7 +33,6 @@ export const CursorWrapper = forwardRef<
 
     view.cursorWrapped = true;
 
-    // @ts-expect-error Internal property - domObserver
     view.domObserver.connectSelection();
 
     return () => {

@@ -42,6 +42,8 @@ interface DOMObserver {
   stop(): void;
   onSelectionChange(): void;
   setCurSelection(): void;
+  disconnectSelection(): void;
+  connectSelection(): void;
   flush(): void;
   lastChangedTextNode: Text | null;
 }

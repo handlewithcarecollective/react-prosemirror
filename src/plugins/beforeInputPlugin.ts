@@ -197,7 +197,6 @@ export function beforeInputPlugin() {
             // node depending on the user's last navigation direction, and the
             // IME composes into whichever one it found.
           } else if (view.state.selection.empty) {
-            // @ts-expect-error internal method
             view.domObserver.disconnectSelection();
             try {
               view.docView.setSelection(
@@ -207,9 +206,7 @@ export function beforeInputPlugin() {
                 true // force — skip the isEquivalentPosition early-return
               );
             } finally {
-              // @ts-expect-error internal method
               view.domObserver.setCurSelection();
-              // @ts-expect-error internal method
               view.domObserver.connectSelection();
             }
           }
