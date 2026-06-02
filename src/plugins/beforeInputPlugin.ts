@@ -164,11 +164,11 @@ export function beforeInputPlugin() {
           const storedMarks = view.state.selection.empty
             ? view.state.storedMarks
             : view.state.storedMarks ??
-            (view.state.selection instanceof TextSelection
-              ? view.state.selection.$from.marksAcross(
-                view.state.selection.$to
-              )
-              : null);
+              (view.state.selection instanceof TextSelection
+                ? view.state.selection.$from.marksAcross(
+                    view.state.selection.$to
+                  )
+                : null);
 
           view.dispatch(
             view.state.tr.deleteSelection().setStoredMarks(storedMarks)
@@ -420,12 +420,13 @@ function syncCompositionViewDescs(view: ReactEditorView) {
   // node on each composition update) any orphaned composition view
   // desc(s) left over from the previous composition steps.
   for (let i = children.length - 1; i >= 0; i--) {
-    const c = children[i]
-    if (!(c instanceof TextViewDesc) && !(c instanceof CompositionViewDesc)) { continue }
+    const c = children[i];
+    if (!(c instanceof TextViewDesc) && !(c instanceof CompositionViewDesc)) {
+      continue;
+    }
     const dom = c.dom;
-    if (view.dom.contains(dom)) continue
-    children.splice(i, 1)
-
+    if (view.dom.contains(dom)) continue;
+    children.splice(i, 1);
   }
 
   const contentStart = freezeFrom + 1;
