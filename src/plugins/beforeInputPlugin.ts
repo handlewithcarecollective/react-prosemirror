@@ -176,7 +176,7 @@ export function beforeInputPlugin() {
 
           handleGapCursorComposition(view);
 
-          if (storedMarks) {
+          if (storedMarks != null) {
             view.dispatch(
               view.state.tr.setMeta(reactKeysPluginKey, {
                 cursorWrapper: widget(
@@ -340,11 +340,13 @@ export function beforeInputPlugin() {
                 const end = view.posAtDOM(range.endContainer, range.endOffset);
                 const { doc } = view.state;
 
-                const storedMarks = doc
-                  .resolve(start)
-                  .marksAcross(doc.resolve(end));
+                const marks = doc.resolve(start).marksAcross(doc.resolve(end));
 
-                tr.delete(start, end).setStoredMarks(storedMarks);
+                tr.delete(start, end);
+
+                if (marks) {
+                  tr.ensureMarks(marks);
+                }
               }
               view.dispatch(tr);
               break;
