@@ -76,6 +76,9 @@ export const config: WebdriverIO.Config = {
     {
       browserName: "chrome",
       "wdio:exclude": mobileSpecs,
+      "goog:chromeOptions": {
+        args: ["--js-flags=--expose-gc"],
+      },
     },
     {
       browserName: "chrome",
