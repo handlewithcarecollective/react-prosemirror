@@ -90,6 +90,7 @@ import "prosemirror-view/style/prosemirror.css";
   - [`useIgnoreMutation`](#useignoremutation)
   - [`useSelectNode`](#useselectnode)
   - [`useIsNodeSelected`](#useisnodeselected)
+  - [`useIsComposingIn`](#useiscomposingin)
   - [`widget`](#widget)
   - [`reorderSiblings`](#reordersiblings)
     - [When should I use this?](#when-should-i-use-this)
@@ -763,6 +764,15 @@ type useIsNodeSelected = (): boolean
 This hook can be used within a node view component to subscribe to a boolean
 value determining whether this node is selected. The hook will return true when
 a NodeSelection is created whose node is this one.
+
+### `useIsComposingIn`
+
+```tsx
+type useIsComposingIn = (): boolean
+```
+
+This hook can be used within a node view component to subscribe to a boolean
+value determining whether an IME composition is active inside the node.
 
 ### `widget`
 
