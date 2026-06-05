@@ -4,7 +4,7 @@
 export { ProseMirror } from "./components/ProseMirror.js";
 export { ProseMirrorDoc } from "./components/ProseMirrorDoc.js";
 export { reorderSiblings } from "./commands/reorderSiblings.js";
-export { useIsComposing } from "./hooks/useIsComposing.js";
+export { useIsComposing, useIsComposingIn } from "./hooks/useIsComposing.js";
 export { useEditorEffect } from "./hooks/useEditorEffect.js";
 export { useEditorEventCallback } from "./hooks/useEditorEventCallback.js";
 export { useEditorEventListener } from "./hooks/useEditorEventListener.js";
