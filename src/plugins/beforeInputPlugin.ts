@@ -318,7 +318,27 @@ export function beforeInputPlugin() {
               break;
             }
             case "insertText": {
-              insertText(view, event.data);
+              const ranges = event.getTargetRanges();
+              if (
+                ranges.length === 0 ||
+                (ranges.length === 1 && ranges[0] && ranges[0].collapsed)
+              ) {
+                insertText(view, event.data);
+              } else {
+                for (const range of ranges) {
+                  const from = view.posAtDOM(
+                    range.startContainer,
+                    range.startOffset,
+                    1
+                  );
+                  const to = view.posAtDOM(
+                    range.endContainer,
+                    range.endOffset,
+                    1
+                  );
+                  insertText(view, event.data, { from, to });
+                }
+              }
               break;
             }
             case "deleteWordBackward":
