@@ -319,7 +319,10 @@ export function beforeInputPlugin() {
             }
             case "insertText": {
               const ranges = event.getTargetRanges();
-              if (ranges.length <= 1 && ranges[0] && ranges[0].collapsed) {
+              if (
+                ranges.length === 0 ||
+                (ranges.length === 1 && ranges[0] && ranges[0].collapsed)
+              ) {
                 insertText(view, event.data);
               } else {
                 for (const range of ranges) {
