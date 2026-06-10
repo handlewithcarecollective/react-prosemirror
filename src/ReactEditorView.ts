@@ -297,14 +297,13 @@ export class ReactEditorView extends EditorView implements AbstractEditorView {
     const currentSelection = this.prevState.selection;
 
     const selectionChanged = !nextSelection.eq(currentSelection);
-
-    if (selectionChanged) {
+    if (selectionChanged && !this.composing) {
       super.update(this.nextProps);
     } else {
-      // If the selection hasn't changed between renders, force prosemirror-view to
-      // skip the selectionToDOM call. If a render happens after a DOM selection change
-      // but before the "selectionchange" event fired, calling selectionToDOM will cause
-      // the selection to be reset its the previous position.
+      // If the selection hasn't changed between renders or we're composing, force
+      // prosemirror-view to skip the selectionToDOM call. If a render happens after a DOM
+      // selection change but before the "selectionchange" event fired, calling
+      // selectionToDOM will cause the selection to be reset to its previous position.
       this.domObserver.setCurSelection();
       this.input.mouseDown = {
         allowDefault: false,
