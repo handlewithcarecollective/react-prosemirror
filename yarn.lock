@@ -1692,7 +1692,7 @@ __metadata:
     prosemirror-tables: "npm:^1.8.5"
     prosemirror-test-builder: "npm:^1.1.1"
     prosemirror-transform: "npm:^1.12.0"
-    prosemirror-view: "npm:1.41.7"
+    prosemirror-view: "npm:1.41.9"
     puppeteer-core: "npm:^25.0.4"
     react: "npm:^18.2.0"
     react-dom: "npm:^18.2.0"
@@ -1711,7 +1711,7 @@ __metadata:
     "@tiptap/react": ^3.15.3
     prosemirror-model: ^1.0.0
     prosemirror-state: ^1.0.0
-    prosemirror-view: 1.41.7
+    prosemirror-view: 1.41.9
     react: ">=17 <20"
     react-dom: ">=17 <20"
     react-reconciler: ">=0.26.1 <=0.33.0"
@@ -12953,12 +12953,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"prosemirror-model@npm:^1.0.0, prosemirror-model@npm:^1.20.0, prosemirror-model@npm:^1.21.0, prosemirror-model@npm:^1.24.1, prosemirror-model@npm:^1.25.0, prosemirror-model@npm:^1.25.4, prosemirror-model@npm:^1.25.7":
+"prosemirror-model@npm:^1.0.0, prosemirror-model@npm:^1.21.0, prosemirror-model@npm:^1.24.1, prosemirror-model@npm:^1.25.0, prosemirror-model@npm:^1.25.4, prosemirror-model@npm:^1.25.7":
   version: 1.25.7
   resolution: "prosemirror-model@npm:1.25.7"
   dependencies:
     orderedmap: "npm:^2.0.0"
   checksum: 10/516e3609a350bccc2dcb9215eccf7db1567c4f57914467a15884f017f00fc2b110e91332a708e935cb8da179897680ca6d9a64f7cceb0e3a6c543845d7eab2b2
+  languageName: node
+  linkType: hard
+
+"prosemirror-model@npm:^1.25.8":
+  version: 1.25.8
+  resolution: "prosemirror-model@npm:1.25.8"
+  dependencies:
+    orderedmap: "npm:^2.0.0"
+  checksum: 10/e432c5418cf7b390bd8438523c725f3780bc5712fbbaf2ff6a8fc00fd8ed63b2b140a909b1bdaf6287511636dc93fda215d091be30eecd5c031b8086cbc5e31f
   languageName: node
   linkType: hard
 
@@ -13040,14 +13049,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"prosemirror-view@npm:1.41.7":
-  version: 1.41.7
-  resolution: "prosemirror-view@npm:1.41.7"
+"prosemirror-view@npm:1.41.9":
+  version: 1.41.9
+  resolution: "prosemirror-view@npm:1.41.9"
   dependencies:
-    prosemirror-model: "npm:^1.20.0"
+    prosemirror-model: "npm:^1.25.8"
     prosemirror-state: "npm:^1.0.0"
     prosemirror-transform: "npm:^1.1.0"
-  checksum: 10/457cb83cdd677b9ccc8e579e53c9f2fc10316b6627952bffc415c843ccd20069efab15da0ee651541191930ce7e31e790c08f6ddbacfda47dc280aa47dca42db
+  checksum: 10/7feba5d7370380a5561c8d751f764a17d1d42fa0bf82e41e2e03acb11e913d7dc781787cd48a83519430ed922987b4250fc30c6165ebe2d1bc78c0835ebc9e9c
   languageName: node
   linkType: hard
 
