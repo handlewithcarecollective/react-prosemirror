@@ -481,6 +481,7 @@ export class ViewDesc {
     view: ReactEditorView,
     force = false
   ): void {
+    if (view.composing) return;
     // If the selection falls entirely in a child, give it to that child
     const from = Math.min(anchor, head),
       to = Math.max(anchor, head);
