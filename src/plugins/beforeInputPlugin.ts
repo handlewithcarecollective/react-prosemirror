@@ -3,6 +3,7 @@ import { Plugin, TextSelection } from "prosemirror-state";
 import { EditorView } from "prosemirror-view";
 
 import { ReactEditorView } from "../ReactEditorView.js";
+import { browser } from "../browser.js";
 import { CursorWrapper } from "../components/CursorWrapper.js";
 import { widget } from "../decorations/ReactWidgetType.js";
 import { DOMNode } from "../dom.js";
@@ -142,6 +143,16 @@ export function beforeInputPlugin() {
     view.input.compositionID++;
   }
 
+  function teardownCompositionAndUnfreeze(view: ReactEditorView, event: Event) {
+    teardownComposition(view, event.timeStamp);
+    view.dispatch(
+      view.state.tr.setMeta(reactKeysPluginKey, {
+        cursorWrapper: null,
+        freezeFrom: null,
+      })
+    );
+  }
+
   return new Plugin({
     view() {
       return {
@@ -175,8 +186,14 @@ export function beforeInputPlugin() {
           );
 
           handleGapCursorComposition(view);
+          const { selection } = view.state;
 
-          if (storedMarks != null) {
+          const tr = view.state.tr.delete(selection.from, selection.to);
+          const $from = tr.doc.resolve(tr.mapping.map(selection.from));
+          const isEmptyTextblock =
+            $from.parent.isTextblock && $from.parent.childCount === 0;
+
+          if (storedMarks != null || (browser.safari && isEmptyTextblock)) {
             view.dispatch(
               view.state.tr.setMeta(reactKeysPluginKey, {
                 cursorWrapper: widget(
@@ -184,7 +201,7 @@ export function beforeInputPlugin() {
                   CursorWrapper,
                   {
                     key: "cursor-wrapper",
-                    marks: storedMarks,
+                    ...(storedMarks !== null && { marks: storedMarks }),
                     side: 0,
                     raw: true,
                   }
@@ -253,18 +270,31 @@ export function beforeInputPlugin() {
         },
         compositionend(view, event) {
           if (!(view instanceof ReactEditorView)) return false;
-
           if (!view.composing) return false;
 
-          teardownComposition(view, event.timeStamp);
-          view.dispatch(
-            view.state.tr.setMeta(reactKeysPluginKey, {
-              cursorWrapper: null,
-              freezeFrom: null,
-            })
-          );
-
+          teardownCompositionAndUnfreeze(view, event);
           return true;
+        },
+        contextmenu(view, event) {
+          if (!(view instanceof ReactEditorView)) return false;
+          if (!view.composing) return false;
+
+          teardownCompositionAndUnfreeze(view, event);
+          return false;
+        },
+        mousedown(view, event) {
+          if (!(view instanceof ReactEditorView)) return false;
+          if (!view.composing) return false;
+
+          teardownCompositionAndUnfreeze(view, event);
+          return false;
+        },
+        touchstart(view, event) {
+          if (!(view instanceof ReactEditorView)) return false;
+          if (!view.composing) return false;
+
+          teardownCompositionAndUnfreeze(view, event);
+          return false;
         },
         beforeinput(view, event) {
           if (event.inputType !== "insertFromComposition") {
