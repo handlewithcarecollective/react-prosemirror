@@ -85,6 +85,7 @@ import "prosemirror-view/style/prosemirror.css";
   - [`useEditorEventListener`](#useeditoreventlistener-1)
   - [`useEditorEffect`](#useeditoreffect-1)
   - [`NodeViewComponentProps`](#nodeviewcomponentprops)
+  - [`useEditorStateSelector`](#useeditorstateselector)
   - [`useNodePos`](#usenodepos)
   - [`useStopEvent`](#usestopevent)
   - [`useIgnoreMutation`](#useignoremutation)
@@ -700,6 +701,17 @@ ref to their top-level DOM element. All node view components that render their
 `children`.
 
 [See the above example](#building-node-views-with-react) for more details.
+
+### `useEditorStateSelector`
+
+```ts
+type useEditorStateSelector<Result> = (selector: (state: EditorState) => Result): Result
+```
+
+Select a piece of the EditorState, a la Redux’s `useSelector`.
+
+This hook will only trigger a re-render of the consuming component if the return
+value of the selector changes.
 
 ### `useNodePos`
 
