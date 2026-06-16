@@ -19,7 +19,6 @@ export function useEditorStateSelector<Result>(
   const selectorRef = useRef(selector);
   selectorRef.current = selector;
 
-  return useSyncExternalStore(store.subscribe, () =>
-    selectorRef.current(store.getState())
-  );
+  const getSnapshot = () => selectorRef.current(store.getState());
+  return useSyncExternalStore(store.subscribe, getSnapshot, getSnapshot);
 }
