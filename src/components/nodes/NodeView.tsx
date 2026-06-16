@@ -15,8 +15,9 @@ import React, {
   useRef,
 } from "react";
 
-import { CompositionContext } from "../../contexts/CompositionContext.js";
 import { NodeViewContext } from "../../contexts/NodeViewContext.js";
+import { useEditorStateSelector } from "../../hooks/useEditorStateSelector.js";
+import { reactKeysPluginKey } from "../../plugins/reactKeys.js";
 
 import { DefaultNodeView } from "./DefaultNodeView.js";
 import { NodeViewComponentProps } from "./NodeViewComponentProps.js";
@@ -36,7 +37,9 @@ export const NodeView = memo(function NodeView({
   ...props
 }: Props) {
   const renderRef = useRef<JSX.Element | null>(null);
-  const { freezeFrom } = useContext(CompositionContext);
+  const frozen = useEditorStateSelector(
+    (state) => reactKeysPluginKey.getState(state)?.freezeFrom === props.getPos()
+  );
   const { components, constructors } = useContext(NodeViewContext);
 
   const committedFrozenRef = useRef(false);
@@ -62,12 +65,6 @@ export const NodeView = memo(function NodeView({
       };
     }
   }, [constructor, component]);
-
-  // It's not generally safe to access getPos during render, because the
-  // component may not re-render when its return value would change. Here it's
-  // safe because we only use it to _suppress_ commits that would otherwise
-  // have happened.
-  const frozen = props.getPos() === freezeFrom;
 
   // Protect content while frozen, and also through the single render where we
   // leave the frozen state: `committedFrozenRef` still reflects the previous
