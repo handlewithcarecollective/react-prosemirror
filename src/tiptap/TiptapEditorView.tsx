@@ -52,13 +52,23 @@ export function TiptapEditorView({
     (tr: Transaction) => {
       // @ts-expect-error calling private method
       editor.dispatchTransaction(tr);
+
       if (typeof attributesProp === "function") {
         setAttributes(attributesProp(editor.state));
       }
-      // Tiptap's dispatchTransaction doesn't trigger
-      // a re-render, so we need to manually force
-      // one to ensure that React stays in sync.
-      forceUpdate();
+
+      if (
+        tr.docChanged ||
+        tr.selectionSet ||
+        tr.storedMarksSet ||
+        // @ts-expect-error calling private method
+        Object.keys(tr.meta).length > 0
+      ) {
+        // Tiptap's dispatchTransaction doesn't trigger
+        // a re-render, so we need to manually force
+        // one to ensure that React stays in sync.
+        forceUpdate();
+      }
     },
     [attributesProp, editor, forceUpdate]
   );
