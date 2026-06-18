@@ -134,6 +134,9 @@ export function iterDeco(
         end = cutAt;
         index = -1;
       }
+    } else {
+      while (decoIndex < locals.length && locals[decoIndex]!.to < end)
+        decoIndex++;
     }
 
     const outerDeco =
