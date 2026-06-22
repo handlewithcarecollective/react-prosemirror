@@ -1706,9 +1706,9 @@ __metadata:
     webdriver: "npm:^9.18.0"
     webdriverio: "npm:^9.18.1"
   peerDependencies:
-    "@tiptap/core": ^3.15.3
-    "@tiptap/pm": ^3.15.3
-    "@tiptap/react": ^3.15.3
+    "@tiptap/core": ^3.0.0
+    "@tiptap/pm": ^3.0.0
+    "@tiptap/react": ^3.0.0
     prosemirror-model: ^1.0.0
     prosemirror-state: ^1.0.0
     prosemirror-view: 1.41.7
