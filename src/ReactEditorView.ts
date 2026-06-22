@@ -294,12 +294,23 @@ export class ReactEditorView extends EditorView implements AbstractEditorView {
     this.docView.markDirty(-1, -1);
 
     const nextSelection = this.nextProps.state.selection;
-    const currentSelection = this.prevState.selection;
+    const prevSelection = this.prevState.selection;
 
-    const selectionChanged = !nextSelection.eq(currentSelection);
-    if (selectionChanged) {
-      super.update(this.nextProps);
-    } else {
+    const selectionChanged = !nextSelection.eq(prevSelection);
+
+    const needsSelectionUpdate =
+      selectionChanged ||
+      // If the doc within the selection has changed, then the DOM has likely changed.
+      // In this case, we need to force a re-sync of the selection, because the browser
+      // will have probably collapsed the selection to work around the new DOM, which
+      // no longer matches the previous selection.
+      !this.prevState.doc
+        .slice(prevSelection.from, prevSelection.to)
+        .eq(
+          this.nextProps.state.doc.slice(prevSelection.from, prevSelection.to)
+        );
+
+    if (!needsSelectionUpdate) {
       // If the selection hasn't changed between renders, force
       // prosemirror-view to skip the selectionToDOM call. If a render happens after a DOM
       // selection change but before the "selectionchange" event fired, calling
@@ -309,9 +320,11 @@ export class ReactEditorView extends EditorView implements AbstractEditorView {
         allowDefault: false,
         delayedSelectionSync: false,
       };
+    }
 
-      super.update(this.nextProps);
+    super.update(this.nextProps);
 
+    if (!needsSelectionUpdate) {
       this.input.mouseDown = null;
     }
 
