@@ -107,6 +107,7 @@ export const ReactNodeView = memo(function ReactNodeView({
 
       return {
         dom: (nodeDOMRef.current ?? domRef.current) as DOMNode,
+        contentDOM: contentDOMRef.current,
         update() {
           return true;
         },
