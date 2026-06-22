@@ -739,7 +739,7 @@ update.
 ### `useStopEvent`
 
 ```tsx
-type useStopEvent = (stopEvent: (view: EditorView, event: Event) => boolean): void
+type useStopEvent = (stopEvent: (this: NodeView, view: EditorView, event: Event) => boolean): void
 ```
 
 This hook can be used within a node view component to register a
@@ -749,7 +749,7 @@ Events for which this returns true are not handled by the editor.
 ### `useIgnoreMutation`
 
 ```tsx
-type useIgnoreMutation = (stopEvent: (view: EditorView, mutation: ViewMutationRecord) => boolean): void
+type useIgnoreMutation = (stopEvent: (this: NodeView, view: EditorView, mutation: ViewMutationRecord) => boolean): void
 ```
 
 This hook can be used within a node view component to register an
