@@ -28,7 +28,6 @@ import { useIsNodeSelected } from "../hooks/useIsNodeSelected.js";
 import { useStopEvent } from "../hooks/useStopEvent.js";
 import { htmlAttrsToReactProps } from "../props.js";
 import { useMergedDOMRefs } from "../refs.js";
-import { ViewDesc } from "../viewdesc.js";
 
 import { ReactProseMirrorNodeView } from "./ReactProseMirrorNodeView.js";
 import { useTiptapEditorEventCallback } from "./hooks/useTiptapEditorEventCallback.js";
@@ -122,7 +121,7 @@ export function tiptapNodeView({
           return getRenderedAttributes(node, extensionAttributes);
         }, [extensions, node]);
 
-        useStopEvent(function (this: ViewDesc, _, event) {
+        useStopEvent(function (_, event) {
           if (!editor || !(this.dom instanceof HTMLElement)) return false;
 
           const nodeView = new ReactProseMirrorNodeView(
@@ -138,7 +137,7 @@ export function tiptapNodeView({
               view: editor.view,
             },
             this.dom,
-            this.contentDOM
+            this.contentDOM ?? null
           );
           nodeView.isDragging = isDraggingRef.current;
 
@@ -156,7 +155,7 @@ export function tiptapNodeView({
           return result;
         });
 
-        useIgnoreMutation(function (this: ViewDesc, _, mutation) {
+        useIgnoreMutation(function (_, mutation) {
           if (!editor || !(this.dom instanceof HTMLElement)) return false;
 
           const nodeView = new ReactProseMirrorNodeView(
@@ -172,7 +171,7 @@ export function tiptapNodeView({
               view: editor.view,
             },
             this.dom,
-            this.contentDOM
+            this.contentDOM ?? null
           );
 
           if (ignoreMutation) {

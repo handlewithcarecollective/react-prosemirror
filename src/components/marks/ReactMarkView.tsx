@@ -65,7 +65,7 @@ export const ReactMarkView = memo(function ReactMarkView({
       ignoreMutation(mutation) {
         const ignoreMutation = ignoreMutationRef.current;
         if (ignoreMutation) {
-          return ignoreMutation(mutation);
+          return ignoreMutation.call(this, mutation);
         }
 
         return false;

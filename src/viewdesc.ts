@@ -1152,12 +1152,12 @@ class CustomNodeViewDesc extends NodeViewDesc {
   }
 
   stopEvent(event: Event) {
-    return this.spec.stopEvent ? this.spec.stopEvent.call(this, event) : false;
+    return this.spec.stopEvent ? this.spec.stopEvent(event) : false;
   }
 
   ignoreMutation(mutation: ViewMutationRecord) {
     return this.spec.ignoreMutation
-      ? this.spec.ignoreMutation.call(this, mutation)
+      ? this.spec.ignoreMutation(mutation)
       : super.ignoreMutation(mutation);
   }
 }
