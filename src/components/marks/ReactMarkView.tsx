@@ -62,6 +62,7 @@ export const ReactMarkView = memo(function ReactMarkView({
     () => contentDOMRef.current ?? ref.current,
     () => ({
       dom: ref.current as DOMNode,
+      contentDOM: contentDOMRef.current ?? ref.current,
       ignoreMutation(mutation) {
         const ignoreMutation = ignoreMutationRef.current;
         if (ignoreMutation) {
