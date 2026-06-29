@@ -42,9 +42,10 @@ export function useEditorEffect(
   useLayoutGroupEffect(
     () => {
       if (view instanceof ReactEditorView) {
+        const originalFlushSync = flushSyncRef.current;
         flushSyncRef.current = false;
         const result = effect(view);
-        flushSyncRef.current = true;
+        flushSyncRef.current = originalFlushSync;
         return result;
       }
     },
