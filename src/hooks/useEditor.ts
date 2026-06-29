@@ -132,7 +132,38 @@ export function useEditor<T extends HTMLElement = HTMLElement>(
     if (view instanceof ReactEditorView && !view.isDestroyed) {
       flushSyncRef.current = false;
       view.commitPendingEffects();
-      flushSyncRef.current = true;
+      // This is guarding against a very specific pathological
+      // behavior in a ProseMirror plugin, which is unfortunately
+      // implemented in the very popular y-cursor plugin.
+      //
+      // If a plugin dispatches a transaction in an immediately
+      // scheduled task (i.e. setTimeout(..., 0)) during the update
+      // lifecycle method, AND the user has changed the selection
+      // while this render cycle was being committed, that
+      // scheduled task will execute _exactly_ between when the
+      // DOM selection updates and when the selectionchange
+      // event is fired. This will cause commitPendingEffects
+      // to override the pending selection change with the
+      // previous state.
+      //
+      // However, this is only an issue because we wrap all dispatches
+      // in a flushSync call, unless they run synchronously during
+      // a useEditorEffect or commitPendingEffects. If the
+      // scheduled dispatch is not flushSync'd, then
+      // commitPendingEffects will run _after_ the selectionchange
+      // event, and everything is fine.
+      //
+      // So we schedule the re-enabling of flushSync in our
+      // own immediate task. Since it's scheduled _after_
+      // commitPendingEffects runs, it's guaranteed to execute
+      // after any immediate tasks scheduled during
+      // commitPendingEffects. This means that we avoid the
+      // possibility of an immediately scheduled task from
+      // an update method running between the DOM selection update
+      // and the selectionchange update.
+      setTimeout(() => {
+        flushSyncRef.current = true;
+      }, 0);
     }
   });
 
