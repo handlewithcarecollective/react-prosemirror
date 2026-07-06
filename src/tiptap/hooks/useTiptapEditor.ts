@@ -1,6 +1,5 @@
 import { DependencyList } from "react";
 
-import { StaticEditorView } from "../../StaticEditorView.js";
 import { ReactProseMirror } from "../extensions/ReactProseMirror.js";
 import { ReactProseMirrorCommands } from "../extensions/ReactProseMirrorCommands.js";
 
@@ -41,7 +40,7 @@ export function useTiptapEditor(
     extensions.push(ReactProseMirrorCommands);
   }
 
-  const editor = useEditor(
+  return useEditor(
     {
       ...options,
       extensions,
@@ -49,33 +48,4 @@ export function useTiptapEditor(
     },
     deps
   );
-
-  // @ts-expect-error private property
-  editor.editorView ??= new StaticEditorView({
-    // @ts-expect-error private property
-    state: editor.editorState,
-    ...editor.options.editorProps,
-    attributes: {
-      role: "textbox",
-      ...editor.options.editorProps.attributes,
-    },
-  });
-
-  // @ts-expect-error private property
-  const stateHasPlugins = !!editor.editorState.plugins.length;
-  const stateNeedsReconfigure = !stateHasPlugins && !editor.isDestroyed;
-
-  if (stateNeedsReconfigure) {
-    const managerPlugins = editor.extensionManager.plugins;
-    if (managerPlugins.length) {
-      // @ts-expect-error private property
-      editor.editorState = editor.editorState.reconfigure({
-        plugins: editor.extensionManager.plugins,
-      });
-      // @ts-expect-error private property
-      editor.editorView.updateState(editor.editorState);
-    }
-  }
-
-  return editor;
 }
