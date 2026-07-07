@@ -1,7 +1,6 @@
 // Forked from Tiptap's useEditor hook, with modifications to support
 // server-side rendering
 import { Editor, type EditorOptions } from "@tiptap/core";
-import { useEditorState } from "@tiptap/react";
 import {
   DependencyList,
   MutableRefObject,
@@ -12,10 +11,26 @@ import {
 } from "react";
 import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 
-const isDev = process.env.NODE_ENV !== "production";
-const isSSR = typeof window === "undefined";
-const isNext =
-  isSSR || Boolean(typeof window !== "undefined" && (window as any).next);
+import { StaticEditorView } from "../../StaticEditorView.js";
+
+class ReactEditor extends Editor {
+  constructor(options?: Partial<EditorOptions>) {
+    super(options);
+
+    // @ts-expect-error Internal property
+    this.editorView = new StaticEditorView({
+      // @ts-expect-error Internal property
+      state: this.editorState.reconfigure({
+        plugins: this.extensionManager.plugins,
+      }),
+      ...this.options.editorProps,
+      attributes: {
+        role: "textbox",
+        ...this.options.editorProps.attributes,
+      },
+    });
+  }
+}
 
 /**
  * The options for the `useEditor` hook.
@@ -81,7 +96,7 @@ class EditorInstanceManager {
   constructor(options: MutableRefObject<UseEditorOptions>) {
     this.options = options;
     this.subscriptions = new Set<() => void>();
-    this.setEditor(this.getInitialEditor());
+    this.setEditor(this.createEditor());
     this.scheduleDestroy();
 
     this.getEditor = this.getEditor.bind(this);
@@ -99,42 +114,6 @@ class EditorInstanceManager {
 
     // Notify all subscribers that the editor instance has been created
     this.subscriptions.forEach((cb) => cb());
-  }
-
-  private getInitialEditor() {
-    if (this.options.current.immediatelyRender === undefined) {
-      if (isSSR || isNext) {
-        if (isDev) {
-          /**
-           * Throw an error in development, to make sure the developer is aware that tiptap cannot be SSR'd
-           * and that they need to set `immediatelyRender` to `false` to avoid hydration mismatches.
-           */
-          throw new Error(
-            "Tiptap Error: SSR has been detected, please set `immediatelyRender` explicitly to `false` to avoid hydration mismatches."
-          );
-        }
-
-        // Best faith effort in production, run the code in the legacy mode to avoid hydration mismatches and errors in production
-        return null;
-      }
-
-      // Default to immediately rendering when client-side rendering
-      return this.createEditor();
-    }
-
-    // ----- FORKED CHANGES -----
-    // if (this.options.current.immediatelyRender && isSSR && isDev) {
-    //   // Warn in development, to make sure the developer is aware that tiptap cannot be SSR'd, set `immediatelyRender` to `false` to avoid hydration mismatches.
-    //   throw new Error(
-    //     "Tiptap Error: SSR has been detected, and `immediatelyRender` has been set to `true` this is an unsupported configuration that may result in errors, explicitly set `immediatelyRender` to `false` to avoid hydration mismatches."
-    //   );
-    // }
-    // ----- END FORKED CHANGES -----
-    if (this.options.current.immediatelyRender) {
-      return this.createEditor();
-    }
-
-    return null;
   }
 
   /**
@@ -160,7 +139,7 @@ class EditorInstanceManager {
       onPaste: (...args) => this.options.current.onPaste?.(...args),
       onDelete: (...args) => this.options.current.onDelete?.(...args),
     };
-    const editor = new Editor(optionsToApply);
+    const editor = new ReactEditor(optionsToApply);
 
     // no need to keep track of the event listeners, they will be removed when the editor is destroyed
 
@@ -390,27 +369,6 @@ export function useEditor(
   // This effect will handle creating/updating the editor instance
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(instanceManager.onRender(deps));
-
-  // The default behavior is to re-render on each transaction
-  // This is legacy behavior that will be removed in future versions
-  useEditorState({
-    editor,
-    selector: ({ transactionNumber }) => {
-      if (
-        options.shouldRerenderOnTransaction === false ||
-        options.shouldRerenderOnTransaction === undefined
-      ) {
-        // This will prevent the editor from re-rendering on each transaction
-        return null;
-      }
-
-      // This will avoid re-rendering on the first transaction when `immediatelyRender` is set to `true`
-      if (options.immediatelyRender && transactionNumber === 0) {
-        return 0;
-      }
-      return transactionNumber + 1;
-    },
-  });
 
   return editor;
 }
