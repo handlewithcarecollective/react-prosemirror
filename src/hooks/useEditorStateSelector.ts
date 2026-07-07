@@ -1,5 +1,5 @@
 import { EditorState } from "prosemirror-state";
-import { useContext, useRef, useSyncExternalStore } from "react";
+import { useContext, useSyncExternalStore } from "react";
 
 import { EditorStateStoreContext } from "../contexts/EditorStateStoreContext.js";
 
@@ -16,9 +16,6 @@ export function useEditorStateSelector<Result>(
 ): Result {
   const store = useContext(EditorStateStoreContext);
 
-  const selectorRef = useRef(selector);
-  selectorRef.current = selector;
-
-  const getSnapshot = () => selectorRef.current(store.getState());
+  const getSnapshot = () => selector(store.getState());
   return useSyncExternalStore(store.subscribe, getSnapshot, getSnapshot);
 }
