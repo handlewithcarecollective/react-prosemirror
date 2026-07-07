@@ -713,9 +713,9 @@ Select a piece of the EditorState, a la Redux’s `useSelector`.
 This hook will only trigger a re-render of the consuming component if the return
 value of the selector changes.
 
-The provided selector must return the same value when it receieves the same inputs. If the
-selector creates and returns a new object when it runs, you'll enter a rerender
-loop.
+The provided selector must return the same value when it receieves the same
+inputs. If the selector creates and returns a new object when it runs, you'll
+enter a rerender loop.
 
 ### `useNodePos`
 
