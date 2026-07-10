@@ -71,7 +71,8 @@ export function useEditor<T extends HTMLElement = HTMLElement>(
 
   const dispatchTransaction = useCallback(
     function dispatchTransaction(this: EditorView, tr: Transaction) {
-      if (flushSyncRef.current) {
+      const skipFlushSync = tr.getMeta("skipFlushSync");
+      if (flushSyncRef.current && !skipFlushSync) {
         flushSync(() => {
           if (!options.state) {
             setState((s) => s.apply(tr));
