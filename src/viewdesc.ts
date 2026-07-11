@@ -764,11 +764,18 @@ export class CompositionViewDesc extends ViewDesc {
 /// Objects returned as mark views must conform to this interface.
 export interface MarkView {
   /// The outer DOM node that represents the document node.
-  dom: DOMNode;
+  dom: HTMLElement;
 
   /// The DOM node that should hold the mark's content. When this is not
   /// present, the `dom` property is used as the content DOM.
   contentDOM?: HTMLElement | null;
+
+  /// When given, this is called when the view is updating itself. It
+  /// will be given a mark (of the same type as the current one). When it
+  /// returns true, the existing DOM is kept and reused (its content is
+  /// still managed by ProseMirror); when it returns false, the mark view
+  /// is rebuilt.
+  update?: (mark: Mark) => boolean;
 
   /// Called when a [mutation](#view.ViewMutationRecord) happens within the
   /// view. Return false if the editor should re-read the selection or re-parse
@@ -791,7 +798,7 @@ export class MarkViewDesc extends ViewDesc {
     children: ViewDesc[],
     getPos: () => number,
     public mark: Mark,
-    dom: DOMNode,
+    dom: HTMLElement,
     contentDOM: HTMLElement,
     public spec: MarkView
   ) {
@@ -1083,9 +1090,9 @@ class CustomNodeViewDesc extends NodeViewDesc {
     node: Node,
     outerDeco: readonly Decoration[],
     innerDeco: DecorationSource,
-    dom: DOMNode,
+    dom: HTMLElement,
     contentDOM: HTMLElement | null,
-    nodeDOM: DOMNode,
+    nodeDOM: HTMLElement,
     readonly spec: NodeView
   ) {
     super(

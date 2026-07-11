@@ -1,4 +1,9 @@
-import { EditorView, NodeView, ViewMutationRecord } from "prosemirror-view";
+import {
+  EditorView,
+  MarkView,
+  NodeView,
+  ViewMutationRecord,
+} from "prosemirror-view";
 import { useContext } from "react";
 
 import { IgnoreMutationContext } from "../contexts/IgnoreMutationContext.js";
@@ -8,7 +13,7 @@ import { useEditorEventCallback } from "./useEditorEventCallback.js";
 
 export function useIgnoreMutation(
   ignoreMutation: (
-    this: NodeView,
+    this: NodeView | MarkView,
     view: EditorView,
     mutation: ViewMutationRecord
   ) => boolean

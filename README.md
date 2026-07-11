@@ -35,7 +35,7 @@ npm install @handlewithcare/react-prosemirror \
     react@^19.1.0 \
     react-dom@^19.1.0 \
     react-reconciler@0.32.0 \
-    prosemirror-view@1.41.7 \
+    prosemirror-view@1.42.0 \
     prosemirror-state \
     prosemirror-model
 ```
@@ -47,7 +47,7 @@ yarn add @handlewithcare/react-prosemirror \
     react@^19.1.0 \
     react-dom@^19.1.0 \
     react-reconciler@0.32.0 \
-    prosemirror-view@1.41.7 \
+    prosemirror-view@1.42.0 \
     prosemirror-state \
     prosemirror-model
 ```
@@ -753,10 +753,10 @@ Events for which this returns true are not handled by the editor.
 ### `useIgnoreMutation`
 
 ```tsx
-type useIgnoreMutation = (stopEvent: (this: NodeView, view: EditorView, mutation: ViewMutationRecord) => boolean): void
+type useIgnoreMutation = (ignoreMutation: (this: NodeView | MarkView, view: EditorView, mutation: ViewMutationRecord) => boolean): void
 ```
 
-This hook can be used within a node view component to register an
+This hook can be used within a node view or mark view component to register an
 [ignoreMutation handler](https://prosemirror.net/docs/ref/#view.NodeView.ignoreMutation).
 Mutations for which this returns true are not handled by the editor.
 

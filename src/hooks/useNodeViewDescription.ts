@@ -5,7 +5,6 @@ import { ReactEditorView } from "../ReactEditorView.js";
 import { NodeViewComponentProps } from "../components/nodes/NodeViewComponentProps.js";
 import { ChildDescriptionsContext } from "../contexts/ChildDescriptionsContext.js";
 import { EditorContext } from "../contexts/EditorContext.js";
-import { DOMNode } from "../dom.js";
 import {
   NodeViewDesc,
   ReactNodeViewDesc,
@@ -19,7 +18,7 @@ import { useEffectEvent } from "./useEffectEvent.js";
 type Props = Omit<NodeViewComponentProps["nodeProps"], "contentDOMRef">;
 
 export function useNodeViewDescription(
-  getDOM: () => DOMNode | null,
+  getDOM: () => HTMLElement | null,
   getContentDOM: (
     nodeView: { contentDOM?: HTMLElement | null } | null
   ) => HTMLElement | null,
