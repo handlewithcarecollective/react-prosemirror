@@ -108,13 +108,13 @@
     "prosemirror-history": "^1.5.0",
     "prosemirror-inputrules": "^1.5.1",
     "prosemirror-keymap": "^1.2.3",
-    "prosemirror-model": "^1.25.7",
+    "prosemirror-model": "^1.25.8",
     "prosemirror-schema-list": "^1.5.1",
     "prosemirror-state": "^1.4.4",
     "prosemirror-tables": "^1.8.5",
     "prosemirror-test-builder": "^1.1.1",
     "prosemirror-transform": "^1.12.0",
-    "prosemirror-view": "1.41.7",
+    "prosemirror-view": "1.42.0",
     "puppeteer-core": "^25.0.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -129,7 +129,7 @@
     "webdriverio": "^9.18.1"
   },
   "resolutions": {
-    "prosemirror-view": "1.41.7"
+    "prosemirror-view": "1.42.0"
   },
   "peerDependencies": {
     "@tiptap/core": "^3.0.0",
@@ -137,7 +137,7 @@
     "@tiptap/react": "^3.0.0",
     "prosemirror-model": "^1.0.0",
     "prosemirror-state": "^1.0.0",
-    "prosemirror-view": "1.41.7",
+    "prosemirror-view": "1.42.0",
     "react": ">=17 <20",
     "react-dom": ">=17 <20",
     "react-reconciler": ">=0.26.1 <=0.33.0"

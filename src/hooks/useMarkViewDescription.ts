@@ -5,7 +5,6 @@ import { ReactEditorView } from "../ReactEditorView.js";
 import { MarkViewComponentProps } from "../components/marks/MarkViewComponentProps.js";
 import { ChildDescriptionsContext } from "../contexts/ChildDescriptionsContext.js";
 import { EditorContext } from "../contexts/EditorContext.js";
-import { DOMNode } from "../dom.js";
 import {
   MarkViewDesc,
   ReactMarkViewDesc,
@@ -19,7 +18,7 @@ import { useEffectEvent } from "./useEffectEvent.js";
 type Props = Omit<MarkViewComponentProps["markProps"], "contentDOMRef">;
 
 export function useMarkViewDescription(
-  getDOM: () => DOMNode | null,
+  getDOM: () => HTMLElement | null,
   getContentDOM: (
     markView: { contentDOM?: HTMLElement | null } | null
   ) => HTMLElement | null,

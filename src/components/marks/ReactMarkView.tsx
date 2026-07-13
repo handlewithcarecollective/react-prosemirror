@@ -13,7 +13,6 @@ import {
   IgnoreMutation,
   IgnoreMutationContext,
 } from "../../contexts/IgnoreMutationContext.js";
-import { DOMNode } from "../../dom.js";
 import { useMarkViewDescription } from "../../hooks/useMarkViewDescription.js";
 
 import { MarkViewComponentProps } from "./MarkViewComponentProps.js";
@@ -61,7 +60,7 @@ export const ReactMarkView = memo(function ReactMarkView({
     () => ref.current,
     () => contentDOMRef.current ?? ref.current,
     () => ({
-      dom: ref.current as DOMNode,
+      dom: ref.current as HTMLElement,
       contentDOM: contentDOMRef.current ?? ref.current,
       ignoreMutation(mutation) {
         const ignoreMutation = ignoreMutationRef.current;

@@ -1,8 +1,8 @@
-import { NodeView, ViewMutationRecord } from "prosemirror-view";
+import { MarkView, NodeView, ViewMutationRecord } from "prosemirror-view";
 import { createContext } from "react";
 
 export type IgnoreMutation = (
-  this: NodeView,
+  this: NodeView | MarkView,
   mutation: ViewMutationRecord
 ) => boolean;
 

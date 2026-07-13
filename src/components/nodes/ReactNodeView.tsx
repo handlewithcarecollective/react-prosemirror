@@ -24,7 +24,6 @@ import {
   StopEvent,
   StopEventContext,
 } from "../../contexts/StopEventContext.js";
-import { DOMNode } from "../../dom.js";
 import { useForceUpdate } from "../../hooks/useForceUpdate.js";
 import { useNodeViewDescription } from "../../hooks/useNodeViewDescription.js";
 import { ChildNodeViews, wrapInDeco } from "../ChildNodeViews.js";
@@ -106,7 +105,7 @@ export const ReactNodeView = memo(function ReactNodeView({
       setSelected(false);
 
       return {
-        dom: (nodeDOMRef.current ?? domRef.current) as DOMNode,
+        dom: (nodeDOMRef.current ?? domRef.current) as HTMLElement,
         contentDOM: contentDOMRef.current,
         update() {
           return true;
