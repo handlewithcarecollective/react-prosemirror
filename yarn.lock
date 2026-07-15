@@ -1692,7 +1692,7 @@ __metadata:
     prosemirror-tables: "npm:^1.8.5"
     prosemirror-test-builder: "npm:^1.1.1"
     prosemirror-transform: "npm:^1.12.0"
-    prosemirror-view: "npm:1.42.0"
+    prosemirror-view: "npm:1.42.1"
     puppeteer-core: "npm:^25.0.4"
     react: "npm:^18.2.0"
     react-dom: "npm:^18.2.0"
@@ -1711,7 +1711,7 @@ __metadata:
     "@tiptap/react": ^3.0.0
     prosemirror-model: ^1.0.0
     prosemirror-state: ^1.0.0
-    prosemirror-view: 1.42.0
+    prosemirror-view: 1.42.1
     react: ">=17 <20"
     react-dom: ">=17 <20"
     react-reconciler: ">=0.26.1 <=0.33.0"
@@ -13040,14 +13040,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"prosemirror-view@npm:1.42.0":
-  version: 1.42.0
-  resolution: "prosemirror-view@npm:1.42.0"
+"prosemirror-view@npm:1.42.1":
+  version: 1.42.1
+  resolution: "prosemirror-view@npm:1.42.1"
   dependencies:
     prosemirror-model: "npm:^1.25.8"
     prosemirror-state: "npm:^1.0.0"
     prosemirror-transform: "npm:^1.1.0"
-  checksum: 10/7430a30bafe4304fec31183c5f004ae98255c4087efb089b423b47ca0dc7efa93fc975db9fa08e7ec4941ba238edd52e271d8a67616a5d5a58ed8ef09932743d
+  checksum: 10/59f5cad21e1049bd577c3e001619c3dec208f0c99df16a52a2df2c0d312b7b182b794d7a2be51af9e64b3f678ce17723486bd39d7cdd835b832d0423a3ff54e5
   languageName: node
   linkType: hard
 
