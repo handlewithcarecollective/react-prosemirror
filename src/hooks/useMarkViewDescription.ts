@@ -30,6 +30,11 @@ export function useMarkViewDescription(
 
   const contentDOMRef = useRef<HTMLElement | null>(null);
 
+  // Tracks the mount layout effect's lifecycle, as in
+  // useNodeViewDescription: refUpdated must be inert between that
+  // effect's cleanup and its next run, and must still run after a
+  // callback ref churn, which a viewDescRef guard alone gets wrong.
+  const mountedRef = useRef(false);
   const viewDescRef = useRef<MarkViewDesc | undefined>();
   const childrenRef = useRef<ViewDesc[]>([]);
 
@@ -72,6 +77,17 @@ export function useMarkViewDescription(
     for (const child of children) {
       child.parent = viewDesc;
     }
+
+    // Register with the parent's children immediately, as the node view
+    // hook does. create() can run from a ref callback (refUpdated)
+    // without a following layout effect, and a live desc that is absent
+    // from its parent's children corrupts position mapping
+    // (posBeforeChild walks past the end of the array).
+    const siblings = siblingsRef.current;
+    if (!siblings.includes(viewDesc)) {
+      siblings.push(viewDesc);
+    }
+    siblings.sort(sortViewDescs);
 
     contentDOMRef.current = contentDOM;
 
@@ -121,18 +137,27 @@ export function useMarkViewDescription(
   });
 
   useClientLayoutEffect(() => {
+    mountedRef.current = true;
     viewDescRef.current = create();
     return () => {
+      mountedRef.current = false;
       destroy();
     };
   }, [create, destroy]);
 
+  // A null DOM on a ref detach pass while mounted is transient, as in
+  // useNodeViewDescription: the attach pass re-syncs the desc, and a
+  // real unmount destroys it in the layout effect cleanup.
+  const domDetached = useEffectEvent(() => getDOM() == null);
+
   const refUpdated = useCallback(() => {
+    if (!mountedRef.current) return;
+    if (domDetached()) return;
     if (!update()) {
       destroy();
       viewDescRef.current = create();
     }
-  }, [create, destroy, update]);
+  }, [create, destroy, domDetached, update]);
 
   useClientLayoutEffect(() => {
     if (!update()) {
