@@ -29,6 +29,19 @@ export function useNodeViewDescription(
   const { parentRef, siblingsRef } = useContext(ChildDescriptionsContext);
   const contentDOMRef = useRef<HTMLElement | null>(null);
 
+  // Tracks the mount layout effect's lifecycle. refUpdated must be inert
+  // between that effect's cleanup and its next run: React detaches and
+  // reattaches callback refs around a simulated remount (StrictMode,
+  // Activity), and in that window viewDescRef still points at the
+  // destroyed desc, so update() can misjudge it and register a
+  // replacement that the effect's unconditional create() then orphans in
+  // the parent's children, corrupting position mapping. Guarding on
+  // viewDescRef alone gets the other direction wrong: a ref reattach
+  // after callback ref churn (#276) finds it empty and never recreates
+  // the desc. While mounted, every destroy is immediately followed by a
+  // create, so viewDescRef only ever holds a live desc and update() can
+  // be trusted.
+  const mountedRef = useRef(false);
   const viewDescRef = useRef<NodeViewDesc | undefined>();
   const childrenRef = useRef<ViewDesc[]>([]);
 
@@ -139,19 +152,30 @@ export function useNodeViewDescription(
   });
 
   useClientLayoutEffect(() => {
+    mountedRef.current = true;
     viewDescRef.current = create();
     return () => {
+      mountedRef.current = false;
       destroy();
     };
   }, [create, destroy]);
 
+  // React detaches a replaced callback ref by calling it with null
+  // before attaching its successor, so while mounted a null DOM here is
+  // transient: the attach pass that follows re-syncs the desc, and a
+  // real unmount destroys it in the layout effect cleanup. Tearing the
+  // desc down on the detach pass would destroy and recreate it even
+  // though the DOM never changed.
+  const domDetached = useEffectEvent(() => getDOM() == null);
+
   const refUpdated = useCallback(() => {
-    if (!viewDescRef.current) return;
+    if (!mountedRef.current) return;
+    if (domDetached()) return;
     if (!update()) {
       destroy();
       viewDescRef.current = create();
     }
-  }, [create, destroy, update]);
+  }, [create, destroy, domDetached, update]);
 
   useClientLayoutEffect(() => {
     if (!update()) {
