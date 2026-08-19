@@ -39,7 +39,6 @@ export function SeparatorHackView({ getPos }: Props) {
       (lastSibling?.dom as HTMLElement)?.contentEditable == "false"
     ) {
       setShouldRender(true);
-      return;
     }
 
     if (!ref.current) return;
