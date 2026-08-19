@@ -35,10 +35,12 @@ export function SeparatorHackView({ getPos }: Props) {
     );
     const lastSibling = nonHackSiblings[nonHackSiblings.length - 1];
     if (
+      !shouldRender &&
       (browser.safari || browser.chrome) &&
       (lastSibling?.dom as HTMLElement)?.contentEditable == "false"
     ) {
       setShouldRender(true);
+      return;
     }
 
     if (!ref.current) return;
