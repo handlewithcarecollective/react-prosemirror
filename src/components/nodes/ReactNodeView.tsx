@@ -26,6 +26,7 @@ import {
 } from "../../contexts/StopEventContext.js";
 import { useForceUpdate } from "../../hooks/useForceUpdate.js";
 import { useNodeViewDescription } from "../../hooks/useNodeViewDescription.js";
+import { useSetDom } from "../../hooks/useSetDom.js";
 import { ChildNodeViews, wrapInDeco } from "../ChildNodeViews.js";
 import { NodeViewComponentProps } from "../nodes/NodeViewComponentProps.js";
 
@@ -98,7 +99,7 @@ export const ReactNodeView = memo(function ReactNodeView({
     [getPos, innerDeco, node, outerDeco]
   );
 
-  const { childContextValue, refUpdated } = useNodeViewDescription(
+  const { childContextValue, refUpdated, isMounted } = useNodeViewDescription(
     () => domRef.current,
     () => contentDOMRef.current,
     () => {
@@ -148,40 +149,15 @@ export const ReactNodeView = memo(function ReactNodeView({
     nodeViewDescProps
   );
 
-  const setDOM = useCallback(
-    (el: HTMLElement | null) => {
-      domRef.current = el;
-      refUpdated();
-    },
-    [refUpdated]
-  );
+  const setDOM = useSetDom(domRef, refUpdated, isMounted, forceUpdate);
 
-  const setNodeDOM = useCallback(
-    (el: HTMLElement | null) => {
-      if (!!nodeDOMRef.current !== !!el) {
-        // Force a re-render if the existence of nodeDOM
-        // is changing, since we use its existince to set
-        // some props
-        forceUpdate();
-      }
-      nodeDOMRef.current = el;
-      refUpdated();
-    },
-    [forceUpdate, refUpdated]
-  );
+  const setNodeDOM = useSetDom(nodeDOMRef, refUpdated, isMounted, forceUpdate);
 
-  const setContentDOM = useCallback(
-    (el: HTMLElement | null) => {
-      if (!!contentDOMRef.current !== !!el) {
-        // Force a re-render if the existence of contentDOM
-        // is changing, since we use its existince to set
-        // some props
-        forceUpdate();
-      }
-      contentDOMRef.current = el;
-      refUpdated();
-    },
-    [forceUpdate, refUpdated]
+  const setContentDOM = useSetDom(
+    contentDOMRef,
+    refUpdated,
+    isMounted,
+    forceUpdate
   );
 
   const nodeProps = useMemo(

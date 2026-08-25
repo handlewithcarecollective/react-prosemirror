@@ -14,6 +14,7 @@ import {
   IgnoreMutationContext,
 } from "../../contexts/IgnoreMutationContext.js";
 import { useMarkViewDescription } from "../../hooks/useMarkViewDescription.js";
+import { useSetDom } from "../../hooks/useSetDom.js";
 
 import { MarkViewComponentProps } from "./MarkViewComponentProps.js";
 
@@ -74,21 +75,9 @@ export const ReactMarkView = memo(function ReactMarkView({
     markViewDescProps
   );
 
-  const setDOM = useCallback(
-    (el: HTMLElement | null) => {
-      ref.current = el;
-      refUpdated();
-    },
-    [refUpdated]
-  );
+  const setDOM = useSetDom(ref, refUpdated);
 
-  const setContentDOM = useCallback(
-    (el: HTMLElement | null) => {
-      contentDOMRef.current = el;
-      refUpdated();
-    },
-    [refUpdated]
-  );
+  const setContentDOM = useSetDom(contentDOMRef, refUpdated);
 
   const markProps = useMemo(
     () => ({

@@ -25,6 +25,7 @@ export function useMarkViewDescription(
   constructor: MarkViewConstructor,
   props: Props
 ) {
+  const mountedRef = useRef(false);
   const { view } = useContext(EditorContext);
   const { parentRef, siblingsRef } = useContext(ChildDescriptionsContext);
 
@@ -108,6 +109,7 @@ export function useMarkViewDescription(
       return;
     }
 
+    viewDescRef.current = undefined;
     viewDesc.destroy();
 
     const siblings = siblingsRef.current;
@@ -121,13 +123,16 @@ export function useMarkViewDescription(
   });
 
   useClientLayoutEffect(() => {
+    mountedRef.current = true;
     viewDescRef.current = create();
     return () => {
+      mountedRef.current = false;
       destroy();
     };
   }, [create, destroy]);
 
   const refUpdated = useCallback(() => {
+    if (!mountedRef.current) return;
     if (!update()) {
       destroy();
       viewDescRef.current = create();

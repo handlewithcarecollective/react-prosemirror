@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { screen } from "@testing-library/react";
+import { act, screen } from "@testing-library/react";
 import { Plugin } from "prosemirror-state";
 import { blockquote, br, doc, p, strong } from "prosemirror-test-builder";
 import {
@@ -8,12 +8,15 @@ import {
   DecorationSet,
   ViewMutationRecord,
 } from "prosemirror-view";
-import React, { forwardRef, useEffect } from "react";
+import React, { forwardRef, useEffect, useState } from "react";
 
 import { useEditorState } from "../../hooks/useEditorState.js";
 import { useStopEvent } from "../../hooks/useStopEvent.js";
 import { useMergedDOMRefs } from "../../refs.js";
-import { tempEditor } from "../../testing/editorViewTestHelpers.js";
+import {
+  findTextNode,
+  tempEditor,
+} from "../../testing/editorViewTestHelpers.js";
 import { MarkViewComponentProps } from "../marks/MarkViewComponentProps.js";
 import { NodeViewComponentProps } from "../nodes/NodeViewComponentProps.js";
 
@@ -132,6 +135,140 @@ describe("nodeViewComponents prop", () => {
     expect(para.textContent).toBe("afoo");
   });
 
+  it("does not re-render indefinitely when the node view uses an unstable ref callback", async () => {
+    let renders = 0;
+    const { view } = tempEditor({
+      doc: doc(p("foo")),
+      nodeViewComponents: {
+        paragraph: forwardRef<HTMLParagraphElement, NodeViewComponentProps>(
+          function Paragraph({ children, nodeProps }, ref) {
+            renders++;
+            const contentDOMRef = nodeProps.contentDOMRef as (
+              el: HTMLElement | null
+            ) => void;
+            const setRef = (el: HTMLParagraphElement | null) => {
+              if (ref) {
+                if (typeof ref === "function") ref(el);
+                else ref.current = el;
+              }
+              contentDOMRef(el);
+            };
+            return <p ref={setRef}>{children}</p>;
+          }
+        ),
+      },
+    });
+
+    const para = view.dom.querySelector("p")!;
+    const base = renders;
+    act(() => {
+      view.dispatch(view.state.tr.insertText("a"));
+    });
+
+    expect(renders).toBe(base + 1);
+    expect(view.dom.querySelector("p")).toBe(para);
+    expect(para.textContent).toBe("afoo");
+  });
+
+  it("keeps its view desc when an unstable ref callback churns on re-render", async () => {
+    let renders = 0;
+    let bump: () => void;
+    const { view } = tempEditor({
+      doc: doc(p("hello")),
+      nodeViewComponents: {
+        paragraph: forwardRef<HTMLParagraphElement, NodeViewComponentProps>(
+          function Paragraph({ children }, ref) {
+            renders++;
+            const [version, setVersion] = useState(0);
+            bump = () => setVersion((v) => v + 1);
+            const setRef = (el: HTMLParagraphElement | null) => {
+              if (ref) {
+                if (typeof ref === "function") ref(el);
+                else ref.current = el;
+              }
+            };
+            return (
+              <p ref={setRef} data-version={version}>
+                {children}
+              </p>
+            );
+          }
+        ),
+      },
+    });
+
+    const para = view.dom.querySelector("p")!;
+    const text = findTextNode(para, "hello");
+    const desc = para.pmViewDesc;
+    expect(desc).toBeTruthy();
+    const base = renders;
+    act(() => {
+      bump();
+    });
+
+    expect(renders).toBe(base + 1);
+    expect(para.pmViewDesc).toBe(desc);
+    for (let i = 0; i <= 5; i++) {
+      expect(view.posAtDOM(text, i)).toBe(1 + i);
+    }
+  });
+
+  it("recreates its view desc when the contentDOM element is removed and restored", async () => {
+    let renders = 0;
+    let toggle: (show: boolean) => void;
+    const { view } = tempEditor({
+      doc: doc(p("foo")),
+      nodeViewComponents: {
+        paragraph: forwardRef<HTMLParagraphElement, NodeViewComponentProps>(
+          function Paragraph({ children, nodeProps, ...props }, ref) {
+            renders++;
+            const [showContentDOM, setShowContentDOM] = useState(true);
+            toggle = setShowContentDOM;
+            return (
+              <p {...props} ref={ref}>
+                {showContentDOM ? (
+                  <span ref={nodeProps.contentDOMRef}>{children}</span>
+                ) : (
+                  children
+                )}
+              </p>
+            );
+          }
+        ),
+      },
+    });
+
+    const para = view.dom.querySelector("p")!;
+    const desc = para.pmViewDesc;
+    expect(desc).toBeTruthy();
+    expect(para.getAttribute("contenteditable")).toBeNull();
+    const base = renders;
+
+    await act(async () => {
+      toggle(false);
+    });
+    expect(renders).toBe(base + 2);
+    expect(para.getAttribute("contenteditable")).toBe("false");
+    expect(para.pmViewDesc).toBeTruthy();
+    expect(para.pmViewDesc).not.toBe(desc);
+    const text = findTextNode(para, "foo");
+    for (let i = 0; i <= 3; i++) {
+      expect(view.posAtDOM(text, i)).toBe(1 + i);
+    }
+
+    act(() => {
+      toggle(true);
+    });
+
+    expect(renders).toBe(base + 4);
+    expect(para.getAttribute("contenteditable")).toBeNull();
+    expect(para.pmViewDesc).toBeTruthy();
+    const restoredText = findTextNode(para, "foo");
+    for (let i = 0; i <= 3; i++) {
+      expect(view.posAtDOM(restoredText, i)).toBe(1 + i);
+    }
+  });
+
   it("has its destroy method called", async () => {
     let destroyed = 0;
     const { view } = tempEditor({
@@ -152,6 +289,37 @@ describe("nodeViewComponents prop", () => {
       },
     });
     view.dispatch(view.state.tr.delete(3, 5));
+    expect(destroyed).toBe(1);
+  });
+
+  it("destroys its node view exactly once when the node is removed", async () => {
+    let destroyed = 0;
+    const { view } = tempEditor({
+      doc: doc(p("foo", br())),
+      nodeViewComponents: {
+        hard_break: forwardRef<HTMLBRElement, NodeViewComponentProps>(
+          function BR(_props, ref) {
+            useEffect(() => {
+              return () => {
+                destroyed++;
+              };
+            }, []);
+            const setRef = (el: HTMLBRElement | null) => {
+              if (ref) {
+                if (typeof ref === "function") ref(el);
+                else ref.current = el;
+              }
+            };
+            return <br ref={setRef} />;
+          }
+        ),
+      },
+    });
+
+    act(() => {
+      view.dispatch(view.state.tr.delete(3, 5));
+    });
+
     expect(destroyed).toBe(1);
   });
 
@@ -352,6 +520,50 @@ describe("markViewComponents prop", () => {
     view.dispatch(view.state.tr.insertText("a"));
     expect(view.dom.querySelector("p")).toBe(para);
     expect(para.textContent).toBe("afoo");
+  });
+
+  it("keeps its view desc when an unstable ref callback churns on re-render", async () => {
+    let renders = 0;
+    let bump: () => void;
+    const { view } = tempEditor({
+      doc: doc(p(strong("hello"))),
+      markViewComponents: {
+        strong: forwardRef<HTMLElement, MarkViewComponentProps>(function Strong(
+          { children },
+          ref
+        ) {
+          renders++;
+          const [version, setVersion] = useState(0);
+          bump = () => setVersion((v) => v + 1);
+          const setRef = (el: HTMLElement | null) => {
+            if (ref) {
+              if (typeof ref === "function") ref(el);
+              else ref.current = el;
+            }
+          };
+          return (
+            <strong ref={setRef} data-version={version}>
+              {children}
+            </strong>
+          );
+        }),
+      },
+    });
+
+    const strongEl = view.dom.querySelector("strong")!;
+    const text = findTextNode(strongEl, "hello");
+    const desc = strongEl.pmViewDesc;
+    expect(desc).toBeTruthy();
+    const base = renders;
+    act(() => {
+      bump();
+    });
+
+    expect(renders).toBe(base + 1);
+    expect(strongEl.pmViewDesc).toBe(desc);
+    for (let i = 0; i <= 5; i++) {
+      expect(view.posAtDOM(text, i)).toBe(1 + i);
+    }
   });
 
   it("has its destroy method called", async () => {
