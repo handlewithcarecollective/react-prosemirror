@@ -25,6 +25,7 @@ export function useNodeViewDescription(
   constructor: NodeViewConstructor,
   props: Props
 ) {
+  const mountedRef = useRef(false);
   const { view } = useContext(EditorContext);
   const { parentRef, siblingsRef } = useContext(ChildDescriptionsContext);
   const contentDOMRef = useRef<HTMLElement | null>(null);
@@ -126,6 +127,7 @@ export function useNodeViewDescription(
       return;
     }
 
+    viewDescRef.current = undefined;
     viewDesc.destroy();
 
     const siblings = siblingsRef.current;
@@ -139,14 +141,16 @@ export function useNodeViewDescription(
   });
 
   useClientLayoutEffect(() => {
+    mountedRef.current = true;
     viewDescRef.current = create();
     return () => {
+      mountedRef.current = false;
       destroy();
     };
   }, [create, destroy]);
 
   const refUpdated = useCallback(() => {
-    if (!viewDescRef.current) return;
+    if (!mountedRef.current) return;
     if (!update()) {
       destroy();
       viewDescRef.current = create();
@@ -208,9 +212,12 @@ export function useNodeViewDescription(
     []
   );
 
+  const isMounted = useCallback(() => mountedRef.current, []);
+
   return {
     childContextValue,
     contentDOM: contentDOMRef.current,
     refUpdated,
+    isMounted,
   };
 }
