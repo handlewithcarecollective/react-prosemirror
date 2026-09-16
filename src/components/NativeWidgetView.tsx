@@ -43,7 +43,9 @@ export function NativeWidgetView({ widget, getPos }: Props) {
         wrap.appendChild(dom);
         dom = wrap;
       }
-      dom.contentEditable = "false";
+      if (!dom.hasAttribute("contenteditable")) {
+        dom.contentEditable = "false";
+      }
       dom.classList.add("ProseMirror-widget");
     }
     if (rootDomRef.current.firstElementChild === dom) return;

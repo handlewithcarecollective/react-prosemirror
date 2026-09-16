@@ -105,7 +105,7 @@ export class ViewDesc {
   // When parsing in-editor content (in domchange.js), we allow
   // descriptions to determine the parse rules that should be used to
   // parse them.
-  parseRule(): Omit<TagParseRule, "tag"> | null {
+  parseRule(addedNodes?: readonly DOMNode[]): Omit<TagParseRule, "tag"> | null {
     return null;
   }
 
@@ -860,7 +860,7 @@ export class NodeViewDesc extends ViewDesc {
     super(parent, children, getPos, dom, contentDOM);
   }
 
-  parseRule() {
+  parseRule(addedNodes?: readonly DOMNode[]) {
     // Experimental kludge to allow opt-in re-parsing of nodes
     if (this.node.type.spec.reparseInView) return null;
     // FIXME the assumption that this can always return the current
@@ -889,7 +889,18 @@ export class NodeViewDesc extends ViewDesc {
           break;
         }
       }
-      if (!rule.contentElement) rule.getContent = () => Fragment.empty;
+      if (!rule.contentElement) {
+        const found =
+          addedNodes &&
+          addedNodes.find(
+            (n) =>
+              n.nodeType == 1 &&
+              addedNodes.indexOf(n.parentNode!) < 0 &&
+              this.dom.contains(n)
+          );
+        if (found) rule.contentElement = found as HTMLElement;
+        else rule.getContent = () => Fragment.empty;
+      }
     }
     return rule;
   }
