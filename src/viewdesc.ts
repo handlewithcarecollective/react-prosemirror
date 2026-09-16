@@ -105,7 +105,7 @@ export class ViewDesc {
   // When parsing in-editor content (in domchange.js), we allow
   // descriptions to determine the parse rules that should be used to
   // parse them.
-  parseRule(addedNodes?: readonly DOMNode[]): Omit<TagParseRule, "tag"> | null {
+  parseRule(): Omit<TagParseRule, "tag"> | null {
     return null;
   }
 
