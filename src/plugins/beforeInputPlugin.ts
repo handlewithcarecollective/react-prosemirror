@@ -213,7 +213,7 @@ export function beforeInputPlugin() {
             // a cursor at a mark boundary lands in either the left or right text
             // node depending on the user's last navigation direction, and the
             // IME composes into whichever one it found.
-          } else if (view.state.selection.empty) {
+          } else if (view.state.selection.empty && view.domSelection()) {
             view.domObserver.disconnectSelection();
             try {
               view.docView.setSelection(
