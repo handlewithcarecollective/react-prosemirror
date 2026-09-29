@@ -130,7 +130,11 @@ export function useEditor<T extends HTMLElement = HTMLElement>(
     // Ensure that the EditorView hasn't been destroyed before
     // running effects. Running effects will reattach selection
     // change listeners if the EditorView has been destroyed.
-    if (view instanceof ReactEditorView && !view.isDestroyed) {
+    if (
+      view instanceof ReactEditorView &&
+      !view.isDestroyed &&
+      view.domSelection()
+    ) {
       flushSyncRef.current = false;
       view.commitPendingEffects();
       flushSyncRef.current = true;

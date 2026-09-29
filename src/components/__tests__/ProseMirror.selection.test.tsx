@@ -143,6 +143,28 @@ describe("ProseMirror", () => {
     test(10, two, 2);
   });
 
+  it("doesn't throw when the root document has no browsing context", async () => {
+    const { view } = tempEditor({
+      doc: doc(p("one"), p("two")),
+    });
+    const two = await findTextNode(view.dom, "two")!;
+    view.focus();
+
+    // getSelection returns null when the document lost its browsing context
+    (document as any).getSelection = () => null;
+    try {
+      expect(() => setSel(view, 7)).not.toThrow();
+    } finally {
+      delete (document as any).getSelection;
+    }
+
+    // when a selection is available again, the next commit catches up
+    setSel(view, 8);
+    const sel = getSel();
+    expect(sel.node).toBe(two);
+    expect(sel.offset).toBe(2);
+  });
+
   it("returns sensible screen coordinates", async () => {
     const { view } = tempEditor({ doc: doc(p("one"), p("two")) });
 
