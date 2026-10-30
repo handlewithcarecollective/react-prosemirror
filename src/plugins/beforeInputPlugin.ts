@@ -100,7 +100,7 @@ export function beforeInputPlugin() {
   let observer: MutationObserver | null = null;
   let preCompositionSnapshot: Fragment | null = null;
 
-  function teardownComposition(view: ReactEditorView, endedAt: number) {
+  function teardownComposition(view: ReactEditorView) {
     view.input.composing = false;
 
     if (observer) {
@@ -137,14 +137,14 @@ export function beforeInputPlugin() {
       observer = null;
     }
 
-    view.input.compositionEndedAt = endedAt;
+    view.input.compositionEndedAt = Date.now();
     view.input.compositionNode = null;
     view.input.compositionNodes = [];
     view.input.compositionID++;
   }
 
   function teardownCompositionAndUnfreeze(view: ReactEditorView, event: Event) {
-    teardownComposition(view, event.timeStamp);
+    teardownComposition(view);
     view.dispatch(
       view.state.tr.setMeta(reactKeysPluginKey, {
         cursorWrapper: null,
@@ -162,7 +162,7 @@ export function beforeInputPlugin() {
             reactKeysPluginKey.getState(view.state)?.freezeFrom != null;
 
           if (observer && view.composing && !frozen) {
-            teardownComposition(view, Date.now());
+            teardownComposition(view);
           }
         },
       };
