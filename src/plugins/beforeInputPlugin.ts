@@ -143,7 +143,7 @@ export function beforeInputPlugin() {
     view.input.compositionID++;
   }
 
-  function teardownCompositionAndUnfreeze(view: ReactEditorView, event: Event) {
+  function teardownCompositionAndUnfreeze(view: ReactEditorView) {
     teardownComposition(view);
     view.dispatch(
       view.state.tr.setMeta(reactKeysPluginKey, {
@@ -268,32 +268,32 @@ export function beforeInputPlugin() {
         compositionupdate() {
           return true;
         },
-        compositionend(view, event) {
+        compositionend(view) {
           if (!(view instanceof ReactEditorView)) return false;
           if (!view.composing) return false;
 
-          teardownCompositionAndUnfreeze(view, event);
+          teardownCompositionAndUnfreeze(view);
           return true;
         },
-        contextmenu(view, event) {
+        contextmenu(view) {
           if (!(view instanceof ReactEditorView)) return false;
           if (!view.composing) return false;
 
-          teardownCompositionAndUnfreeze(view, event);
+          teardownCompositionAndUnfreeze(view);
           return false;
         },
-        mousedown(view, event) {
+        mousedown(view) {
           if (!(view instanceof ReactEditorView)) return false;
           if (!view.composing) return false;
 
-          teardownCompositionAndUnfreeze(view, event);
+          teardownCompositionAndUnfreeze(view);
           return false;
         },
-        touchstart(view, event) {
+        touchstart(view) {
           if (!(view instanceof ReactEditorView)) return false;
           if (!view.composing) return false;
 
-          teardownCompositionAndUnfreeze(view, event);
+          teardownCompositionAndUnfreeze(view);
           return false;
         },
         beforeinput(view, event) {
