@@ -100,7 +100,7 @@ export function beforeInputPlugin() {
   let observer: MutationObserver | null = null;
   let preCompositionSnapshot: Fragment | null = null;
 
-  function teardownComposition(view: ReactEditorView, endedAt: number) {
+  function teardownComposition(view: ReactEditorView) {
     view.input.composing = false;
 
     if (observer) {
@@ -137,14 +137,14 @@ export function beforeInputPlugin() {
       observer = null;
     }
 
-    view.input.compositionEndedAt = endedAt;
+    view.input.compositionEndedAt = Date.now();
     view.input.compositionNode = null;
     view.input.compositionNodes = [];
     view.input.compositionID++;
   }
 
-  function teardownCompositionAndUnfreeze(view: ReactEditorView, event: Event) {
-    teardownComposition(view, event.timeStamp);
+  function teardownCompositionAndUnfreeze(view: ReactEditorView) {
+    teardownComposition(view);
     view.dispatch(
       view.state.tr.setMeta(reactKeysPluginKey, {
         cursorWrapper: null,
@@ -162,7 +162,7 @@ export function beforeInputPlugin() {
             reactKeysPluginKey.getState(view.state)?.freezeFrom != null;
 
           if (observer && view.composing && !frozen) {
-            teardownComposition(view, Date.now());
+            teardownComposition(view);
           }
         },
       };
@@ -268,32 +268,32 @@ export function beforeInputPlugin() {
         compositionupdate() {
           return true;
         },
-        compositionend(view, event) {
+        compositionend(view) {
           if (!(view instanceof ReactEditorView)) return false;
           if (!view.composing) return false;
 
-          teardownCompositionAndUnfreeze(view, event);
+          teardownCompositionAndUnfreeze(view);
           return true;
         },
-        contextmenu(view, event) {
+        contextmenu(view) {
           if (!(view instanceof ReactEditorView)) return false;
           if (!view.composing) return false;
 
-          teardownCompositionAndUnfreeze(view, event);
+          teardownCompositionAndUnfreeze(view);
           return false;
         },
-        mousedown(view, event) {
+        mousedown(view) {
           if (!(view instanceof ReactEditorView)) return false;
           if (!view.composing) return false;
 
-          teardownCompositionAndUnfreeze(view, event);
+          teardownCompositionAndUnfreeze(view);
           return false;
         },
-        touchstart(view, event) {
+        touchstart(view) {
           if (!(view instanceof ReactEditorView)) return false;
           if (!view.composing) return false;
 
-          teardownCompositionAndUnfreeze(view, event);
+          teardownCompositionAndUnfreeze(view);
           return false;
         },
         beforeinput(view, event) {
