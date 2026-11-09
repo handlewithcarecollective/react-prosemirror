@@ -8,6 +8,7 @@ import { ReactEditorView } from "../ReactEditorView.js";
 import { StaticEditorView } from "../StaticEditorView.js";
 import { EMPTY_STATE } from "../constants.js";
 import { beforeInputPlugin } from "../plugins/beforeInputPlugin.js";
+import { reactKeysPluginKey } from "../plugins/reactKeys.js";
 
 import { useClientLayoutEffect } from "./useClientLayoutEffect.js";
 import { useComponentEventListeners } from "./useComponentEventListeners.js";
@@ -23,6 +24,7 @@ export interface UseEditorOptions extends EditorProps {
 }
 
 let didWarnValueDefaultValue = false;
+let didWarnMissingPlugin = false;
 
 /**
  * Creates, mounts, and manages a ProseMirror `EditorView`.
@@ -60,6 +62,23 @@ export function useEditor<T extends HTMLElement = HTMLElement>(
   const defaultState = options.defaultState ?? EMPTY_STATE;
   const [_state, setState] = useState<EditorState>(defaultState);
   const state = options.state ?? _state;
+
+  if (!reactKeysPluginKey.get(state)) {
+    const message =
+      "A component contains a ProseMirror editor whose EditorState " +
+      "is missing the reactKeys plugin from @handlewithcare/react-prosemirror. " +
+      "Please import { reactKeys } from @handlewithcare/react-prosemirror and " +
+      "add it to your plugins array when constructing your EditorState.";
+
+    if (process.env.NODE_ENV === "production") {
+      if (!didWarnMissingPlugin) {
+        console.error(message);
+        didWarnMissingPlugin = true;
+      }
+    } else {
+      throw new Error(message);
+    }
+  }
 
   const { handleDOMEvents, registerEventListener, unregisterEventListener } =
     useComponentEventListeners(options.handleDOMEvents);

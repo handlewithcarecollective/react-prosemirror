@@ -32,7 +32,7 @@ describe("ProseMirror", () => {
         doc: { content: "text*" },
       },
     });
-    const editorState = EditorState.create({ schema });
+    const editorState = EditorState.create({ schema, plugins: [reactKeys()] });
 
     function TestEditor() {
       return (
@@ -69,7 +69,10 @@ describe("ProseMirror", () => {
         doc: { content: "text*" },
       },
     });
-    let outerEditorState = EditorState.create({ schema });
+    let outerEditorState = EditorState.create({
+      schema,
+      plugins: [reactKeys()],
+    });
     function TestEditor() {
       const [editorState, setEditorState] = useState(outerEditorState);
 
@@ -120,7 +123,7 @@ describe("ProseMirror", () => {
         doc: { content: "paragraph+" },
       },
     });
-    const editorState = EditorState.create({ schema });
+    const editorState = EditorState.create({ schema, plugins: [reactKeys()] });
 
     const Paragraph = forwardRef<HTMLDivElement | null, NodeViewComponentProps>(
       function Paragraph({ children }, ref) {
