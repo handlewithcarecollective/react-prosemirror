@@ -16,7 +16,12 @@ export { useSelectNode } from "./hooks/useSelectNode.js";
 export { useIgnoreMutation } from "./hooks/useIgnoreMutation.js";
 export { useIsEditorStatic } from "./hooks/useIsEditorStatic.js";
 export { useIsNodeSelected } from "./hooks/useIsNodeSelected.js";
-export { reactKeys } from "./plugins/reactKeys.js";
+export {
+  reactKeys,
+  reactKeysPluginKey,
+  type ReactKeysPluginState,
+  type ReactKeysPluginMeta,
+} from "./plugins/reactKeys.js";
 export { widget } from "./decorations/ReactWidgetType.js";
 export { useMergedDOMRefs } from "./refs.js";
 

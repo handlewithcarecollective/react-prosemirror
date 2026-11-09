@@ -19,13 +19,12 @@ export const reactKeysPluginKey = new PluginKey<ReactKeysPluginState>(
   "@handlewithcare/react-prosemirror/reactKeys"
 );
 
-export type ReactKeysPluginMeta =
-  | {
-      overrides?: Record<number, number>;
-      cursorWrapper?: Decoration | null;
-      freezeFrom?: number | null;
-    }
-  | undefined;
+export type ReactKeysPluginMeta = { overrides?: Record<number, number> };
+
+export type ReactKeysPluginMetaInternal = ReactKeysPluginMeta & {
+  cursorWrapper?: Decoration | null;
+  freezeFrom?: number | null;
+};
 
 /**
  * Tracks a unique key for each (non-text) node in the
@@ -63,7 +62,9 @@ export function reactKeys() {
        * node was deleted.
        */
       apply(tr, value, oldState, newState) {
-        const meta = tr.getMeta(reactKeysPluginKey) as ReactKeysPluginMeta;
+        const meta = tr.getMeta(reactKeysPluginKey) as
+          | ReactKeysPluginMetaInternal
+          | undefined;
 
         const overrides = meta && "overrides" in meta ? meta.overrides : {};
 

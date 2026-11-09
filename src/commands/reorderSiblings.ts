@@ -3,7 +3,7 @@ import { Command, EditorState, Transaction } from "prosemirror-state";
 import { EditorView } from "prosemirror-view";
 
 import {
-  ReactKeysPluginMeta,
+  ReactKeysPluginMetaInternal,
   reactKeysPluginKey,
 } from "../plugins/reactKeys.js";
 
@@ -54,7 +54,7 @@ export function reorderSiblingsOnTransaction(
 
   const meta: { overrides: Record<number, number> } = {
     overrides: {},
-  } satisfies ReactKeysPluginMeta;
+  } satisfies ReactKeysPluginMetaInternal;
 
   const oldPositions: number[] = [];
   let start = pos;

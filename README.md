@@ -94,6 +94,7 @@ import "prosemirror-view/style/prosemirror.css";
   - [`useIsComposingIn`](#useiscomposingin)
   - [`widget`](#widget)
   - [`reorderSiblings`](#reordersiblings)
+  - [`reactKeysPluginKey`](#reactkeyspluginkey)
     - [When should I use this?](#when-should-i-use-this)
 - [Migrations](#migrations)
 - [Looking for someone to collaborate with?](#looking-for-someone-to-collaborate-with)
@@ -820,6 +821,11 @@ arguments:
 ```ts
 type reorderSiblings = (pos: number, order: number[]): Command
 ```
+
+### `reactKeysPluginKey`
+
+A PluginKey that can be used to retrieve the current `reactKeys` plugin state
+from the EditorState. You almost certainly do not need this!
 
 #### When should I use this?
 
